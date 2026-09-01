@@ -1,12 +1,6 @@
 import { cx } from "@/lib/tone";
 
-/**
- * A submit that reports the action's pending state.
- *
- * `useActionState` already hands the form its `pending` flag, so it is passed
- * in rather than read again through `useFormStatus` — one source, and this
- * component stays free of hooks.
- */
+/** A submit that reports the action's pending state. */
 export function SubmitButton({
   children,
   pendingLabel,
@@ -22,10 +16,7 @@ export function SubmitButton({
   readonly className?: string;
   readonly name?: string;
   readonly value?: string;
-  /**
-   * For the second button on a card whose required fields belong to the other
-   * one — the reset card's "Send OTP" must not be blocked by an empty code.
-   */
+  /** For the second button on a card whose required fields belong to the other one. */
   readonly formNoValidate?: boolean;
 }) {
   return (

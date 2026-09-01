@@ -1,10 +1,6 @@
 import type { RampStep, Tone } from "@/types/ledger";
 
-/**
- * Tailwind needs whole class names at build time, so semantic tones resolve
- * through a lookup rather than string interpolation. One table per property
- * keeps the call sites free of conditionals.
- */
+/** Tailwind needs whole class names at build time. */
 
 export const TEXT_TONE: Readonly<Record<Tone, string>> = {
   text: "text-text",

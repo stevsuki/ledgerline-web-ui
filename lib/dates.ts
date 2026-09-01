@@ -1,15 +1,4 @@
-/**
- * Two date formats meet in this app and neither converts for free.
- *
- * The fixtures carry the artboard's display stamp — `27-08-2026 19:41`,
- * day-first, the way the audit table prints it. Every query param is an ISO
- * day — `2026-08-27` — because that is what sorts, compares and survives a
- * link without anyone guessing whether `03-08` is March or August.
- *
- * Everything here is pure and timezone-free: dates are built at local midnight
- * and only ever compared to other local-midnight dates, so a range never
- * gains or loses a day on the way through.
- */
+/** Two date formats meet in this app and neither converts for free. */
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -23,11 +12,7 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December",
 ] as const;
 
-/**
- * Sunday-first, matching the artboard's week strips. Three initials repeat,
- * so each day carries its own key and its full name — the column head shows
- * one character and reads out the whole word.
- */
+/** Sunday-first, matching the artboard's week strips. */
 export const WEEKDAYS = [
   { key: "sun", initial: "S", label: "Sunday" },
   { key: "mon", initial: "M", label: "Monday" },
@@ -83,10 +68,7 @@ export function monthLabel(date: Date): string {
   return `${MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}`;
 }
 
-/**
- * The 42 days a month grid shows: the month itself, padded either side with
- * the neighbouring days that complete its first and last weeks.
- */
+/** The 42 days a month grid shows: the month, padded out of its neighbours. */
 export function monthGrid(month: Date): readonly Date[] {
   const first = startOfMonth(month);
   const start = addDays(first, -first.getDay());
@@ -128,11 +110,7 @@ function shortDay(iso: string): string {
   return `${dayAndMonth(date)} ${date.getFullYear()}`;
 }
 
-/**
- * What the trigger button and the export summary print. A range inside one
- * month drops the repeated month — `1 – 27 Aug 2026`, not `1 Aug 2026 – 27
- * Aug 2026` — which is the difference between fitting the control and not.
- */
+/** What the trigger button and the export summary print. */
 export function formatRangeLabel(range: DateRange, fallback: string): string {
   if (!range.from && !range.to) {
     return fallback;
@@ -163,19 +141,7 @@ const PRESET_LABEL: Readonly<Record<RangePresetId, string>> = {
   all: "",
 };
 
-/**
- * The shortest label that is still true, for the filter bar's chip.
- *
- * A filter control sits in a row with five others, so its label is a width
- * budget, not just a string: `26 Aug 2026 – 1 Sep 2026` is wide enough to
- * wrap the whole bar onto a second line. Two things keep it narrow. A range
- * that matches a preset is named after it — the same words the segments use,
- * so picking "7 days" reads back as "7 days". Anything else drops the year
- * while both ends sit in the current one, which is nearly always.
- *
- * The popover and the export summary still print years, because there the
- * width is free and the precision is worth having.
- */
+/** The shortest label that is still true, for the filter bar's chip. */
 export function formatRangeChip(
   range: DateRange,
   todayIso: string,
@@ -208,11 +174,7 @@ export function formatRangeChip(
   return `${from} – ${dayAndMonth(end)}`;
 }
 
-/* ── presets ───────────────────────────────────────────────────────────────
-   The four shortcuts that answer most range questions without anyone opening
-   the grid. `today` is passed in rather than read from the clock, so the
-   server and the browser compute the same dates and hydration stays quiet.
-   ────────────────────────────────────────────────────────────────────────── */
+/* presets — The four shortcuts that answer most range questions on their own. */
 
 export const RANGE_PRESET_IDS = ["7d", "30d", "month", "all"] as const;
 

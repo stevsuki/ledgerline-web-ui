@@ -1,22 +1,6 @@
 import type { AuditStatus } from "@/types/access";
 
-/**
- * What to call an audit action.
- *
- * The backend stores a dotted code — `auth.login` — and deliberately ships no
- * label with it: the display labels for modules, statuses and severities live
- * in its DTO layer, but an action is written by whichever service recorded it
- * and naming those is this app's job.
- *
- * So a code the UI has a name for gets that name, and anything else is
- * prettified out of the code itself. That second half matters: the backend can
- * start recording `wallets.connect` tomorrow and the table reads "Connect"
- * rather than a raw identifier, without a release here.
- *
- * The same code can mean two things depending on how it went — `auth.login`
- * with `status: failed` is a failed sign-in, not a sign-in — so the outcome is
- * part of the lookup rather than a separate column.
- */
+/** What to call an audit action. */
 
 const ACTION_LABELS: Readonly<Record<string, string>> = {
   "auth.login": "Signed in",
@@ -60,12 +44,7 @@ export function describeAction(action: string, status: AuditStatus): string {
   return ACTION_LABELS[action] ?? humanise(action);
 }
 
-/**
- * The module's display name. The list endpoint sends only the code, while
- * `/audit-logs/options` carries the labels — so the screen builds the lookup
- * from the options it already fetched rather than keeping its own copy of
- * names the backend owns.
- */
+/** The module's display name. */
 export function moduleLabeller(
   modules: readonly { readonly value: string; readonly label: string }[],
 ): (code: string) => string {

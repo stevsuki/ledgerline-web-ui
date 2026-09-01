@@ -23,28 +23,7 @@ import {
 } from "@/lib/dates";
 import { cx } from "@/lib/tone";
 
-/**
- * A two-ended date range grid.
- *
- * The artboard never drew a calendar, so every value here comes out of the
- * shape contract rather than out of nowhere — the `.cal-*` block in
- * `globals.css` records where each one is taken from.
- *
- * It is controlled and presentational: it owns which month is on screen and
- * which day the keyboard is on, and nothing else. Whoever renders it owns the
- * range, which is what lets the filter bar and the export popover put the
- * same control over the same URL state.
- *
- * Clicking sets one end and then the other. The half-picked state in between
- * is kept here rather than pushed at the parent: it is interaction, not a
- * value, and a parent that stored it would have to hold a range that is not
- * yet a range. So `onChange` only ever fires with both ends set — or with
- * neither, from a preset — and the ends are ordered on the way out, so
- * picking backwards through the month works as well as picking forwards.
- *
- * The pending end needs no clearing: it lives exactly one click, and both
- * popovers unmount this when they close.
- */
+/** A two-ended date range grid. */
 
 /** Arrow keys walk the grid; the vertical pair is one week. */
 const DAY_STEP: Readonly<Record<string, number>> = {
@@ -146,11 +125,7 @@ export function Calendar({
     }
   }
 
-  /**
-   * First click marks one end, second closes the range and reports it, and a
-   * later click starts over — so there is no mode to be in and no start/end
-   * toggle to read.
-   */
+  /** First click marks one end, second closes the range and reports it. */
   function selectDay(iso: string) {
     setCursor(iso);
 
@@ -276,11 +251,7 @@ type CalendarCellProps = {
   readonly onSelect: (iso: string) => void;
 };
 
-/**
- * One day. Split out so the grid above stays readable and so the band
- * rounding — which only the first and last column of a week can carry — sits
- * next to the classes it belongs to.
- */
+/** One day, split out so the grid above stays readable. */
 function CalendarCell({
   day,
   iso,

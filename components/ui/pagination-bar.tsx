@@ -39,7 +39,7 @@ export function PaginationBar({
   );
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3.5 px-6 py-4">
+    <div className="panel-pad-x flex flex-wrap items-center justify-between gap-3.5 py-4">
       <FilterForm
         action={basePath}
         className="flex items-center gap-2.5"

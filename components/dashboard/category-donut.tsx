@@ -5,18 +5,21 @@ import { useState } from "react";
 import type { DonutData } from "@/lib/data/analytics";
 import { RAMP_BG, RAMP_FILL, cx } from "@/lib/tone";
 
-/**
- * Spending by category. The geometry is computed on the server; hovering a
- * slice or a legend row dims the others and swaps the figure in the middle.
- */
+/** Spending by category. The geometry is computed on the server. */
 export function CategoryDonut({ data }: { readonly data: DonutData }) {
   const [hovered, setHovered] = useState<string | null>(null);
   const active = data.segments.find((segment) => segment.id === hovered);
 
   return (
-    <div className="mt-4 flex items-center gap-4">
-      <div className="relative flex-none">
-        <svg viewBox="0 0 180 180" className="size-[164px]" role="img" aria-label="Spending by category">
+    // Wraps rather than shrinking the dial.
+    <div className="mt-4 flex flex-wrap items-center gap-4">
+      <div className="relative mx-auto flex-none">
+        <svg
+          viewBox="0 0 180 180"
+          className="size-[164px]"
+          role="img"
+          aria-label="Spending by category"
+        >
           {data.segments.map((segment) => (
             <path
               key={segment.id}
@@ -45,7 +48,7 @@ export function CategoryDonut({ data }: { readonly data: DonutData }) {
         </div>
       </div>
 
-      <ul className="flex min-w-0 flex-1 flex-col">
+      <ul className="flex min-w-[170px] flex-1 flex-col">
         {data.segments.map((segment) => (
           <li
             key={segment.id}

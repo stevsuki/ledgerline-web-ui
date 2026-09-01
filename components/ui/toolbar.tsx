@@ -1,10 +1,9 @@
+import Link from "next/link";
+
 import { Icon } from "@/components/ui/icon";
 import { cx } from "@/lib/tone";
 
-/**
- * The pieces every filter bar is made of. They are named form controls, so
- * they submit themselves — no state, no handlers, no client bundle.
- */
+/** The pieces every filter bar is made of. */
 
 export function SearchInput({
   id,
@@ -44,26 +43,14 @@ export function SearchInput({
   );
 }
 
-/**
- * A filter option. Most screens filter on the label itself, so a plain string
- * is accepted and stands for both halves; the audit log filters on ids and
- * codes the backend owns, and passes the pair.
- */
+/** A filter option. Most screens filter on the label itself. */
 export type FilterOption = { readonly value: string; readonly label: string };
 
 function toOption(option: string | FilterOption): FilterOption {
   return typeof option === "string" ? { value: option, label: option } : option;
 }
 
-/**
- * By default a select is pinned to `minWidth` and sized to its content, which
- * is what a bar with three or four filters wants.
- *
- * A `className` takes the width over completely — `minWidth` is then not
- * applied at all. That is for a crowded bar: six pinned controls add up past
- * the panel and drop the last one onto a line of its own, whereas six flexible
- * ones share what there is and simply get narrower.
- */
+/** By default a select is pinned to `minWidth` and sized to its content. */
 export function FilterSelect({
   id,
   name,
@@ -109,5 +96,14 @@ export function FilterSubmit() {
     <button type="submit" className="btn btn-secondary sr-only">
       Apply filters
     </button>
+  );
+}
+
+/** Clears every filter by navigating to the bare path — a link, not a reset button. */
+export function FilterReset({ href }: { readonly href: string }) {
+  return (
+    <Link href={href} className="btn btn-secondary h-[38px]">
+      Reset
+    </Link>
   );
 }

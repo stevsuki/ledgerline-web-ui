@@ -5,11 +5,7 @@ import { formatSignedRupiah } from "@/lib/format";
 import { TEXT_TONE, cx } from "@/lib/tone";
 import type { Transaction } from "@/types/ledger";
 
-/**
- * A ledger row in its two shapes: the dashboard's compact summary and the
- * transactions table's five-column grid. Both read the same tone rules, so an
- * incoming amount looks the same wherever it appears.
- */
+/** A ledger row in its two shapes. */
 
 const AMOUNT_CLASS =
   "font-[family-name:var(--font-heading)] text-row font-semibold tabular-nums";
@@ -49,6 +45,7 @@ export function RecentTransactionRow({
   );
 }
 
+/** The five-column ledger row. */
 export function LedgerRow({
   transaction,
 }: {
@@ -58,14 +55,21 @@ export function LedgerRow({
   const tone = toneFor(transaction.amount);
 
   return (
-    <li className="panel-row grid grid-cols-[34px_1fr_140px_132px_110px] items-center gap-3.5">
+    <li className="panel-row grid grid-cols-[34px_minmax(0,1fr)_auto] items-center gap-3 md:grid-cols-[34px_1fr_140px_132px_110px] md:gap-3.5">
       <IconTile name={category.icon} tone={tone.icon} />
       <div className="min-w-0">
         <p className="text-row truncate">{transaction.name}</p>
-        <p className="text-meta text-muted mt-px">{transaction.note}</p>
+        <p className="text-meta text-muted mt-px truncate">
+          {transaction.note}
+        </p>
+        <p className="text-meta text-muted mt-px truncate md:hidden">
+          {category.label} · {transaction.wallet}
+        </p>
       </div>
-      <Tag className="justify-self-start">{category.label}</Tag>
-      <span className="text-muted flex items-center gap-[7px] text-note">
+      <Tag className="hidden justify-self-start md:inline-flex">
+        {category.label}
+      </Tag>
+      <span className="text-muted hidden items-center gap-[7px] text-note md:flex">
         <Icon name={transaction.walletIcon} size={14} />
         {transaction.wallet}
       </span>

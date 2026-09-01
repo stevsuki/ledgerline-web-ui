@@ -4,13 +4,10 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { Icon } from "@/components/ui/icon";
-import { TEXT_TONE } from "@/lib/tone";
+import { TEXT_TONE, cx } from "@/lib/tone";
 import type { Reminder } from "@/types/ledger";
 
-/**
- * The header's reminder popover. The list itself is server data handed down as
- * a prop — this component only owns whether the popover is open.
- */
+/** The header's reminder popover; the list itself is server data, passed in. */
 export function NotificationBell({
   reminders,
 }: {
@@ -69,7 +66,7 @@ export function NotificationBell({
       {isOpen ? (
         <div
           id={panelId}
-          className="overlay-surface animate-rise absolute top-11 right-0 z-60 w-[330px]"
+          className="overlay-surface animate-rise absolute top-11 right-0 z-60 w-[min(330px,calc(100vw-2rem))]"
         >
           <div className="border-divider flex items-center justify-between border-b px-3.5 py-3">
             <span className="font-[family-name:var(--font-heading)] text-[11px] font-semibold tracking-[0.1em] uppercase">
@@ -86,7 +83,7 @@ export function NotificationBell({
               >
                 <Icon
                   name={reminder.icon}
-                  className={`mt-0.5 ${TEXT_TONE[reminder.tone]}`}
+                  className={cx("mt-0.5", TEXT_TONE[reminder.tone])}
                 />
                 <div className="min-w-0">
                   <p className="text-[13px] leading-snug">{reminder.title}</p>

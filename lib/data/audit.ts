@@ -16,27 +16,14 @@ import {
 } from "@/types/access";
 import type { MiniStat } from "@/types/ledger";
 
-/**
- * The audit log, live from `ledgerline-backend`.
- *
- * Everything the screen shows comes from three endpoints, asked for together:
- * the page of rows, the counters behind the four cards, and the values the
- * filter dropdowns offer. They are independent, so they go out in parallel and
- * the screen waits once rather than three times.
- *
- * Filtering, sorting and pagination all happen in the database. The browser
- * receives the ten rows it is showing and nothing else.
- */
+/** The audit log, live from `ledgerline-backend`. */
 
 export const AUDIT_PAGE_SIZES = [10, 25, 50] as const;
 
 /** Every dropdown's first entry: the filter switched off. */
 export const NO_FILTER = "";
 
-/**
- * A retention window with no counters yet — the fallback used when the
- * overview call is the one that failed, so the date picker still has bounds.
- */
+/** A retention window with no counters yet. */
 const FALLBACK_RETENTION_DAYS = 365;
 
 const EMPTY_OPTIONS: AuditOptions = {
@@ -46,11 +33,7 @@ const EMPTY_OPTIONS: AuditOptions = {
   severities: [],
 };
 
-/**
- * A UUID as the backend writes them. `user_id` is the only filter whose values
- * are not a closed set, so it is shape-checked here rather than sent blind and
- * bounced back as a 400.
- */
+/** A UUID as the backend writes them. */
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -86,11 +69,7 @@ export type AuditResult = {
   readonly error: string;
 };
 
-/**
- * The window the date picker may offer. Retention is policy the backend owns,
- * so it comes from the overview; the fallback only matters when that call
- * failed, and then the picker is bounded rather than unbounded.
- */
+/** The window the date picker may offer. */
 export function auditRetentionBounds(overview: AuditOverview | null): {
   readonly min: string;
   readonly max: string;

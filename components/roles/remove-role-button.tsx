@@ -4,14 +4,7 @@ import { deleteRoleAction } from "@/lib/access/actions";
 import { ACCESS_FIELD } from "@/lib/access/fields";
 import { Icon } from "@/components/ui/icon";
 
-/**
- * Deleting a role is a form posting to a Server Action, not a handler — the
- * row goes on the server and the list revalidates itself.
- *
- * The only thing the client adds is the confirm: a role with members attached
- * is refused by the backend, but one without them goes quietly, and that is
- * worth a question first.
- */
+/** Deleting a role is a form posting to a Server Action, not a handler. */
 export function RemoveRoleButton({
   id,
   name,

@@ -16,10 +16,7 @@ export const CATEGORY_LABELS: readonly string[] = Object.values(CATEGORIES).map(
   (category) => category.label,
 );
 
-/**
- * Spending categories map onto the ramp positionally — the same order the
- * donut, the allocation bar and the category comparison all read.
- */
+/** Spending categories map onto the ramp positionally, in the donut's own order. */
 export const RAMP_BY_CATEGORY_LABEL: Readonly<Record<string, RampStep>> = {
   Housing: "c1",
   "Food & drink": "c2",

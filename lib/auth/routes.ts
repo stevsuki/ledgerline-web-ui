@@ -1,10 +1,4 @@
-/**
- * The route names the gate is built from.
- *
- * `proxy.ts`, the Server Actions and the auth pages all reason about the same
- * three public paths, so they are declared once here rather than as literals
- * repeated across the three files.
- */
+/** The route names the gate is built from. */
 
 export const SIGN_IN_PATH = "/sign-in";
 export const REGISTER_PATH = "/register";
@@ -45,13 +39,7 @@ export function isPublicPath(pathname: string): boolean {
   );
 }
 
-/**
- * Turns a `?next=` value back into a destination.
- *
- * Only a same-site absolute path is accepted — anything protocol-relative or
- * off-site would make the sign-in form an open redirect — and bouncing back to
- * a public path would just loop, so those fall through to the dashboard too.
- */
+/** Turns a `?next=` value back into a destination. */
 export function safeReturnPath(raw: string | null | undefined): string {
   if (!raw?.startsWith("/") || raw.startsWith("//") || raw === ROOT_PATH) {
     return HOME_PATH;
@@ -66,9 +54,7 @@ export function signInHref(
   status: AuthStatus = "none",
 ): string {
   const query = new URLSearchParams();
-  // The same rule the sign-in form applies on the way back, so a
-  // destination that would only resolve to the dashboard anyway never
-  // reaches the URL in the first place.
+  // The same rule the sign-in form applies on the way back.
   if (returnTo && safeReturnPath(returnTo) !== HOME_PATH) {
     query.set(RETURN_PARAM, returnTo);
   }
@@ -81,10 +67,7 @@ export function signInHref(
 
 /* ── the two legs of the password reset ────────────────────────────────── */
 
-/**
- * The leg lives in the URL rather than in React state, so a reload lands the
- * user back where they were.
- */
+/** The leg lives in the URL rather than in React state. */
 export const RESET_STEPS = ["request", "reset"] as const;
 export type ResetStep = (typeof RESET_STEPS)[number];
 

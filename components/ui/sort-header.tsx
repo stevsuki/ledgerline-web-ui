@@ -10,16 +10,7 @@ import {
 } from "@/lib/search-params";
 import { cx } from "@/lib/tone";
 
-/**
- * A column head that sorts.
- *
- * Ordering is the backend's job — `dto.userSort` and `dto.roleSort` whitelist
- * the columns — so this is a link that rewrites `?sort=`, not a handler. It
- * ships no JavaScript, survives a reload, and can be opened in a new tab.
- *
- * One click sorts ascending, a second flips to descending, a third clears the
- * column and hands the list back to the backend's own default order.
- */
+/** A column head that sorts. Ordering is the backend's job. */
 
 const ARROW_SIZE = 12;
 

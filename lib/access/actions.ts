@@ -21,13 +21,7 @@ import {
 import { requireAccessToken } from "@/lib/auth/session";
 import { PERMISSION_ACTIONS, type PermissionAction } from "@/types/access";
 
-/**
- * Every mutation the access screens perform.
- *
- * The forms post straight to these, so a row can be edited with JavaScript
- * switched off; the client halves only add the pending label, the inline error
- * and the live permission grid.
- */
+/** Every mutation the access screens perform. */
 
 /** Both lists sit behind the shell, so a change invalidates the whole tree. */
 const USERS_PATH = "/users";
@@ -45,11 +39,7 @@ function secret(formData: FormData, key: string): string {
 
 /* ── users ─────────────────────────────────────────────────────────────── */
 
-/**
- * One action for one sheet. Creating needs an email and a password, editing
- * needs neither — `PATCH /users/{id}` takes only the name and the role — so
- * the presence of an id is what decides which call is made.
- */
+/** One action for one sheet. Creating needs an email and a password. */
 export async function saveUserAction(
   _previousState: AuthFormState,
   formData: FormData,
@@ -103,13 +93,7 @@ function isPermissionAction(value: string): value is PermissionAction {
   return PERMISSION_ACTIONS.some((action) => action === value);
 }
 
-/**
- * Reads the matrix back off the form.
- *
- * Every ticked cell posts one `grant` value, so the grid needs no JSON blob
- * and no parsing that could fail: an entry that is not `<uuid>:<action>` is
- * simply not a grant.
- */
+/** Reads the matrix back off the form. */
 function readGrants(formData: FormData): readonly RolePermissionInput[] {
   const byMenu = new Map<string, Partial<Record<PermissionAction, boolean>>>();
 
@@ -146,8 +130,7 @@ export async function saveRoleAction(
   const accessToken = await requireAccessToken();
   const permissions = readGrants(formData);
 
-  // A built-in role posts no name — its input is disabled, because the backend
-  // rejects the field outright on those roles rather than comparing it.
+  // A built-in role posts no name — its input is disabled.
   const result = id
     ? await updateRole(accessToken, id, {
         name: name || undefined,

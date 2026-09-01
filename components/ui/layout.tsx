@@ -2,20 +2,9 @@ import type { ReactNode } from "react";
 
 import { cx } from "@/lib/tone";
 
-/**
- * The two layout rules every screen in the artboard follows: a single column
- * of sections, and an auto-fitting split that collapses at a minimum width.
- */
+/** The two layout rules every screen follows: a stacked column, and a collapsing split. */
 
-/**
- * Centring is the artboard's one omission worth correcting: it caps the content
- * width but leaves it pinned left, so on any display wider than the canvas all
- * the leftover space piles up on the right.
- *
- * The cap itself comes from `--screen-max`, which <AppScreen> sets on both the
- * header and the content — that is what keeps the page title above the first
- * card at every window width.
- */
+/** Centring is the artboard's one omission worth correcting. */
 export function ScreenStack({
   children,
   gap = 24,
@@ -59,10 +48,7 @@ export function SplitGrid({
   );
 }
 
-/**
- * Wide tables scroll inside their panel rather than pushing the page sideways,
- * matching the artboard's `overflow-x:auto` wrappers.
- */
+/** Wide tables scroll inside their panel rather than pushing the page sideways. */
 export function TableScroll({
   children,
   minWidth,
@@ -92,7 +78,29 @@ export function CardGrid({
       className="grid"
       style={{
         gap,
-        gridTemplateColumns: `repeat(auto-fill, minmax(${minWidth}px, 1fr))`,
+        gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, ${minWidth}px), 1fr))`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** The two-up field layout the editor panels share — wallets, goals, settings. */
+export function FieldGrid({
+  children,
+  minWidth = 180,
+  className,
+}: {
+  readonly children: ReactNode;
+  readonly minWidth?: number;
+  readonly className?: string;
+}) {
+  return (
+    <div
+      className={cx("grid gap-3", className)}
+      style={{
+        gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${minWidth}px), 1fr))`,
       }}
     >
       {children}

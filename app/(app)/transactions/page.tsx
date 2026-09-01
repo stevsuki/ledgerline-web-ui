@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 
 import { AppScreen } from "@/components/shell/app-screen";
@@ -11,7 +10,12 @@ import { PaginationBar } from "@/components/ui/pagination-bar";
 import { Panel } from "@/components/ui/panel";
 import { EmptyState } from "@/components/ui/primitives";
 import { StatRow } from "@/components/ui/stats";
-import { FilterSelect, FilterSubmit, SearchInput } from "@/components/ui/toolbar";
+import {
+  FilterReset,
+  FilterSelect,
+  FilterSubmit,
+  SearchInput,
+} from "@/components/ui/toolbar";
 import {
   AMOUNT_FILTER_OPTIONS,
   CATEGORY_FILTER_OPTIONS,
@@ -29,7 +33,7 @@ export const metadata: Metadata = { title: PAGE_META.transactions.title };
 const BASE_PATH = "/transactions";
 
 export default async function TransactionsPage(
-  props: PageProps<"/transactions">,
+  props: Readonly<PageProps<"/transactions">>,
 ) {
   const params = await props.searchParams;
 
@@ -62,7 +66,7 @@ export default async function TransactionsPage(
               label="Search transactions"
               placeholder="Merchant or note"
               defaultValue={filters.query}
-              className="min-w-[230px]"
+              className="min-w-[190px] flex-1"
             />
             <FilterSelect
               id="tx-filter-category"
@@ -96,9 +100,7 @@ export default async function TransactionsPage(
             />
             <FilterSubmit />
             <div className="ml-auto flex gap-2">
-              <Link href={BASE_PATH} className="btn btn-secondary h-[38px]">
-                Reset
-              </Link>
+              <FilterReset href={BASE_PATH} />
               <OpenTransactionButton className="btn btn-primary h-[38px]">
                 <Icon name="plus" size={15} />
                 New

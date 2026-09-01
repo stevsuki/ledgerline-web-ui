@@ -8,10 +8,7 @@ type IconProps = {
   readonly title?: string;
 };
 
-/**
- * References a symbol from <IconSprite />. Decorative by default, which is
- * what almost every icon in this app is — the label next to it does the work.
- */
+/** References a symbol from <IconSprite />. */
 export function Icon({ name, size = 16, className, title }: IconProps) {
   return (
     <svg

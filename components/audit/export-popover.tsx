@@ -7,30 +7,7 @@ import { Icon } from "@/components/ui/icon";
 import { formatRangeLabel, type DateRange } from "@/lib/dates";
 import { buildHref, type RawSearchParams } from "@/lib/search-params";
 
-/**
- * The audit screen's export control: pick the period, download the file.
- *
- * The range in here belongs to the download and to nothing else. It is React
- * state rather than a URL param, so opening this and choosing dates leaves
- * the table behind it exactly as it was — the filter bar has its own range
- * field for changing what is on screen.
- *
- * The other filters are a different matter: they come from the URL and go
- * into the file, because this button sits at the end of the bar that set them
- * and quietly ignoring them would be the surprise. The scope block names
- * them, so what the file will hold is on screen before it is asked for rather
- * than discovered afterwards.
- *
- * It opens on whatever period the table is showing. That is a convenient
- * starting value, not a link — moving it from here moves only the export.
- *
- * The download is fetched rather than followed as a plain link, for one
- * reason: a link with `download` on it saves whatever comes back. When the
- * route answers with a failure the browser writes that sentence to disk as a
- * text file and shows nothing, which is how a dead endpoint reaches someone as
- * a mystery file in their downloads folder. Fetching first means the status
- * can be read, and a failure becomes a line in the popover instead.
- */
+/** The audit screen's export control: pick the period, download the file. */
 
 const EXPORT_PATH = "/audit/export";
 const RANGE_FALLBACK = "All dates";
@@ -137,11 +114,7 @@ export function AuditExportPopover({
     }
   }
 
-  /**
-   * The export's own dates win over whatever the URL carries; every other
-   * filter passes through untouched. `page` and `size` are dropped — a file
-   * covers the filters, never a page of them.
-   */
+  /** The export's own dates win over whatever the URL carries. */
   const exportHref = buildHref(EXPORT_PATH, params, {
     from: range.from || undefined,
     to: range.to || undefined,
@@ -168,7 +141,7 @@ export function AuditExportPopover({
           id={panelId}
           role="dialog"
           aria-labelledby={headingId}
-          className="overlay-surface animate-rise absolute top-11 right-0 z-60 w-[320px] p-4"
+          className="overlay-surface animate-rise absolute top-11 right-0 z-60 w-[min(320px,calc(100vw-2rem))] p-4"
         >
           <h2
             id={headingId}
@@ -204,8 +177,7 @@ export function AuditExportPopover({
             </div>
           </dl>
 
-          {/* Retention is the backend's to report; when the overview call
-              failed there is no number to state, so nothing is claimed. */}
+          {/* Retention is the backend's to report. */}
           {retentionDays > 0 ? (
             <p className="text-meta text-muted mt-2">
               Events older than {retentionDays} days are archived and cannot be

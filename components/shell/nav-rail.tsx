@@ -3,31 +3,22 @@ import { RailToggle } from "@/components/shell/rail-toggle";
 import { SignOutButton } from "@/components/shell/sign-out-button";
 import { Icon } from "@/components/ui/icon";
 import { navGroupsFromMenus } from "@/lib/access/menus";
-import { STREAK_CARD, WORKSPACE } from "@/lib/nav";
+import { NAV_ID, STREAK_CARD, WORKSPACE } from "@/lib/nav";
 import type { MenuNode } from "@/types/access";
 
-/**
- * The rail is a Server Component: only the active-state link and the collapse
- * button ship JavaScript.
- *
- * The groups are the ones `/auth/me` returned, so the rail shows exactly what
- * the signed-in role may read — the backend filters the tree, and a group
- * whose pages are all hidden never arrives.
- */
+/** The rail: a Server Component, save for the active link and the collapse button. */
 export function NavRail({
-  shellId,
   menus,
 }: {
-  readonly shellId: string;
   readonly menus: readonly MenuNode[];
 }) {
   const groups = navGroupsFromMenus(menus);
 
   return (
     <nav
+      id={NAV_ID}
       aria-label="Main"
-      className="bg-rail border-divider flex flex-none flex-col gap-[3px] overflow-x-hidden overflow-y-auto border-r px-3 py-[18px] transition-[width] duration-200"
-      style={{ width: "var(--rail-width)" }}
+      className="nav-rail bg-rail border-divider flex flex-none flex-col gap-[3px] overflow-x-hidden overflow-y-auto border-r px-3 py-[18px] transition-[width] duration-200"
     >
       <div className="flex items-center gap-2.5 px-2 pt-1 pb-4">
         <span
@@ -77,7 +68,7 @@ export function NavRail({
         <p className="text-meta text-muted mt-1.5">{STREAK_CARD.body}</p>
       </div>
 
-      <RailToggle shellId={shellId} />
+      <RailToggle />
     </nav>
   );
 }

@@ -7,8 +7,8 @@ import { ThemeSegment } from "@/components/shell/theme-controls";
 import { ActionButton } from "@/components/ui/action-button";
 import { SelectField, TextField, ToggleRow } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icon";
-import { ScreenStack, SplitGrid } from "@/components/ui/layout";
-import { Panel } from "@/components/ui/panel";
+import { FieldGrid, ScreenStack, SplitGrid } from "@/components/ui/layout";
+import { SectionPanel } from "@/components/ui/panel";
 import { Avatar } from "@/components/ui/primitives";
 import {
   EXPORT_FORMATS,
@@ -34,15 +34,14 @@ export default async function SettingsPage() {
       <ScreenStack>
         <SplitGrid minWidth={320} ratio={1}>
           <div className="flex flex-col gap-6">
-            <Panel className="p-6">
-              <h2 className="panel-title">Profile</h2>
-              <div className="mt-4 flex items-center gap-3.5">
+            <SectionPanel title="Profile" bodyClassName="mt-4">
+              <div className="flex items-center gap-3.5">
                 <Avatar name={WORKSPACE.signedInAs} size={48} highlight />
-                <div>
-                  <p className="text-[15px] font-semibold">
+                <div className="min-w-0">
+                  <p className="truncate text-[15px] font-semibold">
                     {WORKSPACE.signedInAs}
                   </p>
-                  <p className="text-meta text-muted mt-0.5">
+                  <p className="text-meta text-muted mt-0.5 truncate">
                     {WORKSPACE.signedInEmail} · {PROFILE.location}
                   </p>
                 </div>
@@ -60,40 +59,41 @@ export default async function SettingsPage() {
                   defaultValue={WORKSPACE.signedInEmail}
                 />
               </div>
-            </Panel>
+            </SectionPanel>
 
-            <Panel className="p-6">
-              <h2 className="panel-title">Security</h2>
-              <div className="mt-4 flex flex-col gap-3.5">
-                <div className="flex items-center gap-3">
-                  <Icon name="lock" size={17} className="text-muted" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-row">{PASSWORD_ROW.label}</p>
-                    <p className="text-meta text-muted">{PASSWORD_ROW.meta}</p>
-                  </div>
-                  <ActionButton
-                    className="btn btn-secondary text-note"
-                    message="Password reset link sent"
-                  >
-                    Change
-                  </ActionButton>
+            <SectionPanel
+              title="Security"
+              bodyClassName="mt-4 flex flex-col gap-3.5"
+            >
+              <div className="flex items-center gap-3">
+                <Icon name="lock" size={17} className="text-muted" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-row">{PASSWORD_ROW.label}</p>
+                  <p className="text-meta text-muted truncate">
+                    {PASSWORD_ROW.meta}
+                  </p>
                 </div>
-                {SECURITY_TOGGLES.map((toggle) => (
-                  <ToggleRow
-                    key={toggle.id}
-                    id={`security-${toggle.id}`}
-                    label={toggle.label}
-                    defaultChecked={toggle.enabled}
-                  />
-                ))}
+                <ActionButton
+                  className="btn btn-secondary text-note"
+                  message="Password reset link sent"
+                >
+                  Change
+                </ActionButton>
               </div>
-            </Panel>
+              {SECURITY_TOGGLES.map((toggle) => (
+                <ToggleRow
+                  key={toggle.id}
+                  id={`security-${toggle.id}`}
+                  label={toggle.label}
+                  defaultChecked={toggle.enabled}
+                />
+              ))}
+            </SectionPanel>
           </div>
 
           <div className="flex flex-col gap-6">
-            <Panel className="p-6">
-              <h2 className="panel-title">Preferences</h2>
-              <div className="mt-4 grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr))]">
+            <SectionPanel title="Preferences" bodyClassName="mt-4">
+              <FieldGrid>
                 {PREFERENCE_FIELDS.map((field) => (
                   <SelectField
                     key={field.id}
@@ -102,18 +102,18 @@ export default async function SettingsPage() {
                     options={field.options}
                   />
                 ))}
-              </div>
+              </FieldGrid>
               <div className="border-divider mt-4 border-t pt-4">
                 <ThemeSegment initial={theme} />
               </div>
-            </Panel>
+            </SectionPanel>
 
-            <Panel className="p-6">
-              <h2 className="panel-title">Data</h2>
-              <p className="text-meta text-muted mt-0.5">
-                Exports cover the selected date range across all wallets.
-              </p>
-              <div className="mt-3.5 flex flex-wrap gap-2">
+            <SectionPanel
+              title="Data"
+              description="Exports cover the selected date range across all wallets."
+              bodyClassName="mt-3.5"
+            >
+              <div className="flex flex-wrap gap-2">
                 {EXPORT_FORMATS.map((format) => (
                   <ActionButton
                     key={format}
@@ -131,7 +131,7 @@ export default async function SettingsPage() {
                   <Icon name="right" size={14} />
                 </Link>
               </div>
-            </Panel>
+            </SectionPanel>
           </div>
         </SplitGrid>
       </ScreenStack>

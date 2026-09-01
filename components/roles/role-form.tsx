@@ -24,19 +24,7 @@ import {
   type PermissionAction,
 } from "@/types/access";
 
-/**
- * The role editor.
- *
- * It is a client component because the matrix is live: granting create implies
- * read, revoking read clears the row, and the summary line keeps up. What it
- * posts is a plain form to a Server Action — every ticked cell rides along as
- * one hidden `grant` value of `<menu id>:<action>`, so the backend receives the
- * permission rows it stores and no JSON is parsed anywhere.
- *
- * The rows are the menus table, keyed by menu id. The module list, the grants
- * a role already holds and its member count all arrive as props from the
- * server.
- */
+/** The role editor. It is a client component because the matrix is live. */
 
 type Grants = Record<string, Partial<Record<PermissionAction, boolean>>>;
 
@@ -155,8 +143,7 @@ export function RoleForm({
     >
       <input type="hidden" name={ACCESS_FIELD.id} value={roleId ?? ""} />
 
-      {/* Every ticked cell, as the backend's permission rows. Rendered from
-          state so the form carries exactly what the grid shows. */}
+      {/* Every ticked cell, as the backend's permission rows. */}
       {modules.map((entry) =>
         PERMISSION_ACTIONS.filter((action) => grants[entry.id]?.[action])
           .map((action) => (
@@ -179,7 +166,7 @@ export function RoleForm({
 
       {state.error ? <FormBanner tone="error" message={state.error} /> : null}
 
-      <Panel className="flex flex-col gap-3 p-6">
+      <Panel className="panel-pad flex flex-col gap-3">
         <div className="field">
           <label htmlFor="role-name">Role name</label>
           <input
@@ -194,8 +181,7 @@ export function RoleForm({
             minLength={ROLE_NAME_MIN_LENGTH}
             maxLength={ROLE_NAME_MAX_LENGTH}
             defaultValue={state.values[ACCESS_FIELD.name] ?? initialName}
-            // Disabled, not read-only: a disabled input posts nothing, and the
-            // backend refuses a built-in role that carries a name at all.
+            // Disabled, not read-only: a disabled input posts nothing.
             disabled={isSystem}
           />
           {state.fieldErrors[ACCESS_FIELD.name] ? (
@@ -269,7 +255,7 @@ export function RoleForm({
               <div
                 key={entry.id}
                 className={cx(
-                  "border-divider border-b px-6 py-[11px]",
+                  "border-divider panel-pad-x border-b py-[11px]",
                   ROW_GRID,
                 )}
               >
@@ -284,10 +270,7 @@ export function RoleForm({
                   onToggle={() => toggleRow(entry)}
                 />
 
-                {/* Every menu offers every action. The table stores all five
-                    flags on every row, so the grid hides none of them — the
-                    artboard's em dashes described a narrower model than the
-                    one the backend actually has. */}
+                {/* Every menu offers every action. */}
                 {PERMISSION_ACTIONS.map((action) => (
                   <PermissionCheckbox
                     key={action}
@@ -301,13 +284,13 @@ export function RoleForm({
           })}
         </TableScroll>
 
-        <p className="text-muted flex items-start gap-2.5 px-6 py-4 text-note">
+        <p className="text-muted panel-pad-x flex items-start gap-2.5 py-4 text-note">
           <Icon name="shield" size={15} className="mt-0.5" />
           {impact}
         </p>
       </Panel>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button type="submit" disabled={isPending} className="btn btn-primary">
           {saveLabel(isEdit, isPending)}
         </button>

@@ -3,13 +3,7 @@ import type { IconName } from "@/components/ui/icon-sprite";
 import type { AuthFormState } from "@/lib/auth/form-state";
 import { cx } from "@/lib/tone";
 
-/**
- * The one line an auth card says back to the person filling it in.
- *
- * Shape contract: an InsetBlock — radius 12, 1px border — tinted by tone
- * rather than filled, so a failure never becomes a solid red slab inside a
- * 400px card.
- */
+/** The one line an auth card says back to the person filling it in. */
 
 export type BannerTone = "error" | "notice";
 

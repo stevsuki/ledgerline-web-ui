@@ -22,19 +22,7 @@ import { IDLE_AUTH_STATE, type AuthFormState } from "@/lib/auth/form-state";
 import { PASSWORD_MIN_LENGTH } from "@/lib/auth/fields";
 import type { RoleOption, UserRow } from "@/lib/data/access";
 
-/**
- * The user editor: one slide-over shared by the toolbar's "Add new user" and
- * every row's "Edit".
- *
- * The sheet is a real `<form action={…}>` over a Server Action, so the account
- * is written by the server and the list revalidates itself. What the client
- * half adds is the sheet, the pending label, and the inline field errors the
- * backend sent back.
- *
- * Two fields the artboard draws are not editable here, because the API has no
- * way to change them: the email is fixed once an account exists, and the
- * status is set by the backend, not by this form.
- */
+/** The user editor: one slide-over shared by the toolbar's "Add new user" and every. */
 
 type EditorApi = {
   readonly open: (user: UserRow | null) => void;
@@ -68,9 +56,7 @@ export function UserEditorProvider({
   const { showToast } = useAppChrome();
   const [editing, setEditing] = useState<UserRow | null>(null);
   const [isOpen, setOpen] = useState(false);
-  // The action is wrapped rather than watched from an effect: the sheet closes
-  // and the toast fires on the same resolution that returns the state, so a
-  // rejected save simply keeps the sheet up with its errors.
+  // The action is wrapped rather than watched from an effect.
   const [state, formAction, isPending] = useActionState(
     async (previousState: AuthFormState, formData: FormData) => {
       const next = await saveUserAction(previousState, formData);
@@ -125,8 +111,7 @@ export function UserEditorProvider({
           </>
         }
       >
-        {/* `key` remounts the fields when the row changes, so the defaults of
-            an uncontrolled form follow the row that was opened. */}
+        {/* `key` remounts the fields when the row changes. */}
         <form
           id={formId}
           key={editing?.id ?? "new"}
@@ -193,10 +178,7 @@ export function UserEditorProvider({
   );
 }
 
-/**
- * The role select plus a line about the role chosen. The summary is live, so
- * switching the select describes the new role before anything is saved.
- */
+/** The role select plus a line about the role chosen. */
 function RoleField({
   roles,
   defaultValue,
@@ -227,9 +209,7 @@ function RoleField({
         </select>
       </Field>
 
-      {/* The artboard tags each menu the role grants. `GET /roles` sends no
-          permissions, so the role's own description stands in for that list
-          until it does — see `getRoleOptions`. */}
+      {/* The artboard tags each menu the role grants. */}
       <div className="inset p-3.5">
         <p className="panel-kicker">
           Inherited from {selected?.name ?? "this role"}
@@ -274,11 +254,7 @@ export function EditUserButton({ user }: { readonly user: UserRow }) {
   );
 }
 
-/**
- * Removal is a form, not a handler: the row is deleted on the server and the
- * list revalidates itself. The confirm is the browser's, which is enough for
- * an action that is one row wide and reversible by re-inviting.
- */
+/** Removal is a form, not a handler. */
 export function RemoveUserButton({ user }: { readonly user: UserRow }) {
   return (
     <form

@@ -15,12 +15,7 @@ import {
 import { IDLE_AUTH_STATE } from "@/lib/auth/form-state";
 import { RESET_PASSWORD_PATH } from "@/lib/auth/routes";
 
-/**
- * The sign-in card's fields.
- *
- * Client only for the pending state and the inline errors — the form posts to
- * `signInAction` either way, so it still works with JavaScript switched off.
- */
+/** The sign-in card's fields. */
 export function SignInForm({ returnTo }: { readonly returnTo: string }) {
   const [state, formAction, pending] = useActionState(
     signInAction,

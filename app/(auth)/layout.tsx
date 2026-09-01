@@ -3,11 +3,7 @@ import type { ReactNode } from "react";
 
 import { AppChromeProvider } from "@/components/shell/app-chrome";
 
-/**
- * The auth routes sit outside the app shell — no rail, no header. The artboard
- * shows the three cards side by side on one canvas; here each is its own page,
- * with the shared frame lifted into this layout.
- */
+/** The auth routes sit outside the app shell — no rail, no header. */
 export default function AuthLayout({
   children,
 }: {
@@ -15,7 +11,7 @@ export default function AuthLayout({
 }) {
   return (
     <AppChromeProvider>
-      <div className="bg-bg flex min-h-dvh flex-col items-center justify-center gap-6 p-6">
+      <div className="bg-bg flex min-h-dvh flex-col items-center justify-center gap-6 p-4 sm:p-6">
         <main className="animate-fade w-full max-w-[400px]">{children}</main>
 
         <nav className="text-muted flex flex-wrap justify-center gap-4 text-note">

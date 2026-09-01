@@ -1,16 +1,4 @@
-/**
- * The structured payload behind an audit entry, mirroring `AuditDetail` and
- * its eleven implementations in `ledgerline-backend/internal/domain/
- * audit_detail.go`. Field names are the JSON tags, so this is the wire shape
- * rather than a translation of it.
- *
- * The table never reads this: the backend renders `detail_text` when the entry
- * is written and the row prints that. This is here for anything that needs the
- * parts rather than the sentence — a detail drawer, a richer export, a filter
- * on amounts — and it is what makes those possible without a migration.
- *
- * `kind` is the discriminant, exactly as the Go structs set it.
- */
+/** The structured payload behind an audit entry. */
 
 export const AUDIT_KINDS = [
   "session",

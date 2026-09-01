@@ -4,14 +4,7 @@ import type { ReactNode } from "react";
 
 import { useAppChrome } from "@/components/shell/app-chrome";
 
-/**
- * The artboard's demo actions all end in a confirmation toast rather than a
- * mutation. This is the one component that does that, so no screen grows its
- * own handler.
- *
- * The auth flows have outgrown it: they post to real Server Actions in
- * `lib/auth/actions.ts`. What is left here are the screens still on fixtures.
- */
+/** The artboard's demo actions all end in a confirmation toast rather than a mutation. */
 export function ActionButton({
   message,
   className,
@@ -41,14 +34,21 @@ export function ActionButton({
 export function OpenTransactionButton({
   className,
   children,
+  label,
 }: {
   readonly className: string;
   readonly children: ReactNode;
+  readonly label?: string;
 }) {
   const { openTransaction } = useAppChrome();
 
   return (
-    <button type="button" className={className} onClick={openTransaction}>
+    <button
+      type="button"
+      className={className}
+      aria-label={label}
+      onClick={openTransaction}
+    >
       {children}
     </button>
   );

@@ -15,14 +15,7 @@ import {
 } from "@/lib/auth/fields";
 import { IDLE_AUTH_STATE } from "@/lib/auth/form-state";
 
-/**
- * The register card's fields.
- *
- * The backend takes email, full name and password. The currency choice is on
- * the card because the artboard puts it there, but `/auth/register` has no
- * field for it yet, so it is not sent — it lands with the account preferences
- * once the backend grows them.
- */
+/** The register card's fields. The backend takes email, full name and password. */
 const CURRENCIES = ["IDR — Rupiah", "USD — US Dollar"] as const;
 
 export function RegisterForm() {

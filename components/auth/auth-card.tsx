@@ -1,11 +1,9 @@
 import type { ReactNode } from "react";
 
 import { WORKSPACE } from "@/lib/nav";
+import { cx } from "@/lib/tone";
 
-/**
- * The shared auth surface: a 400px panel with 32px padding, optionally led by
- * the brand mark, exactly as the artboard's three cards are built.
- */
+/** The shared auth surface: a 400px panel with 32px padding. */
 export function AuthCard({
   title,
   intro,
@@ -20,7 +18,7 @@ export function AuthCard({
   readonly children: ReactNode;
 }) {
   return (
-    <div className="panel animate-pop p-8">
+    <div className="panel animate-pop p-6 sm:p-8">
       {showBrand ? (
         <span
           aria-hidden="true"
@@ -33,9 +31,10 @@ export function AuthCard({
       {kicker ? <p className="panel-kicker mb-2">{kicker}</p> : null}
 
       <h1
-        className={`text-[28px] leading-[1.1] font-semibold tracking-[-0.03em] ${
-          showBrand ? "mt-5" : ""
-        }`}
+        className={cx(
+          "text-[25px] leading-[1.1] font-semibold tracking-[-0.03em] sm:text-[28px]",
+          showBrand && "mt-5",
+        )}
       >
         {title}
       </h1>

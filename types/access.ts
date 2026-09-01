@@ -21,13 +21,7 @@ export const ACCOUNT_STATUS_BY_CODE: Readonly<Record<string, AccountStatus>> = {
   invited: "Invited",
 };
 
-/* ── audit log ──────────────────────────────────────────────────
-   Mirrors `internal/domain/audit_log.go` and `audit_detail.go` in
-   `ledgerline-backend`. The three vocabularies below are closed there — each
-   has a `Valid()` that rejects anything else — so they are safe to hold as
-   constants here, which is what lets a filter be validated before it is sent.
-   The human labels are not here: `/audit-logs/options` owns those.
-   ──────────────────────────────────────────────────────────────── */
+/* audit log — Mirrors `internal/domain/audit_log.go` and `audit_detail.go`. */
 
 export const AUDIT_SEVERITIES = ["info", "warning", "critical"] as const;
 export type AuditSeverity = (typeof AUDIT_SEVERITIES)[number];
@@ -52,11 +46,7 @@ export const AUDIT_MODULES = [
 ] as const;
 export type AuditModule = (typeof AUDIT_MODULES)[number];
 
-/**
- * One row of the table. `detail` is the backend's `detail_text` — the
- * sentence rendered when the entry was written, which is why the actor name
- * and the amounts in it do not follow later renames.
- */
+/** One row of the table. `detail` is the backend's `detail_text`. */
 export type AuditEvent = {
   readonly id: string;
   /** `created_at` formatted for the table: `27-08-2026 19:41`. */
@@ -104,20 +94,12 @@ export type AuditOptions = {
 
 /* ── what the backend actually stores ──────────────────────────────────── */
 
-/**
- * The RBAC records as `ledgerline-backend` returns them. They are kept apart
- * from the fixture shapes above: those carry the artboard's pre-formatted
- * strings, these carry the raw columns, and the data layer is what turns one
- * into the other.
- */
+/** The RBAC records as `ledgerline-backend` returns them. */
 
 /** What one role may do on one menu. All false when no permission row exists. */
 export type MenuAccess = Readonly<Record<PermissionAction, boolean>>;
 
-/**
- * One entry of the sidebar tree from `/auth/me`. A group carries children and
- * no access; a page carries access and no children.
- */
+/** One entry of the sidebar tree from `/auth/me`. */
 export type MenuNode = {
   readonly id: string;
   readonly code: string;

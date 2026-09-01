@@ -1,10 +1,4 @@
-/**
- * Money formatting, ported from the artboard's `F()` helper:
- *   F = n => 'Rp' + Math.abs(n).toLocaleString('de-DE')
- *
- * German grouping is what produces the Indonesian dot separator
- * (Rp12.780.000). The sign is carried separately so a row can colour it.
- */
+/** Money formatting, ported from the artboard's `F()` helper. */
 
 const GROUPED = new Intl.NumberFormat("de-DE");
 
@@ -39,13 +33,7 @@ export function initialsOf(name: string): string {
     .join("");
 }
 
-/**
- * "27-08-2026 19:40" — the stamp the access tables print.
- *
- * The workspace is a Jakarta one, so the zone is pinned rather than left to the
- * runtime: the server renders these, and a server in another zone would
- * otherwise print a different time than the person who made the change saw.
- */
+/** "27-08-2026 19:40" — the stamp the access tables print. */
 const TIMESTAMP = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Asia/Jakarta",
   day: "2-digit",

@@ -6,10 +6,7 @@ import { usePathname } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 import type { IconName } from "@/components/ui/icon-sprite";
 
-/**
- * The one part of the rail that has to know where the browser is. Everything
- * around it — the groups, the labels, the streak card — stays on the server.
- */
+/** The one part of the rail that has to know where the browser is. */
 export function NavLink({
   href,
   label,

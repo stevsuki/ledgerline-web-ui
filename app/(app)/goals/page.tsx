@@ -4,8 +4,13 @@ import { AppScreen } from "@/components/shell/app-screen";
 import { ActionButton } from "@/components/ui/action-button";
 import { SelectField, TextField, ToggleRow } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icon";
-import { CardGrid, ScreenStack, SplitGrid } from "@/components/ui/layout";
-import { Panel } from "@/components/ui/panel";
+import {
+  CardGrid,
+  FieldGrid,
+  ScreenStack,
+  SplitGrid,
+} from "@/components/ui/layout";
+import { Panel, SectionPanel } from "@/components/ui/panel";
 import { ProgressTrack } from "@/components/ui/primitives";
 import {
   GOAL_FUNDING_WALLETS,
@@ -31,13 +36,17 @@ export default async function GoalsPage() {
                   <Icon name={goal.icon} size={17} />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-[14.5px] font-semibold">{goal.name}</h2>
+                  <h2 className="truncate text-[14.5px] font-semibold">
+                    {goal.name}
+                  </h2>
                   <p className="text-meta text-muted mt-px">{goal.deadline}</p>
                 </div>
-                <span className="text-[17px] font-semibold">{goal.percent}</span>
+                <span className="flex-none text-[17px] font-semibold">
+                  {goal.percent}
+                </span>
               </div>
 
-              <p className="mt-5 flex items-baseline gap-2">
+              <p className="mt-5 flex flex-wrap items-baseline gap-x-2">
                 <span className="text-[25px] font-semibold tracking-[-0.03em] tabular-nums">
                   {goal.saved}
                 </span>
@@ -50,12 +59,12 @@ export default async function GoalsPage() {
                 fillClass="bg-accent"
               />
 
-              <p className="text-meta text-muted mt-[9px] flex justify-between">
+              <p className="text-meta text-muted mt-[9px] flex flex-wrap justify-between gap-x-3">
                 <span>{goal.monthly} / month</span>
                 <span>{goal.eta}</span>
               </p>
 
-              <div className="mt-4.5 flex gap-2">
+              <div className="mt-4.5 flex flex-wrap gap-2">
                 <ActionButton
                   className="btn btn-primary text-[13px]"
                   message="Rp1.000.000 moved into the goal"
@@ -74,9 +83,8 @@ export default async function GoalsPage() {
         </CardGrid>
 
         <SplitGrid minWidth={320} ratio={1}>
-          <Panel className="p-6">
-            <h2 className="panel-title">New goal</h2>
-            <div className="mt-4 grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr))]">
+          <SectionPanel title="New goal" bodyClassName="mt-4">
+            <FieldGrid>
               <TextField
                 id="goal-name"
                 label="Goal name"
@@ -107,16 +115,16 @@ export default async function GoalsPage() {
                   defaultChecked
                 />
               </div>
-            </div>
+            </FieldGrid>
             <ActionButton
               className="btn btn-primary btn-block mt-4"
               message="Goal created"
             >
               Create goal
             </ActionButton>
-          </Panel>
+          </SectionPanel>
 
-          <Panel className="border-accent/45 p-6">
+          <Panel className="border-accent/45 panel-pad">
             <p className="text-accent flex items-center gap-[9px]">
               <Icon name="flame" size={17} />
               <span className="text-[13px] font-semibold tracking-[0.08em] uppercase">

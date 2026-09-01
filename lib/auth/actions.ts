@@ -27,15 +27,7 @@ import {
 } from "@/lib/auth/session";
 import type { ApiErrorCode } from "@/types/api";
 
-/**
- * Every auth mutation the UI can perform.
- *
- * The forms post to these directly, so sign-in, register and reset all work
- * with JavaScript switched off; the client components only add the pending
- * state and the inline error rendering on top.
- *
- * Tokens are set here and read by the server. They never enter a React tree.
- */
+/** Every auth mutation the UI can perform. */
 
 /** A checkbox with no `value` posts this when it is ticked. */
 const CHECKED = "on";
@@ -91,8 +83,7 @@ export async function registerAction(
   const fullName = text(formData, FIELD.fullName);
   const values = { [FIELD.email]: email, [FIELD.fullName]: fullName };
 
-  // Checked on the server as well as in the browser, so the form still holds
-  // when it is posted without JavaScript.
+  // Checked on the server as well as in the browser.
   if (formData.get(FIELD.terms) !== CHECKED) {
     return localFailureState(
       "You need to accept the terms before an account can be created.",
@@ -111,8 +102,7 @@ export async function registerAction(
     return failureState(result.error, values);
   }
 
-  // The backend returns the new user, not a token pair: the account exists but
-  // nobody is signed in yet, so the next stop is the sign-in card.
+  // The backend returns the new user, not a token pair.
   redirect(signInHref(undefined, "registered"));
 }
 
@@ -151,11 +141,7 @@ async function verifyOtpStep(formData: FormData): Promise<AuthFormState> {
   redirect(resetStepHref("reset"));
 }
 
-/**
- * One action for one card. The card carries both the email and the OTP, and
- * its two buttons say which leg they mean through a `name="intent"` value —
- * that keeps a single `useActionState` driving a single form.
- */
+/** One action for one card. The card carries both the email and the OTP. */
 export async function resetRequestAction(
   _previousState: AuthFormState,
   formData: FormData,
@@ -166,11 +152,7 @@ export async function resetRequestAction(
   return verifyOtpStep(formData);
 }
 
-/**
- * On this card a rejected grant is a stale link, not a lapsed session: the
- * person is signed out by definition, so the default `UNAUTHORIZED` wording
- * would send them to a sign-in they cannot pass.
- */
+/** On this card a rejected grant is a stale link, not a lapsed session. */
 const RESET_GRANT_MESSAGES: Partial<Readonly<Record<ApiErrorCode, string>>> = {
   UNAUTHORIZED:
     "That reset is no longer valid. Request a new code to continue.",
@@ -185,8 +167,7 @@ export async function updatePasswordAction(
   const newPassword = secret(formData, FIELD.newPassword);
   const confirmNewPassword = secret(formData, FIELD.confirmNewPassword);
 
-  // Caught here rather than at the API, whose `eqfield` message names the Go
-  // struct field and reads like nothing a person typed.
+  // Caught here rather than at the API.
   if (newPassword !== confirmNewPassword) {
     return localFailureState("The two passwords do not match.", {
       [FIELD.confirmNewPassword]: "This does not match the new password.",

@@ -1,12 +1,6 @@
 import type { ApiErrorCode, ApiFailure } from "@/types/api";
 
-/**
- * What an auth Server Action hands back to its form.
- *
- * This module is imported from both sides of the boundary — the actions build
- * the state, the client forms render it — so it holds no `next/headers` and no
- * `"use server"` directive.
- */
+/** What an auth Server Action hands back to its form. */
 export type AuthFormState = {
   /** A form-level failure, or "" when there is none. */
   readonly error: string;
@@ -14,11 +8,7 @@ export type AuthFormState = {
   readonly notice: string;
   /** Backend validation errors, keyed by the input's `name`. */
   readonly fieldErrors: Readonly<Record<string, string>>;
-  /**
-   * The non-secret values that were submitted. React clears an uncontrolled
-   * form once its action resolves, so they are echoed back and re-applied as
-   * `defaultValue` — otherwise a rejected sign-in would also wipe the email.
-   */
+  /** The non-secret values that were submitted. */
   readonly values: Readonly<Record<string, string>>;
 };
 
@@ -29,10 +19,7 @@ export const IDLE_AUTH_STATE: AuthFormState = {
   values: {},
 };
 
-/**
- * Wording for the failures a person actually meets. Anything not listed keeps
- * the backend's own message, which is already written for a reader.
- */
+/** Wording for the failures a person actually meets. */
 const MESSAGE_BY_CODE: Partial<Readonly<Record<ApiErrorCode, string>>> = {
   INVALID_CREDENTIALS: "That email and password do not match an account.",
   CONFLICT: "An account with that email already exists.",
@@ -57,13 +44,7 @@ function fieldErrorsOf(failure: ApiFailure): Record<string, string> {
   return errors;
 }
 
-/**
- * Turns a rejected API call into the state its form renders.
- *
- * `overrides` is for a code whose meaning depends on the card it lands on:
- * `UNAUTHORIZED` is a lapsed session on the sign-in card, but a stale grant
- * on the reset card, where there is no session to have lapsed.
- */
+/** Turns a rejected API call into the state its form renders. */
 export function failureState(
   failure: ApiFailure,
   values: Readonly<Record<string, string>> = {},

@@ -4,7 +4,7 @@ import { AppScreen } from "@/components/shell/app-screen";
 import { ToggleRow } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icon";
 import { ScreenStack, SplitGrid } from "@/components/ui/layout";
-import { Panel, PanelHeader } from "@/components/ui/panel";
+import { Panel, PanelHeader, SectionPanel } from "@/components/ui/panel";
 import { Tag } from "@/components/ui/primitives";
 import {
   DELIVERY_CHANNELS,
@@ -35,7 +35,7 @@ export default async function RemindersPage() {
               {bills.map((bill) => (
                 <li
                   key={bill.id}
-                  className="panel-row flex items-center gap-3.5 py-4"
+                  className="panel-row flex items-center gap-3 py-4 sm:gap-3.5"
                 >
                   <span className="inset grid size-[44px] flex-none place-content-center text-center leading-none">
                     <span className="text-muted text-[9.5px] tracking-[0.1em] uppercase">
@@ -47,12 +47,18 @@ export default async function RemindersPage() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-row truncate">{bill.name}</p>
-                    <p className="text-meta text-muted mt-px">{bill.meta}</p>
+                    <p className="text-meta text-muted mt-px truncate">
+                      {bill.meta}
+                    </p>
                   </div>
-                  <Tag variant={bill.isImminent ? "accent" : "neutral"}>
+                  {/* The tag repeats what the date tile already says. */}
+                  <Tag
+                    className="hidden sm:inline-flex"
+                    variant={bill.isImminent ? "accent" : "neutral"}
+                  >
                     {bill.state}
                   </Tag>
-                  <span className="text-row w-[110px] text-right font-semibold tabular-nums">
+                  <span className="text-row flex-none text-right font-semibold tabular-nums sm:w-[110px]">
                     {bill.amount}
                   </span>
                 </li>
@@ -62,7 +68,7 @@ export default async function RemindersPage() {
 
           <div className="flex flex-col gap-5">
             <Panel>
-              <h2 className="panel-head panel-title">Budget alerts</h2>
+              <PanelHeader title="Budget alerts" />
               <ul>
                 {alerts.map((alert) => (
                   <li
@@ -84,19 +90,16 @@ export default async function RemindersPage() {
               </ul>
             </Panel>
 
-            <Panel className="p-6">
-              <h2 className="panel-title">Delivery</h2>
-              <div className="mt-3.5 flex flex-col gap-3">
-                {DELIVERY_CHANNELS.map((channel) => (
-                  <ToggleRow
-                    key={channel.id}
-                    id={`delivery-${channel.id}`}
-                    label={channel.label}
-                    defaultChecked={channel.enabled}
-                  />
-                ))}
-              </div>
-            </Panel>
+            <SectionPanel title="Delivery" bodyClassName="mt-3.5 flex flex-col gap-3">
+              {DELIVERY_CHANNELS.map((channel) => (
+                <ToggleRow
+                  key={channel.id}
+                  id={`delivery-${channel.id}`}
+                  label={channel.label}
+                  defaultChecked={channel.enabled}
+                />
+              ))}
+            </SectionPanel>
           </div>
         </SplitGrid>
       </ScreenStack>

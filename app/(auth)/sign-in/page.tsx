@@ -16,10 +16,7 @@ import { readOption, readText } from "@/lib/search-params";
 
 export const metadata: Metadata = { title: "Sign in" };
 
-/**
- * What the card says after arriving from somewhere else. `none` is the first
- * entry of `AUTH_STATUSES`, so an absent or unknown `?status=` says nothing.
- */
+/** What the card says after arriving from somewhere else. */
 const NOTICE_BY_STATUS: Partial<Readonly<Record<AuthStatus, string>>> = {
   registered: "Account created. Sign in to open your workspace.",
   "password-updated": "Password updated. Sign in with the new one.",
@@ -42,9 +39,7 @@ export default async function SignInPage(
 
       <AuthDivider />
 
-      {/* The artboard draws this, and the backend has no OAuth exchange behind
-          it yet — so it is shown in the state that says so rather than wired
-          to a route that would only bounce back here. */}
+      {/* The artboard draws this, and the backend has no OAuth exchange behind it yet. */}
       <button
         type="button"
         disabled

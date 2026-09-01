@@ -18,19 +18,7 @@ import {
 } from "@/types/access";
 import type { MiniStat } from "@/types/ledger";
 
-/**
- * The access screens, served from `ledgerline-backend`.
- *
- * `GET /users` and `GET /roles` take `search`, `sort`, `page` and `per_page`,
- * and nothing else — there is no role or status filter on the wire yet. So one
- * window of rows is fetched (the backend's own `per_page` ceiling), the two
- * selects are applied to it here on the server, and the page is cut from what
- * is left. The browser still only ever receives the rows it shows.
- *
- * The ceiling is the one thing to remember about this file: past
- * `MAX_PER_PAGE` accounts the list needs `role` and `status` as real query
- * params, and the status tiles need a counts endpoint.
- */
+/** The access screens, served from `ledgerline-backend`. */
 
 export const ACCESS_PAGE_SIZES = [10, 25, 50] as const;
 
@@ -46,10 +34,7 @@ export const USER_STATUS_OPTIONS = [
 
 /* ── sorting ───────────────────────────────────────────────────────────── */
 
-/**
- * The columns the backend will sort by — `dto.userSort` and `dto.roleSort`.
- * Anything else is refused there, so the header links never offer it.
- */
+/** The columns the backend will sort by — `dto.userSort` and `dto.roleSort`. */
 export const USER_SORT_COLUMNS = [
   "full_name",
   "email",
@@ -88,12 +73,7 @@ export type RoleRow = {
   readonly icon: IconName;
 };
 
-/*
- * There is no permission count on the row: `GET /roles` answers with an empty
- * `permissions` array — only `GET /roles/{id}` hydrates it — so any figure
- * here would read zero for every role. A `permission_count` on the list
- * response is what would bring the artboard's sub-line back.
- */
+/* There is no permission count on the row. */
 
 function toUserRow(record: UserRecord): UserRow {
   return {
@@ -243,10 +223,7 @@ export async function getRole(id: string): Promise<RoleRecord | null> {
 
 /* ── the permission matrix ─────────────────────────────────────────────── */
 
-/**
- * The rows of the role editor, and the grants one role already holds, keyed by
- * menu id so the grid can look each row up directly.
- */
+/** The rows of the role editor, and the grants one role already holds. */
 export type GrantMap = Readonly<
   Record<string, Readonly<Partial<Record<PermissionAction, boolean>>>>
 >;
@@ -283,14 +260,7 @@ export type RoleOption = {
   readonly description: string;
 };
 
-/**
- * The roles a user can be given.
- *
- * The artboard's sheet lists the menus the chosen role grants. That list is
- * not on the wire — `GET /roles` sends no permissions, and asking
- * `GET /roles/{id}` once per option would be a request per row — so the
- * role's own description stands in its place until the list carries them.
- */
+/** The roles a user can be given. The artboard's sheet lists the menus the chosen role grants. */
 export async function getRoleOptions(): Promise<readonly RoleOption[]> {
   const accessToken = await requireAccessToken();
   const listed = await listRoles(accessToken, { perPage: MAX_PER_PAGE });

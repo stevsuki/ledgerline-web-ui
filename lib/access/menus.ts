@@ -2,20 +2,7 @@ import type { IconName } from "@/components/ui/icon-sprite";
 import type { NavGroup } from "@/lib/nav";
 import type { MenuNode } from "@/types/access";
 
-/**
- * The menus table, read as the app needs it.
- *
- * `/auth/me` is the only endpoint that returns menus, and it returns the tree
- * the signed-in role may read — already filtered, already nested. Two things
- * it does not carry are filled in here:
- *
- * 1. **The route.** `menus.path` is still NULL in every row (migration 000008
- *    left it so until the frontend routes existed), so the code is what maps a
- *    menu onto a page.
- * 2. **The full menu list.** `/auth/me` returns only what the signed-in role
- *    may read, which is not the list a role editor needs — see
- *    `MENU_CATALOGUE` below.
- */
+/** The menus table, read as the app needs it. */
 
 /** Menu code → the route it opens. A code with no route never reaches the rail. */
 const PATH_BY_CODE: Readonly<Record<string, string>> = {
@@ -39,14 +26,7 @@ export function pathForMenu(code: string): string | undefined {
   return PATH_BY_CODE[code];
 }
 
-/**
- * Whether the signed-in role may read a menu.
- *
- * `/auth/me` returns only the menus the role has read access to, so asking
- * whether one is in the list is the authorization check — no second call, and
- * the same answer the rail is already drawn from. Route handlers need this:
- * they are addressable by URL and get no layout to guard them.
- */
+/** Whether the signed-in role may read a menu. */
 export function canReadMenu(
   menus: readonly MenuNode[],
   code: string,
@@ -59,10 +39,7 @@ export function canReadMenu(
 
 /* ── the rail ──────────────────────────────────────────────────────────── */
 
-/**
- * The menu tree as the rail renders it. A group whose children all lack a
- * route is dropped rather than rendered as an empty header.
- */
+/** The menu tree as the rail renders it. */
 export function navGroupsFromMenus(
   menus: readonly MenuNode[],
 ): readonly NavGroup[] {
@@ -99,20 +76,7 @@ export type PermissionModule = {
   readonly icon: IconName;
 };
 
-/**
- * The pages of the menus table, by the ids the seed pins.
- *
- * This is here because of a gap in the API, and it goes when the gap closes:
- * `/auth/me` is the only endpoint that returns menus, and it returns only the
- * ones the signed-in role may *read*. A role editor built from that could
- * never grant a menu the editing admin cannot already see — and the seeded
- * Admin role holds no permission rows at all, so its matrix would be empty and
- * no permission could ever be granted to anyone.
- *
- * Migration `000008_seed_menus.up.sql` pins these ids precisely so "every
- * environment matches", which is what makes listing them here safe. Replace
- * the whole constant with a `GET /menus` call as soon as the backend has one.
- */
+/** The pages of the menus table, by the ids the seed pins. */
 const MENU_CATALOGUE: readonly PermissionModule[] = [
   { id: "b0000000-0000-0000-0000-000000000001", code: "dashboard", label: "Dashboard", icon: "grid" },
   { id: "b0000000-0000-0000-0000-000000000002", code: "transactions", label: "Transactions", icon: "swap" },
@@ -137,11 +101,7 @@ function pagesOf(menus: readonly MenuNode[]): readonly MenuNode[] {
   );
 }
 
-/**
- * The rows of the role editor: the catalogue above, with whatever `/auth/me`
- * returned laid over it — so a menu that has been renamed, re-iconed or added
- * since shows as the backend has it, and the rest still shows at all.
- */
+/** The rows of the role editor: the catalogue above. */
 export function permissionModules(
   menus: readonly MenuNode[],
 ): readonly PermissionModule[] {

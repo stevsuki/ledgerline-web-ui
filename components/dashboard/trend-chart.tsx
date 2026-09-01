@@ -5,17 +5,13 @@ import { useState } from "react";
 import { MINUS_SIGN } from "@/lib/format";
 import type { TrendBar } from "@/lib/data/analytics";
 
-/**
- * Income against expense. The bars and their heights come from the server;
- * this component exists only for the hover read-out, which the artboard shows
- * floating over the plot.
- */
+/** Income against expense. The bars and their heights come from the server. */
 export function TrendChart({ bars }: { readonly bars: readonly TrendBar[] }) {
   const [hovered, setHovered] = useState<number>(-1);
   const active = bars[hovered];
 
   /** Keep the tooltip inside the panel, as the artboard's `tipLeft` does. */
-  const tipLeft = Math.min(74, (hovered / bars.length) * 100 + 3);
+  const tipLeft = Math.max(0, Math.min(74, (hovered / bars.length) * 100 + 3));
 
   return (
     <div className="relative mt-3 flex h-[216px] items-end gap-0.5">
@@ -44,8 +40,8 @@ export function TrendChart({ bars }: { readonly bars: readonly TrendBar[] }) {
 
       {active ? (
         <div
-          className="overlay-surface bg-bg pointer-events-none absolute -top-1.5 z-5 min-w-[140px] px-[11px] py-[9px]"
-          style={{ left: `${tipLeft}%` }}
+          className="overlay-surface bg-bg pointer-events-none absolute -top-1.5 z-5 max-w-full min-w-[140px] px-[11px] py-[9px]"
+          style={{ left: `min(${tipLeft}%, 100% - 140px)` }}
         >
           <p className="text-muted mb-1 text-[10px] tracking-[0.1em] uppercase">
             {active.label}

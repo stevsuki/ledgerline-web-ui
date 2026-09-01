@@ -11,18 +11,7 @@ import type {
   SessionMethod,
 } from "@/types/audit-detail";
 
-/**
- * Narrows an audit entry's `details` into one member of the union.
- *
- * There is one builder per kind and no cast anywhere: each reads the fields
- * its own shape requires and returns `null` when one is missing, so a payload
- * this build does not understand becomes an absent detail rather than an
- * object claiming a type it does not have.
- *
- * Nothing breaks when it returns `null`. The row renders `detail_text`, which
- * the backend wrote at the same moment as the payload; this is for the parts
- * rather than the sentence.
- */
+/** Narrows an audit entry's `details` into one member of the union. */
 
 /* ── field readers ─────────────────────────────────────────────────────── */
 

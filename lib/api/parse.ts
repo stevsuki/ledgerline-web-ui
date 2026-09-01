@@ -1,11 +1,4 @@
-/**
- * Narrowing helpers for JSON that has just come off the wire.
- *
- * A `fetch` body is `unknown`, and the codebase forbids casting it into shape.
- * Every field is therefore read through one of these guards, so a backend that
- * answers with something unexpected produces a null we can report rather than
- * a runtime crash three components later.
- */
+/** Narrowing helpers for JSON that has just come off the wire. */
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);

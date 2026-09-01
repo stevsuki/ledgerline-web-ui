@@ -2,16 +2,7 @@ import type { ReactNode } from "react";
 
 import { cx } from "@/lib/tone";
 
-/**
- * Native form controls on the design system's classes. Everything here is
- * uncontrolled, so the panels render and work on the server with no client
- * JavaScript at all — the browser owns the field state.
- *
- * Every control takes an explicit `id` so its label really points at it. An
- * `error` is the message the server sent back for that field: it colours the
- * control, is announced through `aria-describedby`, and is rendered once,
- * under the input, by `<Field>`.
- */
+/** Native form controls on the design system's classes. */
 
 /** Suffix for the id of a field's error line, so the input can point at it. */
 function errorId(id: string): string {

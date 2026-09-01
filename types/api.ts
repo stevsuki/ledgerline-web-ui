@@ -1,16 +1,6 @@
-/**
- * The shapes the Go backend puts on the wire.
- *
- * Every endpoint answers with the same envelope — `pkg/response` in
- * `ledgerline-backend` — so it is parsed once here and every caller works from
- * one result type instead of re-reading `response.ok` and `response.status`.
- */
+/** The shapes the Go backend puts on the wire. */
 
-/**
- * The codes `handleError` in the backend's `internal/delivery/http/handler`
- * can emit, plus the two this client adds when the answer never arrived or was
- * not the envelope at all.
- */
+/** The codes `handleError` in the backend's `internal/delivery/http/handler` can emit. */
 export const API_ERROR_CODES = [
   "BAD_REQUEST",
   "VALIDATION_ERROR",

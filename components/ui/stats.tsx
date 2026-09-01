@@ -5,10 +5,7 @@ import { Panel } from "@/components/ui/panel";
 import { TEXT_TONE, cx } from "@/lib/tone";
 import type { MiniStat, SummaryStat } from "@/types/ledger";
 
-/**
- * The auto-fitting stat strip. Six screens open with one of these, so the grid
- * rule lives here rather than being restated per page.
- */
+/** The auto-fitting stat strip six screens open with. */
 export function StatGrid({
   children,
   minWidth = 200,
@@ -28,11 +25,7 @@ export function StatGrid({
   );
 }
 
-/**
- * The artboard uses three sizes of stat card. They differ only in padding and
- * the step between label, value and note, so they resolve through a table
- * rather than three near-identical components.
- */
+/** The artboard uses three sizes of stat card. */
 export type StatSize = "compact" | "regular" | "large";
 
 const STAT_SIZE: Readonly<

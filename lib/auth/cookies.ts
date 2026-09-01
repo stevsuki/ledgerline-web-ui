@@ -1,36 +1,19 @@
 import type { AuthTokens } from "@/types/auth";
 
-/**
- * Where the session lives, and for how long.
- *
- * Kept free of `next/headers` on purpose: `proxy.ts` writes these cookies onto
- * a `NextResponse` while the Server Actions write them through the cookie
- * store, and both need the same names and the same options.
- *
- * All four are http-only. They are credentials, not display preferences —
- * unlike the theme and rail cookies in `lib/preferences.ts`, no browser script
- * ever reads them.
- */
+/** Where the session lives, and for how long. */
 
 export const ACCESS_COOKIE = "ll-access";
 export const REFRESH_COOKIE = "ll-refresh";
 export const RESET_COOKIE = "ll-reset";
 
-/**
- * Records that the person ticked "Keep me signed in". Without it the refresh
- * token is a session cookie that dies with the browser, and the proxy needs to
- * know which of the two it is renewing.
- */
+/** Records that the person ticked "Keep me signed in". */
 export const PERSIST_COOKIE = "ll-persist";
 export const PERSIST_VALUE = "1";
 
 /** Mirrors the backend's `JWT_REFRESH_TOKEN_TTL` (168h). */
 export const REFRESH_MAX_AGE_SECONDS = 168 * 60 * 60;
 
-/**
- * Retire the access cookie a little before the token itself dies, so a request
- * that is already in flight cannot arrive at the API with an expired token.
- */
+/** Retire the access cookie a little before the token itself dies. */
 const EXPIRY_SKEW_SECONDS = 30;
 
 /** Floor for the access cookie, in case the API reports no lifetime at all. */
@@ -65,13 +48,7 @@ function accessMaxAge(expiresIn: number): number {
   return Math.max(expiresIn - EXPIRY_SKEW_SECONDS, MIN_ACCESS_MAX_AGE_SECONDS);
 }
 
-/**
- * The cookies that make up a signed-in session.
- *
- * The access cookie always carries a `maxAge`: its own expiry is what tells
- * the proxy to go and refresh. Only the refresh cookie answers to the
- * "keep me signed in" choice.
- */
+/** The cookies that make up a signed-in session. */
 export function sessionCookieWrites(
   tokens: AuthTokens,
   persistent: boolean,

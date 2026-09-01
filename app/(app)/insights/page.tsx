@@ -4,7 +4,8 @@ import { AppScreen } from "@/components/shell/app-screen";
 import { ActionButton } from "@/components/ui/action-button";
 import { Icon } from "@/components/ui/icon";
 import { CardGrid, ScreenStack, SplitGrid } from "@/components/ui/layout";
-import { Panel } from "@/components/ui/panel";
+import { Panel, PanelHeader, SectionPanel } from "@/components/ui/panel";
+import { LegendItem, LegendList } from "@/components/ui/primitives";
 import {
   COMPARE_LEGEND,
   INSIGHTS,
@@ -30,7 +31,7 @@ export default async function InsightsPage() {
       <ScreenStack>
         <CardGrid>
           {INSIGHTS.map((insight) => (
-            <Panel key={insight.id} className="flex flex-col gap-2 p-6">
+            <Panel key={insight.id} className="panel-pad flex flex-col gap-2">
               <p
                 className={cx(
                   "flex items-center gap-2",
@@ -51,17 +52,16 @@ export default async function InsightsPage() {
         </CardGrid>
 
         <SplitGrid>
-          <Panel className="p-6">
-            <h2 className="panel-title">Category by month</h2>
-            <p className="text-meta text-muted mt-0.5">
-              Six months, top four categories
-            </p>
-
-            <div className="mt-5 flex h-[190px] items-end gap-3">
+          <SectionPanel
+            title="Category by month"
+            description="Six months, top four categories"
+            bodyClassName="mt-5"
+          >
+            <div className="flex h-[190px] items-end gap-2 sm:gap-3">
               {comparison.map((column) => (
                 <div
                   key={column.label}
-                  className="flex h-full flex-1 flex-col items-center justify-end gap-2"
+                  className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2"
                 >
                   <div className="flex h-full w-full flex-col justify-end">
                     {column.parts.map((part) => (
@@ -73,56 +73,53 @@ export default async function InsightsPage() {
                       />
                     ))}
                   </div>
-                  <span className="text-muted text-[11px] font-semibold">
+                  <span className="text-muted truncate text-[11px] font-semibold">
                     {column.label}
                   </span>
                 </div>
               ))}
             </div>
 
-            <ul className="border-divider text-meta text-muted mt-4 flex flex-wrap gap-3.5 border-t pt-3.5">
+            <LegendList className="border-divider mt-4 border-t pt-3.5">
               {COMPARE_LEGEND.map((entry) => (
-                <li key={entry.id} className="flex items-center gap-1.5">
-                  <span
-                    aria-hidden="true"
-                    className={cx(
-                      "size-2.5 rounded-[3px]",
-                      RAMP_BG[entry.step],
-                    )}
-                  />
-                  {entry.label}
-                </li>
+                <LegendItem
+                  key={entry.id}
+                  label={entry.label}
+                  fillClass={RAMP_BG[entry.step]}
+                />
               ))}
-            </ul>
-          </Panel>
+            </LegendList>
+          </SectionPanel>
 
           <Panel>
-            <h2 className="panel-head panel-title">Top categories</h2>
+            <PanelHeader title="Top categories" />
             <ol>
               {ranking.map((entry) => (
                 <li
                   key={entry.label}
                   className="panel-row-dense flex items-center gap-3"
                 >
-                  <span className="text-muted w-[18px] text-[13px] font-semibold">
+                  <span className="text-muted w-[18px] flex-none text-[13px] font-semibold">
                     {entry.rank}
                   </span>
-                  <span className="text-row min-w-0 flex-1">{entry.label}</span>
+                  <span className="text-row min-w-0 flex-1 truncate">
+                    {entry.label}
+                  </span>
                   <span
                     className={cx(
-                      "text-note font-semibold",
+                      "text-note flex-none font-semibold",
                       TEXT_TONE[entry.deltaTone],
                     )}
                   >
                     {entry.delta}
                   </span>
-                  <span className="w-[104px] text-right text-[13px] tabular-nums">
+                  <span className="flex-none text-right text-[13px] tabular-nums sm:w-[104px]">
                     {entry.value}
                   </span>
                 </li>
               ))}
             </ol>
-            <div className="px-6 py-[17px]">
+            <div className="panel-pad-x py-[17px]">
               <ActionButton
                 className="btn btn-secondary btn-block"
                 message="Export queued — check your email"

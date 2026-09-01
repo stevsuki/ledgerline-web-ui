@@ -13,11 +13,7 @@ import {
 } from "@/lib/auth/fields";
 import { IDLE_AUTH_STATE } from "@/lib/auth/form-state";
 
-/**
- * Leg two of the reset. The grant earned by the OTP is not in this form: it
- * waits in an http-only cookie the action reads on the server, so it never
- * enters the page at all.
- */
+/** Leg two of the reset. The grant earned by the OTP is not in this form. */
 export function NewPasswordForm() {
   const [state, formAction, pending] = useActionState(
     updatePasswordAction,

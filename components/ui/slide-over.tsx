@@ -4,14 +4,7 @@ import { useEffect, useId, useRef, type ReactNode } from "react";
 
 import { Icon } from "@/components/ui/icon";
 
-/**
- * The right-hand sheet from the artboard (lines 1380 and 1437): full height,
- * 440px wide, page ground behind a divider edge.
- *
- * Keyboard behaviour is the part the design could not express — Escape closes,
- * focus moves in on open and returns to the opener on close, and Tab is kept
- * inside the sheet while it is up.
- */
+/** The right-hand sheet from the artboard (lines 1380 and 1437): full height, 440px wide. */
 export function SlideOver({
   open,
   onClose,
@@ -104,7 +97,7 @@ export function SlideOver({
         style={{ width }}
         className="border-divider bg-bg animate-slide flex max-w-full flex-col border-l shadow-lg"
       >
-        <div className="border-divider flex items-center justify-between gap-3 border-b px-[26px] py-[22px]">
+        <div className="border-divider flex items-center justify-between gap-3 border-b px-5 py-[22px] sm:px-[26px]">
           <div className="min-w-0">
             <h2
               id={titleId}
@@ -124,11 +117,11 @@ export function SlideOver({
           </button>
         </div>
 
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-6">
+        <div className="panel-pad flex flex-1 flex-col gap-4 overflow-y-auto">
           {children}
         </div>
 
-        <div className="border-divider flex gap-2 border-t px-[26px] py-5">
+        <div className="border-divider flex flex-wrap gap-2 border-t px-5 py-5 sm:px-[26px]">
           {footer}
         </div>
       </div>

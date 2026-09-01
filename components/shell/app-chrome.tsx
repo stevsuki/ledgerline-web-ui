@@ -11,14 +11,9 @@ import {
   type ReactNode,
 } from "react";
 
-/**
- * The two pieces of chrome that any screen can reach: the confirmation toast
- * and the add-transaction slide-over.
- *
- * Holding them here means one dialog exists for the whole app, however many
- * buttons open it, and `children` stays server-rendered — a client provider
- * does not drag its subtree across the boundary.
- */
+import { Icon } from "@/components/ui/icon";
+
+/** The two pieces of chrome any screen can reach: the toast and the slide-over. */
 
 type AppChrome = {
   readonly showToast: (message: string) => void;
@@ -81,11 +76,9 @@ function Toaster({ message }: { readonly message: string | null }) {
   return (
     <output
       aria-live="polite"
-      className="overlay-surface animate-toast fixed bottom-7 left-1/2 z-[80] flex -translate-x-1/2 items-center gap-2.5 px-4 py-3 text-[13px]"
+      className="overlay-surface animate-toast fixed bottom-7 left-1/2 z-[80] flex max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-2.5 px-4 py-3 text-[13px]"
     >
-      <svg width={16} height={16} className="text-income" aria-hidden="true">
-        <use href="#i-check" />
-      </svg>
+      <Icon name="check" className="text-income" />
       <span>{message}</span>
     </output>
   );

@@ -1,15 +1,6 @@
 @import "tailwindcss";
 
-/* ══════════════════════════════════════════════════════════════════════════
-   Ledgerline tokens.
-
-   Ported from Ledgerline/Finance App.dc.html (lines 15-58) layered over the
-   Modernist design system's styles.css. The artboard wins wherever the two
-   disagree: Plus Jakarta Sans instead of Archivo, a dark ground by default,
-   and real radii instead of the design system's 0px.
-
-   Raw values live here and only here. Everything downstream reads a token.
-   ══════════════════════════════════════════════════════════════════════ */
+/* Ledgerline tokens. Ported from Ledgerline/Finance App.dc.html (lines 15-58) layered. */
 
 :root {
   --ll-bg: #0d0f14;
@@ -24,8 +15,7 @@
   --ll-expense: #ff6a4d;
   --ll-warn: #e5a94a;
 
-  /* Categorical ramp, in category order: housing, food, transport,
-     subscriptions, utilities, health, other. */
+  /* Categorical ramp, in category order: housing, food, transport, subscriptions. */
   --ll-c1: #ff563c;
   --ll-c2: #e7eaf1;
   --ll-c3: #9aa3b6;
@@ -43,8 +33,9 @@
   --ll-tag-accent-bg: #3a1a13;
   --ll-tag-accent-fg: #ffc4b8;
 
-  /* Height of the sticky screen header. Panels that stick below it offset by
-     this so they never slide underneath. */
+  /* the responsive inset scale — The artboard was drawn at one width. */
+  --pad-screen: 28px;
+  --pad-panel: 24px;
   --header-h: 73px;
 
   /* The accent is the one value the artboard never re-declares per theme. */
@@ -82,8 +73,25 @@ html[data-theme="light"] {
   --ll-tag-accent-fg: #7c1405;
 }
 
-/* `inline` keeps the utilities pointing at the custom properties above, so a
-   theme flip on <html> repaints without regenerating any CSS. */
+/* Tablet: the rail undocks into a drawer and the header drops its global search. */
+@media (width < 64rem) {
+  :root {
+    --pad-screen: 20px;
+    --pad-panel: 20px;
+    --header-h: 69px;
+  }
+}
+
+/* Phone: one row of chrome, one step of inset. */
+@media (width < 40rem) {
+  :root {
+    --pad-screen: 16px;
+    --pad-panel: 16px;
+    --header-h: 62px;
+  }
+}
+
+/* `inline` keeps the utilities pointing at the custom properties above. */
 @theme inline {
   --color-bg: var(--ll-bg);
   --color-surface: var(--ll-surface);
@@ -200,10 +208,7 @@ html[data-theme="light"] {
   }
 }
 
-/* ── the shape contract ────────────────────────────────────────────────────
-   Artboard lines 96-108. Each class is one row of that table, so a screen
-   never restates the radius, the border or the rhythm.
-   ────────────────────────────────────────────────────────────────────── */
+/* the shape contract — Artboard lines 96-108. */
 
 @layer components {
   .panel {
@@ -231,28 +236,34 @@ html[data-theme="light"] {
     color: var(--color-muted);
   }
 
-  /* The rhythm classes all pin the SAME 24px horizontal padding, so a header,
-     a column head and a body row line up down the panel's left and right
-     edges. Only the vertical step varies between screens — override it with a
-     `py-*` utility, which wins because Tailwind's utility layer comes last. */
+  /* The rhythm classes all pin the SAME horizontal padding, so a header. */
   .panel-head {
-    padding: 19px 24px;
+    padding: 19px var(--pad-panel);
     border-bottom: 1px solid var(--color-divider);
   }
 
   .panel-row {
-    padding: 14px 24px;
+    padding: 14px var(--pad-panel);
     border-bottom: 1px solid var(--color-divider);
   }
 
   .panel-row-dense {
-    padding: 15px 24px;
+    padding: 15px var(--pad-panel);
     border-bottom: 1px solid var(--color-divider);
+  }
+
+  /* The same inset as a class of its own, for the blocks that are not rows: a panel footer. */
+  .panel-pad {
+    padding: var(--pad-panel);
+  }
+
+  .panel-pad-x {
+    padding-inline: var(--pad-panel);
   }
 
   /* Money tables (transactions, recurring) head on the page ground. */
   .column-head {
-    padding: 15px 24px;
+    padding: 15px var(--pad-panel);
     border-bottom: 1px solid var(--color-divider);
     background: var(--color-bg);
     font-family: var(--font-heading);
@@ -265,7 +276,7 @@ html[data-theme="light"] {
 
   /* Access-control tables head on the panel fill, one step tighter. */
   .column-head-access {
-    padding: 13px 24px;
+    padding: 13px var(--pad-panel);
     border-bottom: 1px solid var(--color-divider);
     background: var(--color-panel);
     font-family: var(--font-heading);
@@ -282,11 +293,9 @@ html[data-theme="light"] {
     background: var(--color-panel);
   }
 
-  /* One horizontal inset for the whole screen. The header and the content
-     below it both read it, so the page title sits exactly above the first
-     card — the artboard drifts 8px here and that reads as a mistake. */
+  /* One horizontal inset for the whole screen. */
   .screen-gutter {
-    padding-inline: 28px;
+    padding-inline: var(--pad-screen);
   }
 
   .icon-tile {
@@ -327,10 +336,7 @@ html[data-theme="light"] {
     box-shadow: var(--shadow-lg);
   }
 
-  /* ── controls ─────────────────────────────────────────────────────────
-     Ported from the design system's component layer, then re-shaped by the
-     artboard: radius 12, height 38, panel-filled inputs.
-     ───────────────────────────────────────────────────────────────────── */
+  /* controls — Ported from the design system's component layer. */
 
   .btn {
     position: relative;
@@ -449,16 +455,12 @@ html[data-theme="light"] {
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent);
   }
 
-  /* Lines a bare control up with the input beside it in a `.field` row:
-     one 12px label line at the body's 1.55 leading, plus its 5px gap.
-     Using it instead of `items-end` keeps the two level even when the
-     field grows an error line underneath. */
+  /* Lines a bare control up with the input beside it in a `.field` row. */
   .field-offset {
     margin-top: calc(12px * 1.55 + 5px);
   }
 
-  /* The field the API rejected. Same shape, expense-red edge — the only
-     other semantic red in the palette, so it cannot be read as brand. */
+  /* The field the API rejected. */
   .input-invalid,
   .input-invalid:hover {
     border-color: var(--color-expense);
@@ -572,15 +574,7 @@ html[data-theme="light"] {
     outline-offset: -2px;
   }
 
-  /* ── calendar ───────────────────────────────────────────────
-     The one surface in the app the artboard never drew, so it is assembled
-     entirely out of the shape contract rather than invented: a day is an
-     IconTile footprint (34px, radius 10), the selected band is the accent at
-     the same 12% mix the tags use, and the type is the row/meta pair.
-
-     Cells collapse against each other so a selected range reads as one
-     continuous band; only its two ends get a radius.
-     ──────────────────────────────────────────────────────────── */
+  /* calendar — The one surface in the app the artboard never drew. */
 
   .cal-grid {
     width: 100%;
@@ -697,11 +691,7 @@ html[data-theme="light"] {
     color: var(--color-accent);
   }
 
-  /* ── the nav rail ─────────────────────────────────────────────────────
-     Collapsing is a CSS-only state change driven by `data-rail` on the shell,
-     so the toggle repaints instantly and the cookie only has to keep the
-     server's first render honest.
-     ───────────────────────────────────────────────────────────────────── */
+  /* the nav rail — Two independent state changes. */
 
   [data-rail="open"] {
     --rail-width: 208px;
@@ -713,6 +703,49 @@ html[data-theme="light"] {
 
   [data-rail="closed"] .rail-label {
     display: none;
+  }
+
+  .nav-rail {
+    width: var(--rail-width);
+  }
+
+  .nav-backdrop {
+    display: none;
+  }
+
+  @media (width < 64rem) {
+    .nav-rail {
+      position: fixed;
+      inset-block: 0;
+      left: 0;
+      z-index: 70;
+      width: 264px;
+      /* `visibility` is what takes the closed drawer out of the tab order. */
+      visibility: hidden;
+      transform: translateX(-100%);
+      transition:
+        transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+        visibility 0.24s;
+    }
+
+    /* A drawer is always labelled, whatever the desktop rail was left at. */
+    [data-rail="closed"] .rail-label {
+      display: revert;
+    }
+
+    [data-nav="open"] .nav-rail {
+      visibility: visible;
+      transform: none;
+      box-shadow: var(--shadow-lg);
+    }
+
+    [data-nav="open"] .nav-backdrop {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 65;
+      background: color-mix(in srgb, #03050a 55%, transparent);
+    }
   }
 
   .rail-item {
@@ -792,10 +825,7 @@ html[data-theme="light"] {
   }
 }
 
-/* ── motion ────────────────────────────────────────────────────────────────
-   The artboard's vocabulary (lines 84-95, 109-119): panels rise on mount,
-   bars grow from the bottom, tracks fill from the left, overlays slide in.
-   ────────────────────────────────────────────────────────────────────── */
+/* motion — The artboard's vocabulary (lines 84-95, 109-119): panels rise on mount. */
 
 @layer utilities {
   @keyframes ll-pop {

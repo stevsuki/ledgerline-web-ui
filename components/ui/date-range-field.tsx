@@ -17,38 +17,11 @@ import {
 } from "@/lib/dates";
 import { cx } from "@/lib/tone";
 
-/**
- * The filter bar's range control: one button that prints the current range,
- * over a popover holding the grid.
- *
- * It is a form field, not a piece of React state. The chosen days go into two
- * hidden inputs, and completing a range asks the enclosing `<FilterForm>` to
- * submit — so the range ends up in the URL alongside every other filter and a
- * reload reproduces it.
- *
- * Because a hidden input changed by React fires no `change` event, the form
- * is submitted explicitly rather than left to `FilterForm`'s own `onChange`.
- *
- * The only state it keeps is the range on its way to the URL, held just long
- * enough for the hidden inputs to render before the form is submitted. Once
- * the URL catches up that copy is stale, so the screen gives this a `key`
- * built from the range and lets a remount clear it — cheaper, and harder to
- * get wrong, than syncing state back from props.
- *
- * Before hydration — and for anyone with JavaScript off — the same two fields
- * render as native date inputs instead. The grid is an enhancement over a
- * form that already worked, which is the rule the rest of this app follows.
- */
+/** The filter bar's range control: one button that prints the current range. */
 
 const FALLBACK_LABEL = "All dates";
 
-/**
- * Whether the grid may take over from the native inputs — which is to say,
- * whether this is the browser or the server render. Reading it as an external
- * store rather than setting state in an effect is what keeps the swap to a
- * single render, and keeps React from treating the difference between the two
- * as a hydration mismatch.
- */
+/** Whether the grid may take over from the native inputs. */
 const NEVER_CHANGES = () => () => {};
 const ON_CLIENT = () => true;
 const ON_SERVER = () => false;
@@ -121,11 +94,7 @@ export function DateRangeField({
     };
   }, [isOpen]);
 
-  /**
-   * Into the hidden inputs first, then submit — the effect above waits for
-   * the render so the form reads the new range rather than the old one.
-   * `Calendar` reports only settled ranges, so every call here is one.
-   */
+  /** Into the hidden inputs first, then submit. */
   function handleRangeChange(next: DateRange) {
     setDraft(next);
     wantsSubmit.current = true;
@@ -161,8 +130,7 @@ export function DateRangeField({
         <span className="text-text text-row truncate">
           {formatRangeChip(draft, todayIso, FALLBACK_LABEL)}
         </span>
-        {/* No chevron in the sprite — the app turns the arrow, as pagination
-            does. `down` is the trending-down arrow and means something else. */}
+        {/* No chevron in the sprite — the app turns the arrow, as pagination does. */}
         <Icon name="right" size={13} className="rotate-90" />
       </button>
 
@@ -171,7 +139,7 @@ export function DateRangeField({
           id={panelId}
           role="dialog"
           aria-labelledby={headingId}
-          className="overlay-surface animate-rise absolute top-11 left-0 z-60 w-[300px] p-4"
+          className="overlay-surface animate-rise absolute top-11 left-0 z-60 w-[min(300px,calc(100vw-2rem))] p-4"
         >
           <p id={headingId} className="sr-only">
             {label}

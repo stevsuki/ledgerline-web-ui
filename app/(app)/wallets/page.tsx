@@ -4,8 +4,13 @@ import { AppScreen } from "@/components/shell/app-screen";
 import { ActionButton } from "@/components/ui/action-button";
 import { SelectField, TextField, ToggleRow } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icon";
-import { CardGrid, ScreenStack, SplitGrid } from "@/components/ui/layout";
-import { Panel } from "@/components/ui/panel";
+import {
+  CardGrid,
+  FieldGrid,
+  ScreenStack,
+  SplitGrid,
+} from "@/components/ui/layout";
+import { Panel, SectionPanel } from "@/components/ui/panel";
 import { IconTile, Tag } from "@/components/ui/primitives";
 import {
   WALLET_CURRENCIES,
@@ -34,7 +39,7 @@ export default async function WalletsPage() {
           {wallets.map((wallet) => (
             <Panel
               key={wallet.id}
-              className="flex min-h-[164px] flex-col p-6"
+              className="panel-pad flex min-h-[164px] flex-col"
             >
               <div className="flex items-start justify-between">
                 <IconTile
@@ -60,7 +65,7 @@ export default async function WalletsPage() {
 
           <a
             href="#add-wallet"
-            className="border-divider text-muted hover:border-accent hover:text-accent flex min-h-[164px] flex-col items-start justify-end gap-2.5 rounded-[var(--radius-panel)] border border-dashed p-6 text-[13px] transition-colors"
+            className="border-divider text-muted hover:border-accent hover:text-accent panel-pad flex min-h-[164px] flex-col items-start justify-end gap-2.5 rounded-[var(--radius-panel)] border border-dashed text-[13px] transition-colors"
           >
             <Icon name="plus" size={22} />
             Add wallet
@@ -68,18 +73,23 @@ export default async function WalletsPage() {
         </CardGrid>
 
         <SplitGrid minWidth={320} ratio={1}>
-          <Panel className="p-6" >
-            <h2 className="panel-title" id="add-wallet">
-              Add wallet
-            </h2>
-            <div className="mt-4 grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr))]">
+          <SectionPanel
+            title="Add wallet"
+            titleId="add-wallet"
+            bodyClassName="mt-4"
+          >
+            <FieldGrid>
               <TextField
                 id="wallet-name"
                 label="Wallet name"
                 defaultValue="Jenius savings"
                 className="col-span-full"
               />
-              <SelectField id="wallet-type" label="Type" options={WALLET_TYPES} />
+              <SelectField
+                id="wallet-type"
+                label="Type"
+                options={WALLET_TYPES}
+              />
               <SelectField
                 id="wallet-currency"
                 label="Currency"
@@ -98,26 +108,23 @@ export default async function WalletsPage() {
                   defaultChecked
                 />
               </div>
-            </div>
-            <div className="mt-4 flex gap-2">
-              <ActionButton
-                className="btn btn-primary"
-                message="Wallet saved"
-              >
+            </FieldGrid>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <ActionButton className="btn btn-primary" message="Wallet saved">
                 Save wallet
               </ActionButton>
               <button type="reset" className="btn btn-secondary">
                 Cancel
               </button>
             </div>
-          </Panel>
+          </SectionPanel>
 
-          <Panel className="p-6">
-            <h2 className="panel-title">Connected institutions</h2>
-            <p className="text-meta text-muted mt-0.5">
-              Synced transactions arrive tagged for review.
-            </p>
-            <ul className="mt-3.5">
+          <SectionPanel
+            title="Connected institutions"
+            description="Synced transactions arrive tagged for review."
+            bodyClassName="mt-3.5"
+          >
+            <ul>
               {integrations.map((integration) => (
                 <li
                   key={integration.id}
@@ -129,10 +136,14 @@ export default async function WalletsPage() {
                     className="text-muted"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="text-row">{integration.name}</p>
-                    <p className="text-meta text-muted">{integration.meta}</p>
+                    <p className="text-row truncate">{integration.name}</p>
+                    <p className="text-meta text-muted truncate">
+                      {integration.meta}
+                    </p>
                   </div>
-                  <Tag variant={integration.needsAttention ? "accent" : "neutral"}>
+                  <Tag
+                    variant={integration.needsAttention ? "accent" : "neutral"}
+                  >
                     {integration.status}
                   </Tag>
                 </li>
@@ -145,7 +156,7 @@ export default async function WalletsPage() {
               <Icon name="link" size={15} />
               Connect another account
             </ActionButton>
-          </Panel>
+          </SectionPanel>
         </SplitGrid>
       </ScreenStack>
     </AppScreen>

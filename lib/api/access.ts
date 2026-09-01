@@ -14,13 +14,7 @@ import {
   type UserRecord,
 } from "@/types/access";
 
-/**
- * The RBAC endpoints: `/roles`, `/users`, and the menu tree that rides along
- * with `/auth/me`.
- *
- * Every payload is narrowed into a real type here — the same contract the auth
- * endpoints follow — so no screen ever reads an untyped JSON value.
- */
+/** The RBAC endpoints: `/roles`, `/users`, and the menu tree that rides along with `/auth/me`. */
 
 const ROLES = "/roles";
 const USERS = "/users";
@@ -176,10 +170,7 @@ export type ListResult<T> = {
   readonly total: number;
 };
 
-/**
- * A list answer keeps its `meta`, which is the only place the total lives —
- * `data` is just the page.
- */
+/** A list answer keeps its `meta`, which is the only place the total lives. */
 function withList<T>(
   result: ApiResult<unknown>,
   parse: (entry: unknown) => T | null,
@@ -274,9 +265,7 @@ export async function updateRole(
     permissions: permissionsPayload(input.permissions),
   };
 
-  // The rename guard in `roleService.Update` fires on the field being *present*,
-  // not on the name having changed — so sending a built-in role its own name
-  // back comes home as 403 "access denied". Left out, its permissions save.
+  // The rename guard in `roleService.Update` fires on the field being *present*.
   if (input.name) {
     body.name = input.name;
   }

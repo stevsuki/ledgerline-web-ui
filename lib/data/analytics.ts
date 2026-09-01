@@ -68,10 +68,7 @@ export async function getTrend(mode: TrendMode): Promise<readonly TrendBar[]> {
   }));
 }
 
-/* ── donut geometry ────────────────────────────────────────────────────────
-   Ported from the artboard's `arc(i)`. Two concentric radii, a 0.022rad gap
-   between slices, drawn from twelve o'clock clockwise.
-   ────────────────────────────────────────────────────────────────────── */
+/* donut geometry — Ported from the artboard's `arc(i)`. */
 
 const CENTER = 90;
 const OUTER_RADIUS = 88;

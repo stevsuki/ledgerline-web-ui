@@ -10,7 +10,7 @@ import {
 import { FilterForm } from "@/components/ui/filter-form";
 import { ScreenStack, TableScroll } from "@/components/ui/layout";
 import { PaginationBar } from "@/components/ui/pagination-bar";
-import { Panel } from "@/components/ui/panel";
+import { Panel, PanelNotice } from "@/components/ui/panel";
 import { Avatar, EmptyState, StatusCell, Tag } from "@/components/ui/primitives";
 import { SortHeader } from "@/components/ui/sort-header";
 import { StatRow } from "@/components/ui/stats";
@@ -47,8 +47,7 @@ export default async function UsersPage(props: Readonly<PageProps<"/users">>) {
   const query = readText(params, "q");
   const sort = readSort(params, USER_SORT_COLUMNS);
 
-  // The role select is filled from the roles the backend actually has, so a
-  // role added on the roles screen shows up here without a second edit.
+  // The role select is filled from the roles the backend actually has.
   const roles = await getRoleOptions();
   const roleOptions = [ALL_ROLES, ...roles.map((role) => role.name)];
 
@@ -174,9 +173,7 @@ export default async function UsersPage(props: Readonly<PageProps<"/users">>) {
               </ul>
             </TableScroll>
 
-            {error ? (
-              <p className="text-expense px-6 py-13 text-[13px]">{error}</p>
-            ) : null}
+            {error ? <PanelNotice tone="expense">{error}</PanelNotice> : null}
 
             {isEmpty && !error ? (
               <EmptyState

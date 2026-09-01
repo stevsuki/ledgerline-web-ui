@@ -1,10 +1,4 @@
-/**
- * One pagination engine for every growing list, ported from the artboard's
- * `pager()` (Finance App.dc.html, lines ~1690-1725).
- *
- * It runs on the server: the page slice is computed before render, so the
- * browser only ever receives the rows it is showing.
- */
+/** One pagination engine for every growing list. */
 
 export type PageNumber =
   | { readonly kind: "page"; readonly key: string; readonly value: number; readonly isCurrent: boolean }
@@ -74,12 +68,7 @@ export function paginate<T>(
   };
 }
 
-/**
- * The same shape, for a list the API has already paged.
- *
- * `items` is one page, and `total` comes from the response's `meta` — nothing
- * else knows how many rows there are, so it cannot be derived here.
- */
+/** The same shape, for a list the API has already paged. */
 export function pagedFromTotal<T>(
   items: readonly T[],
   requestedPage: number,

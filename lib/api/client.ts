@@ -7,15 +7,7 @@ import {
   type ApiResult,
 } from "@/types/api";
 
-/**
- * The single door to `ledgerline-backend`.
- *
- * It runs on the server only — the base URL is not a `NEXT_PUBLIC_` variable,
- * and the access token lives in an http-only cookie the browser cannot read.
- * Nothing here throws for an expected failure: a rejected login, a validation
- * error and an unreachable API all come back as `{ ok: false }` so callers
- * handle one shape.
- */
+/** The single door to `ledgerline-backend`. */
 
 const DEFAULT_BASE_URL = "http://localhost:8080/api/v1";
 
@@ -135,11 +127,7 @@ function toFailure(
   );
 }
 
-/**
- * Performs the call and unwraps the envelope. `data` stays `unknown`: the
- * endpoint wrappers in `lib/api/*` are the ones that know its shape and parse
- * it into a real type.
- */
+/** Performs the call and unwraps the envelope. */
 export async function apiRequest(
   request: ApiRequest,
 ): Promise<ApiResult<unknown>> {
@@ -164,15 +152,7 @@ export async function apiRequest(
   };
 }
 
-/**
- * The raw response, for the one endpoint whose body is not JSON: the audit
- * log CSV. It is streamed rather than buffered, so an export of any size
- * passes through this app without ever being held in its memory.
- *
- * `null` means the API could not be reached — the same `send` failure every
- * other call reports as `UNREACHABLE`. A non-2xx response is returned as it
- * is: the caller decides what a failed download should look like.
- */
+/** The raw response, for the one endpoint whose body is not JSON: the audit log CSV. */
 export async function apiStream(
   request: ApiRequest,
 ): Promise<Response | null> {
@@ -203,10 +183,7 @@ export function withoutData(result: ApiResult<unknown>): ApiResult<null> {
   return { ok: true, data: null, message: result.message, meta: result.meta };
 }
 
-/**
- * Appends the query the list endpoints read. An empty or absent value is left
- * out entirely, so `?search=` never reaches the backend as a real filter.
- */
+/** Appends the query the list endpoints read. */
 export function withQuery(
   path: string,
   query: Readonly<Record<string, string | number | undefined>>,

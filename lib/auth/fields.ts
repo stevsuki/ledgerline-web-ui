@@ -1,10 +1,4 @@
-/**
- * The names on the auth inputs.
- *
- * They are the backend's json tags on purpose: a `VALIDATION_ERROR` names the
- * field it rejected, so keeping the two vocabularies identical means the error
- * lands under the right input with no translation table in between.
- */
+/** The names on the auth inputs. */
 export const FIELD = {
   email: "email",
   fullName: "full_name",

@@ -1,10 +1,4 @@
-/**
- * Lucide icon sprite, extracted verbatim from the artboard's <defs> block
- * (Ledgerline/Finance App.dc.html, lines 128-170).
- *
- * Rendered once, in the root layout. Screens reference a symbol through
- * <Icon name="..." /> so path data is never duplicated into a component.
- */
+/** Lucide icon sprite, extracted verbatim from the artboard's <defs> block. */
 export const ICON_NAMES = [
   "grid",
   "swap",
@@ -21,6 +15,7 @@ export const ICON_NAMES = [
   "sun",
   "moon",
   "panel",
+  "menu",
   "right",
   "x",
   "check",
@@ -105,6 +100,10 @@ export function IconSprite() {
         </symbol>
         <symbol id="i-panel" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
           <rect width="18" height="18" x="3" y="3" /><path d="M9 3v18" />
+        </symbol>
+        {/* Lucide `menu` — not in the artboard, which never had to open a rail. */}
+        <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 6h16" /><path d="M4 12h16" /><path d="M4 18h16" />
         </symbol>
         <symbol id="i-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
           <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />

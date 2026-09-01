@@ -9,11 +9,7 @@ import {
   type Theme,
 } from "@/lib/preferences";
 
-/**
- * Theme lives on <html data-theme>, stamped by the server from a cookie.
- * Switching writes the attribute straight away — no re-render, no flash — and
- * saves the cookie so the next server render agrees.
- */
+/** Theme lives on <html data-theme>, stamped by the server from a cookie. */
 function applyTheme(theme: Theme) {
   document.documentElement.dataset.theme = theme;
   persistPreference(THEME_COOKIE, theme);
@@ -55,7 +51,7 @@ export function ThemeSegment({ initial }: { readonly initial: Theme }) {
   }
 
   return (
-    <div className="flex items-center justify-between gap-4">
+    <div className="flex flex-wrap items-center justify-between gap-3">
       <div>
         <p className="text-row">Appearance</p>
         <p className="text-meta text-muted mt-0.5">

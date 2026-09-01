@@ -14,13 +14,7 @@ import {
 import { signInHref } from "@/lib/auth/routes";
 import type { AuthTokens, Profile, ResetGrant } from "@/types/auth";
 
-/**
- * The session, read and written on the server.
- *
- * Reads work anywhere; writes only work where Next allows a cookie to be set —
- * a Server Action or `proxy.ts` — which is why `startSession` and friends are
- * called from `lib/auth/actions.ts` and nowhere else.
- */
+/** The session, read and written on the server. */
 
 /** Floor for the reset grant, in case the API reports no lifetime. */
 const MIN_RESET_MAX_AGE_SECONDS = 60;
@@ -54,11 +48,7 @@ export async function hasRefreshToken(): Promise<boolean> {
 
 /* ── the password-reset grant ──────────────────────────────────────────── */
 
-/**
- * The grant never reaches the browser as a readable value: it is parked in an
- * http-only cookie between the OTP step and the new-password step, so the
- * second form does not have to carry it in a hidden input.
- */
+/** The grant never reaches the browser as a readable value. */
 export async function saveResetGrant(grant: ResetGrant): Promise<void> {
   const store = await cookies();
   store.set(
@@ -80,13 +70,7 @@ export async function clearResetGrant(): Promise<void> {
 
 /* ── who is signed in ──────────────────────────────────────────────────── */
 
-/**
- * The one place the app asks who the caller is.
- *
- * `proxy.ts` only glances at the cookie; this asks the backend, which is what
- * makes it authoritative. React's `cache` collapses every call made while one
- * request renders into a single `/auth/me`.
- */
+/** The one place the app asks who the caller is. */
 export const getProfile = cache(async (): Promise<Profile | null> => {
   const accessToken = await readAccessToken();
   if (!accessToken) {
@@ -97,11 +81,7 @@ export const getProfile = cache(async (): Promise<Profile | null> => {
   return result.ok ? result.data : null;
 });
 
-/**
- * Guard for anything behind the gate, returning the sidebar with the account:
- * every screen needs both, and `cache` means they cost one `/auth/me` between
- * them however many components ask.
- */
+/** Guard for anything behind the gate, returning the sidebar with the account. */
 export async function requireProfile(returnTo?: string): Promise<Profile> {
   const profile = await getProfile();
   if (!profile) {
@@ -110,11 +90,7 @@ export async function requireProfile(returnTo?: string): Promise<Profile> {
   return profile;
 }
 
-/**
- * The token every call to the API carries. A caller that gets here without one
- * has no session left, so it lands on the sign-in card like any other
- * unauthenticated request rather than sending the backend an empty header.
- */
+/** The token every call to the API carries. */
 export async function requireAccessToken(): Promise<string> {
   const accessToken = await readAccessToken();
   if (!accessToken) {

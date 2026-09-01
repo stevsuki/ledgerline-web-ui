@@ -103,17 +103,46 @@ Reuse the primitive in `components/ui/` — do not re-derive the numbers inline.
 | Track | radius 99, fill radius 99 | `<ProgressTrack>` |
 | Overlay | slide-over / dropdown · radius 20 · `shadow-lg` | `<SlideOver>` / popover |
 | PhoneFrame | radius 20 · `shadow-lg` | `<PhoneFrame>` |
-| Rhythm | panel padding 24 · header row 19/24 · body row 14/24 · gaps 16/24 | — |
+| Rhythm | panel inset `--pad-panel` · header row 19 · body row 14 · gaps 16/24 | `.panel-pad` |
+
+Above those sit the compositions — the arrangements that came up on four screens or
+more. Reach for one of these before writing the markup again:
+
+| Composition | Where it repeats | Component |
+| --- | --- | --- |
+| Padded card: title, meta line, column of fields | budgets, wallets, goals, recurring, shared, reminders, settings, insights | `<SectionPanel>` |
+| "Nothing matched" / "the API failed" line in a table | users, roles, audit, transactions | `<PanelNotice>` / `<EmptyState>` |
+| Label · `spent / limit` · track | dashboard, shared | `<MeterRow>` |
+| Swatch · name, and the row of them | dashboard, insights, shared | `<LegendItem>` / `<LegendList>` |
+| One track divided into shares | budgets, shared | `<StackedBar>` |
+| Two-up form fields that stack when halved | wallets, goals, settings | `<FieldGrid>` |
+| Clear-every-filter link | transactions, audit | `<FilterReset>` |
 
 Typography inside panels, from the artboard: panel title 16.5px/600/`-.015em`; kicker
 10.5px uppercase `.12em` muted 600; stat value 24.5px/600/`-.03em`; row primary 13.5px;
 row secondary 11.5px muted. Every money figure carries `tabular-nums`.
 
-### Rhythm: horizontal is fixed, vertical varies
+### Rhythm: horizontal is one token, vertical varies
 
-Inside a panel, **every** header, column head and body row is inset **24px** on both
-sides — that is what makes a column head line up with the rows under it. `.panel-head`,
-`.panel-row`, `.panel-row-dense`, `.column-head` and `.column-head-access` all pin it.
+Inside a panel, **every** header, column head and body row is inset by `--pad-panel` on
+both sides — that is what makes a column head line up with the rows under it.
+`.panel-head`, `.panel-row`, `.panel-row-dense`, `.column-head`, `.column-head-access`
+and the two loose-block classes `.panel-pad` / `.panel-pad-x` all read it, so they step
+together and can never drift apart.
+
+It is a token rather than the artboard's flat 24px because 24px on each side of a 360px
+phone spends 48 of its pixels on nothing. Both insets step down with the viewport, and
+`--header-h` follows, because the header sheds a row of chrome at the same widths:
+
+| | `--pad-screen` | `--pad-panel` | `--header-h` |
+| --- | --- | --- | --- |
+| ≥ 64rem | 28px | 24px | 73px |
+| < 64rem | 20px | 20px | 69px |
+| < 40rem | 16px | 16px | 62px |
+
+Those are Tailwind's own `lg` and `sm`, so a `lg:` or `sm:` utility flips on exactly the
+same frame the tokens do. **Never write `px-6` or `p-6` on a panel** — use `.panel-pad`
+/ `.panel-pad-x`, or the primitive that already carries them.
 
 Only the vertical step changes between screens, so override it with a `py-*` utility
 rather than inventing another class (Tailwind's utility layer is emitted after the
@@ -150,6 +179,33 @@ and both must stay fixed:
 `main` no longer scrolls; the column around it does. That keeps the sticky header and the
 content in one box so a scrollbar cannot shift one edge and not the other.
 
+### The third departure: the canvas has no narrow width
+
+The artboard is one desktop frame, so nothing in it says what a phone gets. These rules
+fill that in, and every new screen must hold them:
+
+- **The rail undocks below `lg`.** Docked, it costs a 390px phone between 62 and 208px of
+  a 390px screen. Below `lg` `.nav-rail` goes `position: fixed` and slides in over the
+  content, driven by `data-nav` on the shell exactly as the docked width is driven by
+  `data-rail`. Closed, it is `visibility: hidden`, which is what keeps it out of the tab
+  order. `<NavDrawer>` owns the button, the scrim, Escape, and closing on navigation.
+- **The header drops chrome, it does not wrap into three rows.** Each piece leaves at the
+  width where it stops earning its place — currency tag at `xl`, global search at `md`,
+  the add-transaction *label* (not the button) at `sm` — so what is left holds one row at
+  360px. `<AppHeader>` is the only place that decides this.
+- **A fixed-column table folds; it does not scroll sideways.** Transactions and recurring
+  drop to `icon · name · amount` under `md` and fold the other columns into the meta line
+  under the name. Reserve `<TableScroll>` for the access tables, where every column is a
+  distinct fact and there is nowhere to fold it to.
+- **Every `minmax()` floor is `min(100%, Npx)`.** A bare `minmax(316px, 1fr)` cannot go
+  under 316px, so on a 320px phone it pushes the whole page sideways. `<CardGrid>`,
+  `<SplitGrid>`, `<FieldGrid>` and `<StatGrid>` all do this for you.
+- **An overlay is capped against the viewport, not just its trigger** — `w-[min(320px,
+  calc(100vw-2rem))]`. That covers the notification popover, the export popover and the
+  date-range grid.
+- **Sticky is a two-column idea.** `lg:sticky` only, or a stacked phone gets a panel that
+  pins itself over the list it belongs beside.
+
 ---
 
 ## 4. Architecture — SSR first, CSR only where it must be
@@ -177,6 +233,7 @@ Keep it this short. Adding one is a decision, not a detail.
 | `NavLink` | `usePathname()` for the active state |
 | `ThemeToggle` / `ThemeSegment` | writes the theme cookie, flips `data-theme` optimistically |
 | `RailToggle` | writes the rail cookie |
+| `NavDrawer` | the mobile rail's open flag — `aria-expanded`, Escape, close on navigation |
 | `NotificationBell` | open/close popover, outside click, Escape |
 | `FilterForm` | debounced typing, instant selects, focus-preserving replace |
 | `TrendChart` | hover tooltip over the bars |

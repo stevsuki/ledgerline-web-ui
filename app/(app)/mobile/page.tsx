@@ -254,7 +254,7 @@ function PhoneFrame({
   readonly children: ReactNode;
 }) {
   return (
-    <section className="w-[330px]">
+    <section className="w-full max-w-[330px]">
       <h2 className="panel-kicker mb-2.5">{label}</h2>
       <div className="border-divider bg-bg animate-pop flex h-[660px] flex-col overflow-hidden rounded-[var(--radius-overlay)] border shadow-lg">
         {children}

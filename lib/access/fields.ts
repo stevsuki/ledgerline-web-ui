@@ -1,10 +1,4 @@
-/**
- * The names on the access forms.
- *
- * They are the backend's json tags, exactly as the auth forms do it: a
- * `VALIDATION_ERROR` names the field it rejected, so the error lands under the
- * right input with no translation table in between.
- */
+/** The names on the access forms. */
 export const ACCESS_FIELD = {
   id: "id",
   email: "email",

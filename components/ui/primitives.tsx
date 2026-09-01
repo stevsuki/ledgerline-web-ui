@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import { Icon } from "@/components/ui/icon";
 import type { IconName } from "@/components/ui/icon-sprite";
+import { PanelNotice } from "@/components/ui/panel";
 import { initialsOf } from "@/lib/format";
 import { BG_TONE, TEXT_TONE, cx } from "@/lib/tone";
 import type { Tone } from "@/types/ledger";
@@ -76,6 +77,106 @@ export function ProgressTrack({
   );
 }
 
+/** A budget line: what it is, how far through it is, and the two figures. */
+export function MeterRow({
+  label,
+  spent,
+  limit,
+  width,
+  fillClass,
+}: {
+  readonly label: string;
+  readonly spent: string;
+  readonly limit: string;
+  readonly width: string;
+  readonly fillClass: string;
+}) {
+  return (
+    <div>
+      <div className="text-note flex items-baseline gap-2">
+        <span className="min-w-0 flex-1 truncate">{label}</span>
+        <span className="text-muted flex-none tabular-nums">
+          {spent} / {limit}
+        </span>
+      </div>
+      <ProgressTrack
+        small
+        className="mt-1.5"
+        width={width}
+        fillClass={fillClass}
+      />
+    </div>
+  );
+}
+
+/* ── legends and stacked bars ──────────────────────────────────────────── */
+
+/** One swatch and its name; four screens draw it. */
+export function LegendItem({
+  label,
+  fillClass,
+}: {
+  readonly label: string;
+  readonly fillClass: string;
+}) {
+  return (
+    <li className="flex items-center gap-1.5">
+      <span
+        aria-hidden="true"
+        className={cx("size-2.5 flex-none rounded-[3px]", fillClass)}
+      />
+      {label}
+    </li>
+  );
+}
+
+/** The row those swatches sit in. Wraps, so a narrow panel stacks them. */
+export function LegendList({
+  children,
+  className,
+}: {
+  readonly children: ReactNode;
+  readonly className?: string;
+}) {
+  return (
+    <ul
+      className={cx(
+        "text-meta text-muted flex flex-wrap gap-x-4.5 gap-y-1.5",
+        className,
+      )}
+    >
+      {children}
+    </ul>
+  );
+}
+
+export type BarSegment = {
+  readonly id: string;
+  readonly width: string;
+  readonly fillClass: string;
+};
+
+/** A single track divided into shares rather than filled to one point. */
+export function StackedBar({
+  segments,
+  className,
+}: {
+  readonly segments: readonly BarSegment[];
+  readonly className?: string;
+}) {
+  return (
+    <div className={cx("track flex", className)}>
+      {segments.map((segment) => (
+        <span
+          key={segment.id}
+          className={segment.fillClass}
+          style={{ width: segment.width }}
+        />
+      ))}
+    </div>
+  );
+}
+
 /* ── avatar ────────────────────────────────────────────────────────────── */
 
 export function Avatar({
@@ -135,11 +236,11 @@ export function EmptyState({
   readonly resetLabel: string;
 }) {
   return (
-    <p className="text-muted px-6 py-13 text-[13px]">
+    <PanelNotice>
       {message}{" "}
       <Link className="btn btn-ghost text-[13px]" href={resetHref}>
         {resetLabel}
       </Link>
-    </p>
+    </PanelNotice>
   );
 }

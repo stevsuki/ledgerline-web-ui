@@ -17,15 +17,7 @@ import {
 } from "@/types/access";
 import type { ApiResult } from "@/types/api";
 
-/**
- * The four audit endpoints of `ledgerline-backend`:
- * `/audit-logs`, `/audit-logs/overview`, `/audit-logs/options` and
- * `/audit-logs/export`.
- *
- * As everywhere else in `lib/api`, the payload is narrowed into a real type
- * here rather than cast, so a backend that answers with something unexpected
- * produces a reportable failure instead of a crash inside a component.
- */
+/** The four audit endpoints of `ledgerline-backend`, under `/audit-logs`. */
 
 const AUDIT_LOGS = "/audit-logs";
 
@@ -63,12 +55,7 @@ function rangeParams(query: AuditQuery): Record<string, string> {
 
 /* ── list ──────────────────────────────────────────────────────────────── */
 
-/**
- * `created_at` arrives as `2026-08-27 19:41:00`; the table prints
- * `27-08-2026 19:41`. Rearranged as text rather than through `Date`, because
- * the backend sends no zone and parsing one in would shift the stamp by
- * whatever the viewer's offset happens to be.
- */
+/** `created_at` arrives as `2026-08-27 19:41:00`; the table prints `27-08-2026 19:41`. */
 function toDisplayStamp(createdAt: string): string {
   const [date, time = ""] = createdAt.split(" ");
   const [year, month, day] = date.split("-");
@@ -231,13 +218,7 @@ export async function fetchAuditOptions(
 
 /* ── export ────────────────────────────────────────────────────────────── */
 
-/**
- * GET /audit-logs/export — the raw response, body and all.
- *
- * The backend streams the CSV row by row and names the file after the range,
- * so the route handler in front of this passes both straight through rather
- * than reading, re-encoding or re-naming anything.
- */
+/** GET /audit-logs/export — the raw response, body and all. */
 export async function streamAuditExport(
   accessToken: string,
   query: AuditQuery,

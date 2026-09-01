@@ -63,9 +63,7 @@ export default async function ResetPasswordPage(
   const params = await props.searchParams;
   const step = readOption(params, RESET_STEP_PARAM, RESET_STEPS);
 
-  // The second leg only exists while the OTP grant does. Landing on it with an
-  // expired or absent grant — a bookmark, a reload an hour later — goes back
-  // to the first leg rather than showing a form that could never submit.
+  // The second leg only exists while the OTP grant does.
   if (step === "reset" && !(await readResetGrant())) {
     redirect(resetStepHref("request"));
   }

@@ -17,30 +17,9 @@ import {
 } from "@/lib/auth/routes";
 import type { AuthTokens } from "@/types/auth";
 
-/**
- * The gate in front of every route.
- *
- * Next 16 renamed this file convention from `middleware` to `proxy`; the job
- * is the same one middleware always did — run before the request is served,
- * and redirect or rewrite it.
- *
- * Two things happen here and nowhere else:
- *
- * 1. An optimistic check. It reads the cookie, never `/auth/me` — this runs on
- *    every request, so it stays cheap. The authoritative check is
- *    `requireUser()` in `lib/auth/session.ts`, which sits next to the data.
- * 2. The token refresh. The access token lives 15 minutes and the refresh
- *    token a week, and a Server Component may not write a cookie — so this is
- *    the only place that can notice an expired access token and quietly
- *    replace the pair before the page renders.
- */
+/** The gate in front of every route. */
 
-/**
- * What `requireUser()` puts on the sign-in URL when the API rejects a token
- * the browser still holds. Without noticing it, this file would send the
- * visitor straight back to a page that redirects here again — a Server
- * Component cannot clear a cookie, so the clearing has to happen here.
- */
+/** What `requireUser()` puts on the sign-in URL when the API rejects a token. */
 const REJECTED_SESSION = "session-expired";
 
 const PREFETCH_HEADER = "next-router-prefetch";
@@ -93,9 +72,7 @@ async function renewSession(
   refreshToken: string,
   isPublic: boolean,
 ): Promise<NextResponse> {
-  // A prefetch must not be answered from a stale session: refreshing on every
-  // hovered link would stampede the API, and letting the page render would
-  // cache a redirect to sign-in for a visitor who is in fact still signed in.
+  // A prefetch must not be answered from a stale session.
   if (isPrefetch(request)) {
     return new NextResponse(null, { status: NO_CONTENT });
   }

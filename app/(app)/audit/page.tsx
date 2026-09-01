@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 
 import { AuditExportPopover } from "@/components/audit/export-popover";
@@ -11,6 +10,7 @@ import { Panel } from "@/components/ui/panel";
 import { Avatar, EmptyState } from "@/components/ui/primitives";
 import { StatRow } from "@/components/ui/stats";
 import {
+  FilterReset,
   FilterSelect,
   FilterSubmit,
   SearchInput,
@@ -43,22 +43,13 @@ export const metadata: Metadata = { title: PAGE_META.audit.title };
 
 const BASE_PATH = "/audit";
 
-/**
- * Six filters, a reset and an export do not fit one row of a 1240px screen at
- * fixed widths — the sum overflows and the last control drops to a line of its
- * own. So none of them is pinned: each select takes an equal share of what is
- * left and shrinks with the others, and the row stays one row.
- */
+/** Six filters, a reset and an export only fit one row if none of them is pinned. */
 const SELECT_CLASS = "w-full min-w-[112px] flex-1";
 
 const ROW_GRID =
   "grid grid-cols-[150px_minmax(0,1fr)_170px_minmax(0,1.4fr)_120px] items-center gap-3.5";
 
-/**
- * The backend's three severities. `critical` takes the expense red because it
- * is the one meant to stop a reader; `warning` the amber; `info` stays muted,
- * so an ordinary day of events reads as texture rather than alarm.
- */
+/** The backend's three severities. */
 const SEVERITY_TONE: Readonly<Record<AuditSeverity, Tone>> = {
   critical: "expense",
   warning: "warn",
@@ -99,11 +90,7 @@ function labelOf(
   return entries.find((entry) => entry.value === value)?.label ?? value;
 }
 
-/**
- * The active filters in words, for the export popover's scope block. The
- * labels come from the same options the dropdowns show, so the summary never
- * invents a name for a code.
- */
+/** The active filters in words, for the export popover's scope block. */
 function describeScope(
   query: string,
   actorId: string,
@@ -123,7 +110,7 @@ function describeScope(
   return parts.length > 0 ? parts.join(" · ") : "None";
 }
 
-export default async function AuditPage(props: PageProps<"/audit">) {
+export default async function AuditPage(props: Readonly<PageProps<"/audit">>) {
   const params = await props.searchParams;
   const query = readText(params, "q");
   const moduleCode = readOption(params, "module", AUDIT_MODULE_VALUES);
@@ -132,8 +119,7 @@ export default async function AuditPage(props: PageProps<"/audit">) {
   const from = readIsoDate(params, "from");
   const to = readIsoDate(params, "to");
 
-  // Actors are the one open set, so the id is shape-checked here rather than
-  // matched against a list the URL had to be parsed before we could fetch.
+  // Actors are the one open set.
   const rawActor = readText(params, "actor");
   const actorId = isActorId(rawActor) ? rawActor : NO_FILTER;
 
@@ -163,8 +149,7 @@ export default async function AuditPage(props: PageProps<"/audit">) {
         <StatRow stats={stats} size="large" />
 
         <Panel>
-          {/* The export control is not a filter, so it sits beside the form
-              rather than inside it — it must not be submitted with the fields. */}
+          {/* The export control is not a filter, so it sits beside the form rather than inside it. */}
           <div className="panel-head flex flex-wrap items-center gap-2.5">
             <FilterForm
               action={BASE_PATH}
@@ -179,8 +164,7 @@ export default async function AuditPage(props: PageProps<"/audit">) {
                 className="min-w-[170px] flex-[2]"
               />
               <DateRangeField
-                // Remounting on a URL change is what resets a half-picked
-                // range, so the field never syncs itself back from its props.
+                // Remounting on a URL change is what resets a half-picked range.
                 key={`${from}|${to}`}
                 from={from}
                 to={to}
@@ -223,9 +207,7 @@ export default async function AuditPage(props: PageProps<"/audit">) {
                 className={SELECT_CLASS}
               />
               <FilterSubmit />
-              <Link href={BASE_PATH} className="btn btn-secondary h-[38px]">
-                Reset
-              </Link>
+              <FilterReset href={BASE_PATH} />
             </FilterForm>
 
             <AuditExportPopover

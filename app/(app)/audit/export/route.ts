@@ -15,28 +15,7 @@ import {
   type RawSearchParams,
 } from "@/lib/search-params";
 
-/**
- * The audit log as a file.
- *
- * The CSV itself is the backend's — `GET /audit-logs/export` streams it row by
- * row, under the same filters as the list, so the file can never hold a
- * different set of rows than the table it was asked for from. This route
- * exists because the browser cannot call that endpoint: the access token is in
- * an http-only cookie that only the server can read.
- *
- * So it is a pipe, not a generator. The upstream body is passed straight
- * through without being buffered, and the filename the backend chose is passed
- * through with it — an export of any size crosses this app without ever
- * sitting in its memory.
- *
- * A failure answers as a status and a sentence, never as a file. The popover
- * reads both and says so on screen: a browser told to download will save
- * whatever arrives, so an error handed back as a body becomes a text file full
- * of error rather than a message anyone sees.
- *
- * It also has to guard itself. `proxy.ts` only checks that a session cookie
- * exists, and a route handler has no layout above it to run the real check.
- */
+/** The audit log as a file. The CSV itself is the backend's. */
 
 /** The menu code the backend gates this screen behind (migration 000008). */
 const AUDIT_MENU = "audit";
@@ -45,8 +24,7 @@ const CSV_CONTENT_TYPE = "text/csv; charset=utf-8";
 const FALLBACK_FILENAME = 'attachment; filename="audit-log.csv"';
 
 function forbidden(): Response {
-  // No redirect: a download is not a navigation, and returning the sign-in
-  // page would save an HTML file under a .csv name.
+  // No redirect: a download is not a navigation.
   return new Response("Not authorised", { status: 403 });
 }
 
@@ -80,8 +58,7 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   if (!upstream.ok) {
-    // Logged with its status, because the sentence the caller shows cannot
-    // carry enough to tell a missing route from an expired token.
+    // Logged with its status: the sentence the caller sees cannot carry that much.
     console.error(`audit export: the API answered ${upstream.status}`);
     return new Response(
       `The audit service could not produce the export (${upstream.status}).`,

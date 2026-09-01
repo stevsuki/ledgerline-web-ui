@@ -1,10 +1,4 @@
-/**
- * Every filter, sort and page lives in the URL, so a Server Component can
- * render the exact list the user asked for and a reload reproduces it.
- *
- * Nothing here trusts a raw query string: a value that is not on the allow
- * list falls back to the default.
- */
+/** Every filter, sort and page lives in the URL. */
 
 import { parseIsoDate } from "@/lib/dates";
 
@@ -29,11 +23,7 @@ export function readOption<T extends string>(
   return match ?? options[0];
 }
 
-/**
- * An ISO day (`2026-08-27`) or nothing. A stamp that is not a real calendar
- * day is dropped rather than clamped, so a broken link shows the unfiltered
- * list instead of a range nobody asked for.
- */
+/** An ISO day (`2026-08-27`) or nothing. */
 export function readIsoDate(params: RawSearchParams, key: string): string {
   const raw = first(params[key])?.trim() ?? "";
   return parseIsoDate(raw) ? raw : "";
@@ -52,10 +42,7 @@ export function readSize(
   return allowed.includes(parsed) ? parsed : allowed[0];
 }
 
-/**
- * Builds an href that keeps the current filters and changes only what is
- * passed in. Setting anything other than `page` sends the list back to page 1.
- */
+/** Builds an href that keeps the current filters and changes only what is passed in. */
 export function buildHref(
   pathname: string,
   current: RawSearchParams,
@@ -97,10 +84,7 @@ export function isDescending(sort: string): boolean {
   return sort.startsWith(DESC_PREFIX);
 }
 
-/**
- * Reads `?sort=`, keeping it only when the column is one the backend will
- * order by — anything else comes back as 400 from there, so it never leaves.
- */
+/** Reads `?sort=`, keeping it only when the column is one the backend will order by. */
 export function readSort(
   params: RawSearchParams,
   columns: readonly string[],

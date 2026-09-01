@@ -1,13 +1,4 @@
-/**
- * Chrome preferences that must be correct in the very first painted frame.
- *
- * They live in cookies so the server can stamp `data-theme` on <html> and give
- * the rail its width before any JavaScript runs — no flash, no layout shift.
- * The client half only writes; it never needs to read back.
- *
- * This module is imported from both sides of the boundary, so it must not
- * pull in `next/headers`.
- */
+/** Chrome preferences that must be correct in the very first painted frame. */
 
 export type Theme = "dark" | "light";
 

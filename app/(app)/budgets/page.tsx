@@ -9,8 +9,13 @@ import {
 } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icon";
 import { ScreenStack, SplitGrid } from "@/components/ui/layout";
-import { Panel } from "@/components/ui/panel";
-import { IconTile, ProgressTrack, Tag } from "@/components/ui/primitives";
+import { Panel, SectionPanel } from "@/components/ui/panel";
+import {
+  IconTile,
+  ProgressTrack,
+  StackedBar,
+  Tag,
+} from "@/components/ui/primitives";
 import { getAllocationShares } from "@/lib/data/analytics";
 import {
   BUDGET_ALLOCATION,
@@ -36,33 +41,33 @@ export default async function BudgetsPage() {
       subtitle={PAGE_META.budgets.subtitle}
     >
       <ScreenStack>
-        <div className="border-divider grid overflow-hidden rounded-[var(--radius-panel)] border shadow-md [grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1.6fr))]">
-          <section className="bg-surface border-divider min-w-0 border-r p-6">
+        {/* Two sections in one panel shell. */}
+        <div className="border-divider bg-divider grid gap-px overflow-hidden rounded-[var(--radius-panel)] border shadow-md [grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1.6fr))]">
+          <section className="bg-surface panel-pad min-w-0">
             <h2 className="panel-kicker">August allocated</h2>
-            <p className="mt-2.5 flex items-baseline gap-3">
-              <span className="text-[30px] font-semibold tracking-[-0.03em]">
+            <p className="mt-2.5 flex flex-wrap items-baseline gap-x-3">
+              <span className="text-[26px] font-semibold tracking-[-0.03em] sm:text-[30px]">
                 {BUDGET_ALLOCATION.total}
               </span>
               <span className="text-muted text-note">
                 {BUDGET_ALLOCATION.categoryCount}
               </span>
             </p>
-            <div className="track mt-4 flex">
-              {shares.map((share) => (
-                <span
-                  key={share.id}
-                  className={RAMP_BG[share.step]}
-                  style={{ width: share.width }}
-                />
-              ))}
-            </div>
-            <p className="text-meta text-muted mt-2.5 flex justify-between">
+            <StackedBar
+              className="mt-4"
+              segments={shares.map((share) => ({
+                id: share.id,
+                width: share.width,
+                fillClass: RAMP_BG[share.step],
+              }))}
+            />
+            <p className="text-meta text-muted mt-2.5 flex flex-wrap justify-between gap-x-3">
               <span>{BUDGET_ALLOCATION.spentNote}</span>
               <span>{BUDGET_ALLOCATION.cycleNote}</span>
             </p>
           </section>
 
-          <section className="bg-surface p-6">
+          <section className="bg-surface panel-pad">
             <h2 className="panel-kicker">Needs attention</h2>
             <ul className="mt-3 flex flex-col gap-[11px]">
               {BUDGET_ATTENTION.map((item) => (
@@ -95,14 +100,16 @@ export default async function BudgetsPage() {
               <Panel
                 key={budget.id}
                 className={cx(
-                  "px-6 py-[19px]",
+                  "panel-pad-x py-[19px]",
                   budget.isOver && "border-accent",
                 )}
               >
                 <div className="flex items-center gap-3">
                   <IconTile name={budget.icon} tone={budget.tone} dense />
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-semibold">{budget.label}</h3>
+                    <h3 className="truncate text-sm font-semibold">
+                      {budget.label}
+                    </h3>
                     <p className="text-meta text-muted mt-px">
                       Alerts at {budget.threshold} of limit
                     </p>
@@ -133,55 +140,54 @@ export default async function BudgetsPage() {
             ))}
           </div>
 
-          <Panel className="sticky top-[calc(var(--header-h)+24px)] p-6">
-            <h2 className="panel-title">New budget</h2>
-            <p className="text-meta text-muted mt-0.5">
-              Applies from next cycle, 1 September.
-            </p>
-            <div className="mt-4 flex flex-col gap-3">
-              <SelectField
-                id="budget-category"
-                label="Category"
-                options={NEW_BUDGET_CATEGORIES}
-              />
-              <div className="field">
-                <label htmlFor="budget-limit">Monthly limit</label>
-                <div className="inset flex min-h-[38px] items-center gap-2 px-2.5">
-                  <span className="text-muted text-[13px]">Rp</span>
-                  <input
-                    id="budget-limit"
-                    name="budget-limit"
-                    defaultValue="1.500.000"
-                    className="text-text min-w-0 flex-1 bg-transparent text-sm outline-none"
-                  />
-                </div>
-              </div>
-              <div className="field">
-                <span className="mb-[5px] block text-xs text-[color-mix(in_srgb,var(--color-text)_70%,transparent)]">
-                  Notify me at
-                </span>
-                <SegmentedControl
-                  fill
-                  name="budget-threshold"
-                  defaultValue="80%"
-                  options={BUDGET_THRESHOLDS.map((value) => ({
-                    value,
-                    label: value,
-                  }))}
+          {/* Sticky only once the split is really two columns. */}
+          <SectionPanel
+            className="lg:sticky lg:top-[calc(var(--header-h)+24px)]"
+            title="New budget"
+            description="Applies from next cycle, 1 September."
+          >
+            <SelectField
+              id="budget-category"
+              label="Category"
+              options={NEW_BUDGET_CATEGORIES}
+            />
+            <div className="field">
+              <label htmlFor="budget-limit">Monthly limit</label>
+              <div className="inset flex min-h-[38px] items-center gap-2 px-2.5">
+                <span className="text-muted text-[13px]">Rp</span>
+                <input
+                  id="budget-limit"
+                  name="budget-limit"
+                  defaultValue="1.500.000"
+                  className="text-text min-w-0 flex-1 bg-transparent text-sm outline-none"
                 />
               </div>
-              <ToggleRow
-                id="budget-rollover"
-                label="Roll unspent amount forward"
-              />
-              <ActionButton
-                className="btn btn-primary btn-block"
-                message="Budget created — active from 1 September"
-              >
-                Create budget
-              </ActionButton>
             </div>
-          </Panel>
+            <div className="field">
+              <span className="mb-[5px] block text-xs text-[color-mix(in_srgb,var(--color-text)_70%,transparent)]">
+                Notify me at
+              </span>
+              <SegmentedControl
+                fill
+                name="budget-threshold"
+                defaultValue="80%"
+                options={BUDGET_THRESHOLDS.map((value) => ({
+                  value,
+                  label: value,
+                }))}
+              />
+            </div>
+            <ToggleRow
+              id="budget-rollover"
+              label="Roll unspent amount forward"
+            />
+            <ActionButton
+              className="btn btn-primary btn-block"
+              message="Budget created — active from 1 September"
+            >
+              Create budget
+            </ActionButton>
+          </SectionPanel>
         </SplitGrid>
       </ScreenStack>
     </AppScreen>

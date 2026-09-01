@@ -1,12 +1,6 @@
 import type { MenuNode } from "@/types/access";
 
-/**
- * The account model, mirroring `internal/domain` in `ledgerline-backend`.
- *
- * `role` here is the built-in privilege, not the RBAC role: the backend sends the
- * role's display name, and only the built-in admin maps onto anything the UI gates
- * on. The role screens work from `RoleRecord`, which carries the real row.
- */
+/** The account model, mirroring `internal/domain` in `ledgerline-backend`. */
 
 export const USER_ROLES = ["admin", "user"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
@@ -38,11 +32,7 @@ export type ResetGrant = {
   readonly expiresIn: number;
 };
 
-/**
- * `/auth/me` — the account plus the sidebar its role may reach. The menus are
- * already filtered and nested by the backend: only what the role can read
- * comes back, and a group whose children are all hidden comes back not at all.
- */
+/** `/auth/me` — the account plus the sidebar its role may reach. */
 export type Profile = {
   readonly user: AuthUser;
   readonly menus: readonly MenuNode[];

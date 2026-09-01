@@ -12,22 +12,13 @@ import {
   type UserRole,
 } from "@/types/auth";
 
-/**
- * The seven `/auth/*` endpoints the backend ships today, one function each.
- *
- * Each one parses the payload into a real type here, so nothing downstream
- * ever touches an untyped JSON value.
- */
+/** The seven `/auth/*` endpoints the backend ships today, one function each. */
 
 const AUTH = "/auth";
 
 /* ── parsers ───────────────────────────────────────────────────────────── */
 
-/**
- * The role arrives as its display name from the RBAC table — `"Admin"`,
- * `"User"`, or whatever a custom role was named — so it is lower-cased before
- * being matched. A name that is not a built-in one is an ordinary user.
- */
+/** The role arrives as its display name from the RBAC table — `"Admin"`, `"User"`. */
 function readRole(raw: Record<string, unknown>): UserRole {
   const name = readString(raw, "role")?.toLowerCase();
   return USER_ROLES.find((role) => role === name) ?? "user";
@@ -55,13 +46,7 @@ function parseUser(raw: unknown): AuthUser | null {
   };
 }
 
-/**
- * `/auth/me` answers with a profile — `{ user, menus }` — not the account on
- * its own, so the user sits one level in. `/auth/register` and the user
- * endpoints do return it bare, which is why the two parsers stay separate.
- *
- * The menus arrive already filtered and nested: only what the role may read.
- */
+/** `/auth/me` answers with a profile — `{ user, menus }` — not the account on its own. */
 function parseProfile(raw: unknown): Profile | null {
   if (!isRecord(raw)) {
     return null;

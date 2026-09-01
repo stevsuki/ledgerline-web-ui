@@ -7,7 +7,7 @@ import { FilterForm } from "@/components/ui/filter-form";
 import { Icon } from "@/components/ui/icon";
 import { ScreenStack, TableScroll } from "@/components/ui/layout";
 import { PaginationBar } from "@/components/ui/pagination-bar";
-import { Panel } from "@/components/ui/panel";
+import { Panel, PanelNotice } from "@/components/ui/panel";
 import { IconTile, Tag } from "@/components/ui/primitives";
 import { SortHeader } from "@/components/ui/sort-header";
 import { FilterSubmit, SearchInput } from "@/components/ui/toolbar";
@@ -127,8 +127,7 @@ export default async function RolesPage(props: Readonly<PageProps<"/roles">>) {
                     >
                       Edit
                     </Link>
-                    {/* A built-in role is what every account falls back to;
-                        the backend refuses to delete one, so it is not offered. */}
+                    {/* A built-in role is what every account falls back to; the backend refuses to delete one. */}
                     {role.isSystem ? null : (
                       <RemoveRoleButton id={role.id} name={role.name} />
                     )}
@@ -138,14 +137,10 @@ export default async function RolesPage(props: Readonly<PageProps<"/roles">>) {
             </ul>
           </TableScroll>
 
-          {error ? (
-            <p className="text-expense px-6 py-13 text-[13px]">{error}</p>
-          ) : null}
+          {error ? <PanelNotice tone="expense">{error}</PanelNotice> : null}
 
           {isEmpty && !error ? (
-            <p className="text-muted px-6 py-13 text-[13px]">
-              No roles match this search.
-            </p>
+            <PanelNotice>No roles match this search.</PanelNotice>
           ) : null}
 
           <PaginationBar

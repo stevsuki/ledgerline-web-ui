@@ -76,6 +76,10 @@ export const PAGE_META = {
   },
 } as const satisfies Record<string, PageMeta>;
 
+/** The app shell and the rail inside it, addressed by id. */
+export const SHELL_ID = "app-shell";
+export const NAV_ID = "app-nav";
+
 export const WORKSPACE = {
   brand: "Ledgerline",
   initial: "L",

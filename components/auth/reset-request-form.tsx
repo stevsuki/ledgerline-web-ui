@@ -9,14 +9,7 @@ import { resetRequestAction } from "@/lib/auth/actions";
 import { FIELD, OTP_LENGTH } from "@/lib/auth/fields";
 import { IDLE_AUTH_STATE } from "@/lib/auth/form-state";
 
-/**
- * Leg one of the reset: claim the email, then prove the code sent to it.
- *
- * Both backend calls need the email, so both buttons submit the same form and
- * say which leg they mean through `name="intent"`. One form, one action, one
- * `useActionState` — and the email typed for the OTP is the email verified
- * against it, with no chance of the two drifting apart.
- */
+/** Leg one of the reset: claim the email, then prove the code sent to it. */
 export function ResetRequestForm() {
   const [state, formAction, pending] = useActionState(
     resetRequestAction,
@@ -27,8 +20,7 @@ export function ResetRequestForm() {
     <form action={formAction} className="flex flex-col gap-3">
       <FormFeedback state={state} />
 
-      {/* The send button sits on the field's baseline: `.input` and `.btn`
-          share the 38px control height, and `.field-offset` clears the label. */}
+      {/* The send button sits on the field's baseline. */}
       <div className="flex items-start gap-2">
         <TextField
           id="reset-email"
