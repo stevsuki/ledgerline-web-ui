@@ -1,0 +1,249 @@
+import type { ReactNode } from "react";
+
+import { cx } from "@/lib/tone";
+
+/**
+ * Native form controls on the design system's classes. Everything here is
+ * uncontrolled, so the panels render and work on the server with no client
+ * JavaScript at all — the browser owns the field state.
+ *
+ * Every control takes an explicit `id` so its label really points at it. An
+ * `error` is the message the server sent back for that field: it colours the
+ * control, is announced through `aria-describedby`, and is rendered once,
+ * under the input, by `<Field>`.
+ */
+
+/** Suffix for the id of a field's error line, so the input can point at it. */
+function errorId(id: string): string {
+  return `${id}-error`;
+}
+
+export function Field({
+  id,
+  label,
+  error,
+  children,
+  className,
+}: {
+  readonly id: string;
+  readonly label: string;
+  readonly error?: string;
+  readonly children: ReactNode;
+  readonly className?: string;
+}) {
+  return (
+    <div className={cx("field", className)}>
+      <label htmlFor={id}>{label}</label>
+      {children}
+      {error ? (
+        <p id={errorId(id)} className="text-expense text-meta mt-1.5">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+export function TextField({
+  id,
+  label,
+  defaultValue,
+  placeholder,
+  type = "text",
+  name,
+  className,
+  inputClassName,
+  autoComplete,
+  inputMode,
+  maxLength,
+  minLength,
+  required = false,
+  error,
+}: {
+  readonly id: string;
+  readonly label: string;
+  readonly defaultValue?: string;
+  readonly placeholder?: string;
+  readonly type?: "text" | "password" | "email" | "date" | "time";
+  readonly name?: string;
+  readonly className?: string;
+  readonly inputClassName?: string;
+  readonly autoComplete?: string;
+  readonly inputMode?: "text" | "numeric";
+  readonly maxLength?: number;
+  readonly minLength?: number;
+  readonly required?: boolean;
+  readonly error?: string;
+}) {
+  return (
+    <Field id={id} label={label} error={error} className={className}>
+      <input
+        className={cx("input", error && "input-invalid", inputClassName)}
+        id={id}
+        name={name ?? id}
+        type={type}
+        defaultValue={defaultValue}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        inputMode={inputMode}
+        maxLength={maxLength}
+        minLength={minLength}
+        required={required}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId(id) : undefined}
+      />
+    </Field>
+  );
+}
+
+export function TextAreaField({
+  id,
+  label,
+  defaultValue,
+  placeholder,
+  rows = 3,
+  className,
+}: {
+  readonly id: string;
+  readonly label: string;
+  readonly defaultValue?: string;
+  readonly placeholder?: string;
+  readonly rows?: number;
+  readonly className?: string;
+}) {
+  return (
+    <Field id={id} label={label} className={className}>
+      <textarea
+        className="input"
+        id={id}
+        name={id}
+        rows={rows}
+        defaultValue={defaultValue}
+        placeholder={placeholder}
+      />
+    </Field>
+  );
+}
+
+export function SelectField({
+  id,
+  label,
+  options,
+  defaultValue,
+  className,
+  name,
+}: {
+  readonly id: string;
+  readonly label: string;
+  readonly options: readonly string[];
+  readonly defaultValue?: string;
+  readonly className?: string;
+  readonly name?: string;
+}) {
+  return (
+    <Field id={id} label={label} className={className}>
+      <select
+        className="input"
+        id={id}
+        name={name ?? id}
+        defaultValue={defaultValue}
+      >
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </Field>
+  );
+}
+
+/** A label-first switch row — the artboard's `.radio` used as a checkbox. */
+export function ToggleRow({
+  id,
+  label,
+  name,
+  defaultChecked = false,
+  labelFirst = true,
+  required = false,
+}: {
+  readonly id: string;
+  readonly label: string;
+  readonly name?: string;
+  readonly defaultChecked?: boolean;
+  readonly labelFirst?: boolean;
+  readonly required?: boolean;
+}) {
+  const control = (
+    <>
+      <input
+        id={id}
+        name={name ?? id}
+        type="checkbox"
+        defaultChecked={defaultChecked}
+        required={required}
+      />
+      <span className="dot" />
+    </>
+  );
+
+  return (
+    <label
+      className={cx(
+        "radio text-[13px]",
+        labelFirst && "w-full justify-between",
+      )}
+      htmlFor={id}
+    >
+      {labelFirst ? (
+        <>
+          <span>{label}</span>
+          {control}
+        </>
+      ) : (
+        <>
+          {control}
+          <span>{label}</span>
+        </>
+      )}
+    </label>
+  );
+}
+
+export type SegmentOption = {
+  readonly value: string;
+  readonly label: string;
+};
+
+export function SegmentedControl({
+  name,
+  options,
+  defaultValue,
+  className,
+  fill = false,
+}: {
+  readonly name: string;
+  readonly options: readonly SegmentOption[];
+  readonly defaultValue: string;
+  readonly className?: string;
+  readonly fill?: boolean;
+}) {
+  return (
+    <div className={cx("seg", fill && "w-full", className)} role="group">
+      {options.map((option) => (
+        <label
+          key={option.value}
+          className={cx("seg-opt", fill && "flex-1 justify-center")}
+        >
+          <input
+            type="radio"
+            name={name}
+            value={option.value}
+            defaultChecked={option.value === defaultValue}
+          />
+          {option.label}
+        </label>
+      ))}
+    </div>
+  );
+}

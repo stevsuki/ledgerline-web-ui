@@ -1,0 +1,222 @@
+import { isRecord, readEnum, readNumber, readString } from "@/lib/api/parse";
+import {
+  API_ERROR_CODES,
+  type ApiFailure,
+  type ApiFieldError,
+  type ApiMeta,
+  type ApiResult,
+} from "@/types/api";
+
+/**
+ * The single door to `ledgerline-backend`.
+ *
+ * It runs on the server only — the base URL is not a `NEXT_PUBLIC_` variable,
+ * and the access token lives in an http-only cookie the browser cannot read.
+ * Nothing here throws for an expected failure: a rejected login, a validation
+ * error and an unreachable API all come back as `{ ok: false }` so callers
+ * handle one shape.
+ */
+
+const DEFAULT_BASE_URL = "http://localhost:8080/api/v1";
+
+/** No HTTP exchange happened, so there is no status to report. */
+const NO_STATUS = 0;
+
+const UNREACHABLE_MESSAGE =
+  "Cannot reach the Ledgerline API. Check that the backend is running.";
+const UNREADABLE_MESSAGE = "The API returned a response we could not read.";
+const FALLBACK_ERROR_MESSAGE = "The request could not be completed.";
+const FALLBACK_SUCCESS_MESSAGE = "Success";
+
+function baseUrl(): string {
+  const configured = process.env.LEDGERLINE_API_URL?.trim();
+  return (configured || DEFAULT_BASE_URL).replace(/\/+$/, "");
+}
+
+export type ApiRequest = {
+  readonly path: string;
+  readonly method: "GET" | "POST" | "PATCH" | "DELETE";
+  readonly body?: Readonly<Record<string, unknown>>;
+  readonly accessToken?: string;
+};
+
+function buildHeaders(request: ApiRequest): Headers {
+  const headers = new Headers({ Accept: "application/json" });
+  if (request.body) {
+    headers.set("Content-Type", "application/json");
+  }
+  if (request.accessToken) {
+    headers.set("Authorization", `Bearer ${request.accessToken}`);
+  }
+  return headers;
+}
+
+async function send(request: ApiRequest): Promise<Response | null> {
+  try {
+    return await fetch(`${baseUrl()}${request.path}`, {
+      method: request.method,
+      headers: buildHeaders(request),
+      body: request.body ? JSON.stringify(request.body) : undefined,
+      // Auth answers are per-user and short-lived; they are never reused.
+      cache: "no-store",
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function readEnvelope(
+  response: Response,
+): Promise<Record<string, unknown> | null> {
+  try {
+    const parsed: unknown = await response.json();
+    return isRecord(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function readFieldErrors(
+  envelope: Record<string, unknown>,
+): readonly ApiFieldError[] {
+  const raw = envelope.errors;
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  const errors: ApiFieldError[] = [];
+  for (const entry of raw) {
+    if (!isRecord(entry)) {
+      continue;
+    }
+    const field = readString(entry, "field");
+    const message = readString(entry, "message");
+    if (field && message) {
+      errors.push({ field, message });
+    }
+  }
+  return errors;
+}
+
+function readMeta(envelope: Record<string, unknown>): ApiMeta | null {
+  const raw = envelope.meta;
+  if (!isRecord(raw)) {
+    return null;
+  }
+  return {
+    page: readNumber(raw, "page") ?? 1,
+    perPage: readNumber(raw, "per_page") ?? 0,
+    totalItems: readNumber(raw, "total_items") ?? 0,
+    totalPages: readNumber(raw, "total_pages") ?? 0,
+  };
+}
+
+function failure(
+  code: ApiFailure["code"],
+  message: string,
+  status: number,
+  fieldErrors: readonly ApiFieldError[] = [],
+): ApiResult<never> {
+  return { ok: false, error: { code, message, status, fieldErrors } };
+}
+
+function toFailure(
+  status: number,
+  envelope: Record<string, unknown> | null,
+): ApiResult<never> {
+  if (!envelope) {
+    return failure("UNREADABLE", UNREADABLE_MESSAGE, status);
+  }
+  return failure(
+    readEnum(envelope, "code", API_ERROR_CODES, "UNREADABLE"),
+    readString(envelope, "message") ?? FALLBACK_ERROR_MESSAGE,
+    status,
+    readFieldErrors(envelope),
+  );
+}
+
+/**
+ * Performs the call and unwraps the envelope. `data` stays `unknown`: the
+ * endpoint wrappers in `lib/api/*` are the ones that know its shape and parse
+ * it into a real type.
+ */
+export async function apiRequest(
+  request: ApiRequest,
+): Promise<ApiResult<unknown>> {
+  const response = await send(request);
+  if (!response) {
+    return failure("UNREACHABLE", UNREACHABLE_MESSAGE, NO_STATUS);
+  }
+
+  const envelope = await readEnvelope(response);
+  if (!response.ok) {
+    return toFailure(response.status, envelope);
+  }
+  if (!envelope) {
+    return failure("UNREADABLE", UNREADABLE_MESSAGE, response.status);
+  }
+
+  return {
+    ok: true,
+    data: envelope.data ?? null,
+    message: readString(envelope, "message") ?? FALLBACK_SUCCESS_MESSAGE,
+    meta: readMeta(envelope),
+  };
+}
+
+/**
+ * The raw response, for the one endpoint whose body is not JSON: the audit
+ * log CSV. It is streamed rather than buffered, so an export of any size
+ * passes through this app without ever being held in its memory.
+ *
+ * `null` means the API could not be reached — the same `send` failure every
+ * other call reports as `UNREACHABLE`. A non-2xx response is returned as it
+ * is: the caller decides what a failed download should look like.
+ */
+export async function apiStream(
+  request: ApiRequest,
+): Promise<Response | null> {
+  return send(request);
+}
+
+/** Runs a successful result's payload through a parser, or reports it unreadable. */
+export function withParsed<T>(
+  result: ApiResult<unknown>,
+  parse: (raw: unknown) => T | null,
+): ApiResult<T> {
+  if (!result.ok) {
+    return result;
+  }
+
+  const parsed = parse(result.data);
+  if (!parsed) {
+    return failure("UNREADABLE", UNREADABLE_MESSAGE, NO_STATUS);
+  }
+  return { ok: true, data: parsed, message: result.message, meta: result.meta };
+}
+
+/** For endpoints whose success carries no payload, only a message. */
+export function withoutData(result: ApiResult<unknown>): ApiResult<null> {
+  if (!result.ok) {
+    return result;
+  }
+  return { ok: true, data: null, message: result.message, meta: result.meta };
+}
+
+/**
+ * Appends the query the list endpoints read. An empty or absent value is left
+ * out entirely, so `?search=` never reaches the backend as a real filter.
+ */
+export function withQuery(
+  path: string,
+  query: Readonly<Record<string, string | number | undefined>>,
+): string {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined && value !== "") {
+      search.set(key, String(value));
+    }
+  }
+  const encoded = search.toString();
+  return encoded ? `${path}?${encoded}` : path;
+}

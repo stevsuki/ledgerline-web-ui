@@ -1,0 +1,2240 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/modernist-78f6dcf4-55a0-4c7b-9fe6-0d94a78a10e2/styles.css">
+<script src="_ds/modernist-78f6dcf4-55a0-4c7b-9fe6-0d94a78a10e2/_ds_bundle.js"></script>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --font-heading:"Plus Jakarta Sans","Archivo",system-ui,sans-serif;
+  --font-body:"Plus Jakarta Sans","Archivo",system-ui,sans-serif;
+  --color-bg:#0d0f14;--color-surface:#15181f;--color-text:#e7eaf1;
+  --color-divider:color-mix(in srgb,#e7eaf1 11%,transparent);
+  --panel:#12151b;--rail:#101319;--muted:#8a93a6;
+  --income:#3ecf8e;--expense:#ff6a4d;--warn:#e5a94a;
+  --c1:#ff563c;--c2:#e7eaf1;--c3:#9aa3b6;--c4:#6a7387;--c5:#454c5c;--c6:#2b313c;--c7:#ffc4b8;
+  --shadow-sm:0 1px 2px rgba(3,5,10,.45);
+  --shadow-md:0 6px 20px -6px rgba(3,5,10,.6),0 1px 2px rgba(3,5,10,.4);
+  --shadow-lg:0 28px 70px -16px rgba(3,5,10,.75),0 2px 6px rgba(3,5,10,.5);
+}
+html[data-theme=light]{
+  --color-bg:#f7f8fa;--color-surface:#ffffff;--color-text:#171a21;
+  --color-divider:color-mix(in srgb,#171a21 10%,transparent);
+  --panel:#f1f3f7;--rail:#ffffff;--muted:#6b7385;
+  --income:#12855c;--expense:#d8402a;--warn:#a06a12;
+  --c1:#ec3013;--c2:#171a21;--c3:#6b7385;--c4:#9aa2b1;--c5:#c3c9d4;--c6:#e3e7ee;--c7:#ffb3a3;
+  --shadow-sm:0 1px 2px rgba(23,26,33,.06);
+  --shadow-md:0 8px 24px -8px rgba(23,26,33,.14),0 1px 2px rgba(23,26,33,.05);
+  --shadow-lg:0 28px 70px -18px rgba(23,26,33,.22),0 2px 6px rgba(23,26,33,.07);
+}
+html[data-theme=light] .tag-neutral{background:#eef0f5;color:#3a4150}
+html[data-theme=dark] .tag-neutral{background:#22262f;color:#c9d0dd}
+html[data-theme=dark] .tag-accent{background:#3a1a13;color:#ffc4b8}
+.btn,.input,select.input,textarea.input,.seg{border-radius:12px}
+.tag{border-radius:99px;padding:4px 11px}
+.btn{padding:9px 15px}
+.btn-icon{padding:0;width:38px;height:38px;flex:none}
+.btn-secondary{border-color:var(--color-divider)}
+.input{background:var(--panel);border-color:var(--color-divider)}
+.seg{overflow:hidden;background:var(--panel);flex:none}
+.seg-opt+.seg-opt{border-left:1px solid var(--color-divider)}
+.seg-opt:has(input:checked){background:var(--color-accent);color:#fff}
+.btn-primary{color:#fff}
+.radio .dot{border-color:var(--color-divider)}
+h1,h2,h3,h4,h5,h6{font-weight:600;letter-spacing:-.02em}
+*{-webkit-tap-highlight-color:transparent}
+.btn,.input,select.input,textarea.input,.seg-opt,.tag,.radio .dot{transition:background-color .18s ease,color .18s ease,border-color .18s ease,box-shadow .2s ease,transform .14s cubic-bezier(.22,1,.36,1)}
+.btn{position:relative;overflow:hidden}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:translateY(0) scale(.975)}
+.btn-primary:hover{box-shadow:0 8px 20px -8px color-mix(in srgb,var(--color-accent) 75%,transparent);filter:brightness(1.08)}
+.btn-secondary:hover,.btn-ghost:hover{background:color-mix(in srgb,var(--color-text) 8%,transparent);border-color:color-mix(in srgb,var(--color-text) 26%,transparent)}
+.btn-icon:hover{transform:translateY(-1px) scale(1.05)}
+.btn:active{transition-duration:.06s}
+/* nav rail items */
+nav button{transition:background-color .18s ease,color .18s ease,transform .14s cubic-bezier(.22,1,.36,1)}
+nav button:hover{background:color-mix(in srgb,var(--color-text) 8%,transparent);color:var(--color-text);transform:translateX(2px)}
+nav button:active{transform:translateX(2px) scale(.985)}
+/* rows lift slightly under the pointer */
+/* rows highlight only where a row action exists (they carry Edit / toggles) */
+main [style*="border-bottom: 1px solid var(--color-divider)"]:has(button):hover{background:color-mix(in srgb,var(--color-text) 4%,transparent);transition:background-color .16s ease}
+/* cards that act as buttons */
+/* only the dashed "add" card behaves like a button */
+main [style*="border-radius: 16px"][style*="dashed"]{transition:border-color .2s ease,color .2s ease}
+main [style*="border-radius: 16px"][style*="dashed"]:hover{border-color:var(--color-accent);color:var(--color-accent)}
+/* permission checkboxes + fields */
+main button[title]:hover{transform:scale(1.14);border-color:var(--color-accent)}
+main button[title]:active{transform:scale(.94)}
+.input:hover,label:hover>.input{border-color:color-mix(in srgb,var(--color-text) 26%,transparent)}
+.input:focus,.input:focus-visible{outline:none;border-color:var(--color-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--color-accent) 18%,transparent)}
+.seg-opt:hover{background:color-mix(in srgb,var(--color-text) 7%,transparent)}
+.radio:hover .dot{border-color:var(--color-accent)}
+.tag{transition:background-color .16s ease}
+.seg-opt:has(input:checked){box-shadow:0 3px 12px -5px color-mix(in srgb,var(--color-accent) 85%,transparent)}
+.radio input:checked+.dot{transform:scale(1.06)}
+.m-rip{position:absolute;border-radius:50%;transform:translate(-50%,-50%) scale(0);background:currentColor;opacity:.3;pointer-events:none;animation:m-rip .6s ease-out forwards}
+@keyframes m-rip{to{transform:translate(-50%,-50%) scale(1);opacity:0}}
+@keyframes m-grow{from{transform:scaleY(0)}to{transform:none}}
+@keyframes m-growx{from{transform:scaleX(0)}to{transform:none}}
+@keyframes m-pop{from{opacity:0;transform:translateY(12px) scale(.99)}to{opacity:1;transform:none}}
+@keyframes m-toast{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
+/* ── SHAPE CONTRACT (maps 1:1 to reusable components) ──────────────
+   Panel      1px var(--color-divider) · radius 16 · shadow-md · bg surface
+   InsetBlock 1px divider · radius 12 · bg panel            (inside a Panel)
+   IconTile   34×34 (32 in dense rows) · 1px divider · radius 10
+   Control    height 38 · radius 12 · bg panel  (.btn/.input/.seg share this)
+   Checkbox   22×22 · radius 6 · 1.5px border
+   Tag        pill (radius 99) · padding 4/11
+   Track      radius 99 · fill radius 99
+   Overlay    slide-over / dropdown · radius 20 · shadow-lg
+   PhoneFrame radius 20 · shadow-lg
+   Rhythm     panel padding 24 · header row 19/24 · body row 14/24 · gap 16/24
+   ───────────────────────────────────────────────────────────────── */
+/* panels drift up on entry — replays whenever a screen mounts */
+main [style*="border-radius: 16px"]{animation:m-pop .5s cubic-bezier(.22,1,.36,1) both;min-width:0}
+main [style*="display: grid"]>*,main [style*="display: flex"]>*{min-width:0}
+main [style*="border-radius: 20px"]{animation:m-pop .55s cubic-bezier(.22,1,.36,1) both}
+main [style*="border-radius: 16px"]:nth-child(2){animation-delay:.06s}
+main [style*="border-radius: 16px"]:nth-child(3){animation-delay:.12s}
+main [style*="border-radius: 16px"]:nth-child(4){animation-delay:.18s}
+/* bars rise, progress bars fill */
+main [style*="border-radius: 7px 7px 3px 3px"]{transform-origin:bottom;animation:m-grow .6s cubic-bezier(.22,1,.36,1) both}
+main [style*="border-radius: 99px; background:"]{transform-origin:left;animation:m-growx .8s cubic-bezier(.22,1,.36,1) both;transition:width .5s cubic-bezier(.22,1,.36,1)}
+main svg path[opacity]{animation:m-fade .55s ease both}
+main [style*="animation: m-pop"] [style*="border-radius: 99px; background:"]{animation-delay:.15s}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+  .btn:hover,.btn-icon:hover,nav button:hover,main button[title]:hover{transform:none !important}
+}
+a{transition:color .15s ease}
+body{margin:0;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--color-text) 22%,transparent)}::-webkit-scrollbar-track{background:transparent}
+@keyframes m-slide{from{transform:translateX(34px)}to{transform:none}}
+@keyframes m-fade{from{opacity:0}to{opacity:1}}
+@keyframes m-rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.seg-opt{white-space:nowrap}
+.btn{white-space:nowrap}
+</style>
+</helmet>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3"></rect><rect width="7" height="5" x="14" y="3"></rect><rect width="7" height="9" x="14" y="12"></rect><rect width="7" height="5" x="3" y="16"></rect></symbol>
+<symbol id="i-swap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"></path><path d="M4 7h16"></path><path d="m16 21 4-4-4-4"></path><path d="M20 17H4"></path></symbol>
+<symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></symbol>
+<symbol id="i-wallet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path></symbol>
+<symbol id="i-flag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" x2="4" y1="22" y2="15"></line></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="20" y2="10"></line><line x1="18" x2="18" y1="20" y2="4"></line><line x1="6" x2="6" y1="20" y2="16"></line></symbol>
+<symbol id="i-repeat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 4 4-4 4"></path><path d="M3 11v-1a4 4 0 0 1 4-4h14"></path><path d="m7 22-4-4 4-4"></path><path d="M21 13v1a4 4 0 0 1-4 4H3"></path></symbol>
+<symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0"></path><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"></path></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></symbol>
+<symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9"></path></symbol>
+<symbol id="i-panel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3"></rect><path d="M9 3v18"></path></symbol>
+<symbol id="i-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></symbol>
+<symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></symbol>
+<symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></symbol>
+<symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></symbol>
+<symbol id="i-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></symbol>
+<symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"></polyline><polyline points="16 17 22 17 22 11"></polyline></symbol>
+<symbol id="i-card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5"></rect><line x1="2" x2="22" y1="10" y2="10"></line></symbol>
+<symbol id="i-cash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6"></rect><circle cx="12" cy="12" r="2"></circle><path d="M6 12h.01M18 12h.01"></path></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2"></rect><path d="M12 18h.01"></path></symbol>
+<symbol id="i-bank" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" x2="21" y1="22" y2="22"></line><line x1="6" x2="6" y1="18" y2="11"></line><line x1="10" x2="10" y1="18" y2="11"></line><line x1="14" x2="14" y1="18" y2="11"></line><line x1="18" x2="18" y1="18" y2="11"></line><polygon points="12 2 20 7 4 7"></polygon></symbol>
+<symbol id="i-cup" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v2"></path><path d="M14 2v2"></path><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"></path><path d="M6 2v2"></path></symbol>
+<symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></symbol>
+<symbol id="i-car" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle></symbol>
+<symbol id="i-wifi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"></path><path d="M2 8.82a15 15 0 0 1 20 0"></path><path d="M5 12.859a10 10 0 0 1 14 0"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path></symbol>
+<symbol id="i-bag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></symbol>
+<symbol id="i-monitor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3"></rect><line x1="8" x2="16" y1="21" y2="21"></line><line x1="12" x2="12" y1="17" y2="21"></line></symbol>
+<symbol id="i-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></symbol>
+<symbol id="i-gift" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4"></rect><path d="M12 8v13"></path><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"></path><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"></path></symbol>
+<symbol id="i-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></symbol>
+<symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" x2="12" y1="15" y2="3"></line></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></symbol>
+<symbol id="i-flame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5"></path></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></symbol>
+<symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4"></rect><path d="M3 10h18"></path></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></symbol>
+<symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></symbol>
+</defs></svg>
+
+<div style="display:flex;height:100vh;overflow:hidden;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body)">
+
+  <nav style="{{ railStyle }}">
+    <div style="display:flex;align-items:center;gap:10px;padding:4px 8px 16px">
+      <div style="width:28px;height:28px;flex:none;border-radius:10px;background:var(--color-accent);color:var(--color-bg);display:grid;place-items:center;font-family:var(--font-heading);font-weight:600;font-size:14px">L</div>
+      <sc-if value="{{ railOpen }}" hint-placeholder-val="{{ true }}">
+        <span style="font-family:var(--font-heading);font-weight:600;font-size:16px;letter-spacing:-.02em;white-space:nowrap">Ledgerline</span>
+      </sc-if>
+    </div>
+
+    <sc-for list="{{ navGroups }}" as="group" hint-placeholder-count="5">
+      <div style="{{ group.dividerStyle }}"></div>
+      <sc-if value="{{ group.showLabel }}" hint-placeholder-val="{{ true }}">
+        <div style="padding:0 12px 5px;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;font-family:var(--font-heading);font-weight:600;color:var(--muted);opacity:.7;white-space:nowrap">{{ group.label }}</div>
+      </sc-if>
+      <sc-for list="{{ group.items }}" as="item" hint-placeholder-count="3">
+        <button onClick="{{ item.go }}" style="{{ item.style }}" title="{{ item.label }}">
+          <svg style="width:17px;height:17px;flex:none"><use href="{{ item.icon }}"></use></svg>
+          <sc-if value="{{ railOpen }}" hint-placeholder-val="{{ true }}">
+            <span style="white-space:nowrap;overflow:hidden">{{ item.label }}</span>
+          </sc-if>
+        </button>
+      </sc-for>
+    </sc-for>
+
+    <div style="flex:1"></div>
+
+    <sc-if value="{{ streakOpen }}">
+      <div style="margin:0 0 12px;padding:12px;border:1px solid color-mix(in srgb,var(--color-accent) 45%,transparent);border-radius:16px;background:color-mix(in srgb,var(--color-accent) 9%,transparent)">
+        <div style="display:flex;align-items:center;gap:7px;color:var(--color-accent);font-size:11px;font-family:var(--font-heading);font-weight:600;letter-spacing:.06em;text-transform:uppercase"><svg style="width:14px;height:14px"><use href="#i-flame"></use></svg><span>7-month streak</span></div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.35">Saved above target every month since February.</div>
+      </div>
+    </sc-if>
+
+    <button onClick="{{ toggleRail }}" style="display:flex;align-items:center;gap:12px;padding:9px 8px;border:0;background:transparent;color:var(--muted);font:inherit;font-size:13px;cursor:pointer;text-align:left">
+      <svg style="width:17px;height:17px;flex:none"><use href="#i-panel"></use></svg>
+      <sc-if value="{{ railOpen }}"><span style="white-space:nowrap">Collapse</span></sc-if>
+    </button>
+  </nav>
+
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+
+    <header style="flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--color-divider);background:var(--color-bg)">
+      <div style="flex:1 1 240px;min-width:0">
+        <div style="font-family:var(--font-heading);font-weight:600;font-size:21px;letter-spacing:-.025em;line-height:1.2">{{ pageTitle }}</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:2px">{{ pageSub }}</div>
+      </div>
+      <label style="flex:none;display:flex;align-items:center;gap:9px;width:220px;padding:0 12px;height:38px;border:1px solid var(--color-divider);border-radius:12px;background:var(--color-surface);color:var(--muted)">
+        <svg style="width:15px;height:15px;flex:none"><use href="#i-search"></use></svg>
+        <input value="{{ query }}" onChange="{{ setQuery }}" placeholder="Search transactions" style="all:unset;flex:1;min-width:0;font-family:var(--font-body);font-size:13px;color:var(--color-text)">
+      </label>
+      <span class="tag tag-neutral" style="flex:none;gap:5px;height:38px;padding:0 12px">IDR</span>
+      <div style="position:relative;flex:none">
+        <button onClick="{{ toggleNotif }}" class="btn btn-secondary btn-icon" style="position:relative;justify-content:center">
+          <svg style="width:17px;height:17px"><use href="#i-bell"></use></svg>
+          <span style="position:absolute;top:5px;right:6px;width:7px;height:7px;background:var(--color-accent)"></span>
+        </button>
+        <sc-if value="{{ notifOpen }}">
+          <div style="position:absolute;top:44px;right:0;width:330px;z-index:60;background:var(--color-surface);border:1px solid var(--color-divider);border-radius:20px;box-shadow:var(--shadow-lg);box-shadow:var(--shadow-lg);animation:m-rise .14s ease both">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--color-divider)">
+              <span style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-family:var(--font-heading);font-weight:600">Reminders</span>
+              <span class="tag tag-accent">4 new</span>
+            </div>
+            <sc-for list="{{ notifications }}" as="n" hint-placeholder-count="4">
+              <div style="display:flex;gap:10px;padding:11px 14px;border-bottom:1px solid var(--color-divider)">
+                <svg style="width:16px;height:16px;flex:none;margin-top:2px;color:{{ n.color }}"><use href="{{ n.icon }}"></use></svg>
+                <div style="min-width:0">
+                  <div style="font-size:13px;line-height:1.35">{{ n.title }}</div>
+                  <div style="font-size:11.5px;color:var(--muted);margin-top:2px">{{ n.meta }}</div>
+                </div>
+              </div>
+            </sc-for>
+            <button onClick="{{ goNotifications }}" class="btn btn-ghost btn-block" style="margin:0;padding:11px 14px">View all reminders</button>
+          </div>
+        </sc-if>
+      </div>
+      <button onClick="{{ toggleTheme }}" class="btn btn-secondary btn-icon" style="flex:none;justify-content:center" title="Toggle theme"><svg style="width:17px;height:17px"><use href="{{ themeIcon }}"></use></svg></button>
+      <button onClick="{{ openTx }}" class="btn btn-primary" style="min-height:38px;flex:none"><svg style="width:15px;height:15px"><use href="#i-plus"></use></svg>Add transaction</button>
+      <div style="flex:none;width:34px;height:34px;border-radius:50%;background:var(--panel);border:1px solid var(--color-divider);color:var(--color-text);display:grid;place-items:center;font-family:var(--font-heading);font-weight:600;font-size:12px">RA</div>
+    </header>
+
+    <main style="flex:1;overflow-y:auto;padding:30px 28px 80px">
+
+      <!-- ═══ DASHBOARD ═══ -->
+      <sc-if value="{{ isDashboard }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:20px;max-width:1340px">
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:16px">
+            <sc-for list="{{ summary }}" as="s" hint-placeholder-count="4">
+              <div style="padding:19px 22px;min-width:0;border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface)">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-family:var(--font-heading);font-weight:600">{{ s.label }}</span>
+                  <svg style="width:15px;height:15px;color:{{ s.tone }}"><use href="{{ s.icon }}"></use></svg>
+                </div>
+                <div style="font-family:var(--font-heading);font-weight:600;font-size:24.5px;letter-spacing:-.03em;margin-top:12px;color:{{ s.valueTone }};font-variant-numeric:tabular-nums">{{ s.value }}</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:11.5px;color:var(--muted)">
+                  <span style="color:{{ s.deltaTone }};font-family:var(--font-heading);font-weight:600">{{ s.delta }}</span><span>{{ s.deltaNote }}</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1.4fr));gap:24px;align-items:start">
+
+            <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:24px">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--color-divider)">
+                <div style="flex:1;min-width:0">
+                  <div style="font-family:var(--font-heading);font-size:16.5px;font-weight:600;letter-spacing:-.015em;white-space:nowrap">Income vs expense</div>
+                  <div style="font-size:11.5px;color:var(--muted);margin-top:2px">{{ trendRange }}</div>
+                </div>
+                <div class="seg" style="flex:none">
+                  <label class="seg-opt"><input type="radio" name="trend" checked="{{ isWeekly }}" onChange="{{ setWeekly }}">Weekly</label>
+                  <label class="seg-opt"><input type="radio" name="trend" checked="{{ isMonthly }}" onChange="{{ setMonthly }}">Monthly</label>
+                </div>
+              </div>
+              <div style="display:flex;gap:18px;margin-top:14px;font-size:11.5px;color:var(--muted)">
+                <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:var(--income)"></span>Income</span>
+                <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:var(--expense)"></span>Expense</span>
+              </div>
+              <div style="position:relative;display:flex;align-items:flex-end;gap:2px;height:216px;margin-top:12px">
+                <sc-for list="{{ trend }}" as="t" hint-placeholder-count="6">
+                  <div onMouseEnter="{{ t.enter }}" onMouseLeave="{{ leaveBar }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;padding:8px 0 0;background:{{ t.bg }}">
+                    <div style="flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:5px">
+                      <div style="width:28%;min-width:11px;background:var(--income);border-radius:7px 7px 3px 3px;height:{{ t.inH }}"></div>
+                      <div style="width:28%;min-width:11px;background:var(--expense);border-radius:7px 7px 3px 3px;height:{{ t.exH }}"></div>
+                    </div>
+                    <span style="font-size:11px;color:var(--muted);font-family:var(--font-heading);font-weight:600;letter-spacing:.04em">{{ t.label }}</span>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ barTip }}">
+                  <div style="{{ barTipStyle }}">
+                    <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">{{ barTip.label }}</div>
+                    <div style="font-size:12.5px;color:var(--income);font-variant-numeric:tabular-nums">+ {{ barTip.income }}</div>
+                    <div style="font-size:12.5px;color:var(--expense);font-variant-numeric:tabular-nums">− {{ barTip.expense }}</div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:4px">Net {{ barTip.net }}</div>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+
+            <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:24px">
+              <div style="padding-bottom:14px;border-bottom:1px solid var(--color-divider)">
+                <div style="font-family:var(--font-heading);font-size:16.5px;font-weight:600;letter-spacing:-.015em">Spending by category</div>
+                <div style="font-size:11.5px;color:var(--muted);margin-top:2px">August 2026 · Rp12.780.000</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:16px;margin-top:16px">
+                <div style="position:relative;flex:none">
+                  <svg viewBox="0 0 180 180" style="width:164px;height:164px">
+                    <sc-for list="{{ donut }}" as="d" hint-placeholder-count="7">
+                      <path d="{{ d.path }}" fill="{{ d.color }}" opacity="{{ d.opacity }}" onMouseEnter="{{ d.enter }}" onMouseLeave="{{ leaveSlice }}" style="cursor:pointer;transition:opacity .14s"></path>
+                    </sc-for>
+                  </svg>
+                  <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;text-align:center">
+                    <div style="font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">{{ donutCenterLabel }}</div>
+                    <div style="font-family:var(--font-heading);font-weight:600;font-size:18px;letter-spacing:-.02em;margin-top:3px">{{ donutCenterValue }}</div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:2px">{{ donutCenterNote }}</div>
+                  </div>
+                </div>
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+                  <sc-for list="{{ donut }}" as="d" hint-placeholder-count="7">
+                    <div onMouseEnter="{{ d.enter }}" onMouseLeave="{{ leaveSlice }}" style="display:flex;align-items:center;gap:8px;font-size:12px;padding:5px 4px;border-bottom:1px solid var(--color-divider);background:{{ d.rowBg }}">
+                      <span style="width:9px;height:9px;flex:none;border-radius:3px;background:{{ d.color }}"></span>
+                      <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ d.label }}</span>
+                      <span style="color:var(--muted);font-variant-numeric:tabular-nums">{{ d.pct }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1.4fr));gap:24px;align-items:start">
+
+            <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface)">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:19px 24px;border-bottom:1px solid var(--color-divider)">
+                <div style="font-family:var(--font-heading);font-size:16.5px;font-weight:600;letter-spacing:-.015em">Recent transactions</div>
+                <button onClick="{{ goTransactions }}" class="btn btn-ghost" style="font-size:12.5px">View all<svg style="width:14px;height:14px"><use href="#i-right"></use></svg></button>
+              </div>
+              <sc-for list="{{ recent }}" as="tx" hint-placeholder-count="7">
+                <div style="display:flex;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid var(--color-divider)">
+                  <div style="width:34px;height:34px;flex:none;display:grid;place-items:center;border:1px solid var(--color-divider);border-radius:10px;color:{{ tx.iconTone }}"><svg style="width:16px;height:16px"><use href="{{ tx.icon }}"></use></svg></div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ tx.name }}</div>
+                    <div style="font-size:11.5px;color:var(--muted);margin-top:1px">{{ tx.category }} · {{ tx.wallet }}</div>
+                  </div>
+                  <div style="text-align:right">
+                    <div style="font-size:13.5px;font-variant-numeric:tabular-nums;color:{{ tx.tone }};font-family:var(--font-heading);font-weight:600">{{ tx.amount }}</div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:1px">{{ tx.day }}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface)">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:19px 24px;border-bottom:1px solid var(--color-divider)">
+                <div style="font-family:var(--font-heading);font-size:16.5px;font-weight:600;letter-spacing:-.015em">Budgets</div>
+                <button onClick="{{ goBudgets }}" class="btn btn-ghost" style="font-size:12.5px">Manage</button>
+              </div>
+              <div style="padding:19px 24px;display:flex;flex-direction:column;gap:14px">
+                <sc-for list="{{ budgetsShort }}" as="b" hint-placeholder-count="5">
+                  <div>
+                    <div style="display:flex;align-items:baseline;gap:8px;font-size:12.5px">
+                      <span style="flex:1;min-width:0">{{ b.label }}</span>
+                      <span style="font-variant-numeric:tabular-nums;color:var(--muted)">{{ b.spent }} / {{ b.limit }}</span>
+                    </div>
+                    <div style="height:8px;margin-top:6px;background:color-mix(in srgb,var(--color-text) 9%,transparent);border-radius:99px;overflow:hidden">
+                      <div style="height:100%;border-radius:99px;background:{{ b.color }};width:{{ b.width }}"></div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ═══ TRANSACTIONS ═══ -->
+      <sc-if value="{{ isTransactions }}">
+        <div style="display:flex;flex-direction:column;gap:24px;max-width:1200px;animation:m-fade .18s ease both">
+          <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
+            <label style="display:flex;align-items:center;gap:9px;min-width:230px;padding:0 12px;height:38px;border:1px solid var(--color-divider);border-radius:12px;color:var(--muted);background:var(--panel)">
+              <svg style="width:15px;height:15px;flex:none"><use href="#i-search"></use></svg>
+              <input value="{{ query }}" onChange="{{ setQuery }}" placeholder="Merchant or note" style="all:unset;flex:1;min-width:0;font-family:var(--font-body);font-size:13.5px;color:var(--color-text)">
+            </label>
+            <select value="{{ filterCat }}" onChange="{{ setCat }}" class="input" style="width:auto;min-width:150px">
+              <sc-for list="{{ categoryOptions }}" as="c" hint-placeholder-count="7"><option value="{{ c }}">{{ c }}</option></sc-for>
+            </select>
+            <select value="{{ filterWallet }}" onChange="{{ setWallet }}" class="input" style="width:auto;min-width:150px">
+              <sc-for list="{{ walletOptions }}" as="w" hint-placeholder-count="5"><option value="{{ w }}">{{ w }}</option></sc-for>
+            </select>
+            <select value="{{ filterRange }}" onChange="{{ setRange }}" class="input" style="width:auto;min-width:140px">
+              <option value="This month">This month</option><option value="Last 90 days">Last 90 days</option><option value="Year to date">Year to date</option>
+            </select>
+            <select value="{{ filterAmount }}" onChange="{{ setAmount }}" class="input" style="width:auto;min-width:170px">
+              <option value="Any amount">Any amount</option><option value="Under Rp100.000">Under Rp100.000</option><option value="Rp100.000 – Rp1.000.000">Rp100.000 – Rp1.000.000</option><option value="Over Rp1.000.000">Over Rp1.000.000</option>
+            </select>
+            <div style="display:flex;gap:8px;margin-left:auto">
+              <button onClick="{{ resetFilters }}" class="btn btn-secondary" style="height:38px">Reset</button>
+              <button onClick="{{ openTx }}" class="btn btn-primary" style="height:38px"><svg style="width:15px;height:15px"><use href="#i-plus"></use></svg>New</button>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:16px">
+            <sc-for list="{{ txStats }}" as="s" hint-placeholder-count="4">
+              <div style="padding:15px 18px;min-width:0;border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface)">
+                <span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-family:var(--font-heading);font-weight:600">{{ s.label }}</span>
+                <div style="font-family:var(--font-heading);font-size:20px;font-weight:600;color:{{ s.tone }};margin-top:5px;font-variant-numeric:tabular-nums">{{ s.value }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface)">
+            <sc-for list="{{ txGroups }}" as="g" hint-placeholder-count="4">
+              <div style="padding:15px 24px;display:flex;align-items:center;gap:10px;background:var(--color-bg);border-bottom:1px solid var(--color-divider)">
+                <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-family:var(--font-heading);font-weight:600">{{ g.date }}</span>
+                <span style="flex:1"></span>
+                <span style="font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums">{{ g.total }}</span>
+              </div>
+              <sc-for list="{{ g.items }}" as="tx" hint-placeholder-count="3">
+                <div style="display:grid;grid-template-columns:34px 1fr 140px 132px 110px;align-items:center;gap:14px;padding:14px 24px;border-bottom:1px solid var(--color-divider)">
+                  <div style="width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--color-divider);border-radius:10px;color:{{ tx.iconTone }}"><svg style="width:16px;height:16px"><use href="{{ tx.icon }}"></use></svg></div>
+                  <div style="min-width:0">
+                    <div style="font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ tx.name }}</div>
+                    <div style="font-size:11.5px;color:var(--muted);margin-top:1px">{{ tx.note }}</div>
+                  </div>
+                  <span class="tag tag-neutral" style="justify-self:start">{{ tx.category }}</span>
+                  <span style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px"><svg style="width:14px;height:14px;flex:none"><use href="{{ tx.walletIcon }}"></use></svg>{{ tx.wallet }}</span>
+                  <span style="text-align:right;font-size:13.5px;font-variant-numeric:tabular-nums;color:{{ tx.tone }};font-family:var(--font-heading);font-weight:600">{{ tx.amount }}</span>
+                </div>
+              </sc-for>
+            </sc-for>
+            <sc-if value="{{ noResults }}">
+              <div style="padding:52px 24px;text-align:left;color:var(--muted);font-size:13px">No transactions match these filters. <button onClick="{{ resetFilters }}" class="btn btn-ghost" style="font-size:13px">Clear them</button></div>
+            </sc-if>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:16px 24px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:12px;color:var(--muted)">Show</span>
+                <select value="{{ txBar.size }}" onChange="{{ txBar.setSize }}" class="input" style="width:auto;min-width:72px;height:34px;padding:0 10px">
+                  <option value="10">10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                </select>
+                <span style="font-size:12px;color:var(--muted)">{{ txBar.range }} entries</span>
+              </div>
+              <sc-if value="{{ txBar.multi }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <button onClick="{{ txBar.prev }}" style="{{ txBar.prevStyle }}" title="Previous page"><svg style="width:14px;height:14px;transform:rotate(180deg)"><use href="#i-right"></use></svg></button>
+                  <sc-for list="{{ txBar.nums }}" as="p" hint-placeholder-count="4">
+                    <sc-if value="{{ p.gap }}"><span style="min-width:22px;text-align:center;color:var(--muted);font-size:12px">…</span></sc-if>
+                    <sc-if value="{{ p.active }}"><button onClick="{{ p.go }}" style="{{ p.style }}">{{ p.label }}</button></sc-if>
+                    <sc-if value="{{ p.idle }}"><button onClick="{{ p.go }}" style="{{ p.style }}">{{ p.label }}</button></sc-if>
+                  </sc-for>
+                  <button onClick="{{ txBar.next }}" style="{{ txBar.nextStyle }}" title="Next page"><svg style="width:14px;height:14px"><use href="#i-right"></use></svg></button>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ═══ BUDGETS ═══ -->
+      <sc-if value="{{ isBudgets }}">
+        <div style="display:flex;flex-direction:column;gap:24px;max-width:1200px;animation:m-fade .18s ease both">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1.6fr));border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md)">
+            <div style="padding:24px;min-width:0;border-right:1px solid var(--color-divider);background:var(--color-surface)">
+              <span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-family:var(--font-heading);font-weight:600">August allocated</span>
+              <div style="display:flex;align-items:baseline;gap:12px;margin-top:10px">
+                <span style="font-family:var(--font-heading);font-size:30px;font-weight:600;letter-spacing:-.03em">Rp12.700.000</span>
+                <span style="font-size:12.5px;color:var(--muted)">across 6 categories</span>
+              </div>
+              <div style="display:flex;height:10px;margin-top:16px;background:color-mix(in srgb,var(--color-text) 9%,transparent);border-radius:99px;overflow:hidden">
+                <sc-for list="{{ donut }}" as="d" hint-placeholder-count="6"><div style="background:{{ d.color }};width:{{ d.pct }}"></div></sc-for>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:11.5px;color:var(--muted)">
+                <span>Rp11.420.000 spent · 90% of allocation</span><span>4 days left in cycle</span>
+              </div>
+            </div>
+            <div style="padding:24px;background:var(--color-surface)">
+              <span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-family:var(--font-heading);font-weight:600">Needs attention</span>
+              <div style="display:flex;flex-direction:column;gap:11px;margin-top:12px">
+                <div style="display:flex;gap:9px;align-items:flex-start"><svg style="width:15px;height:15px;flex:none;margin-top:2px;color:var(--expense)"><use href="#i-warn"></use></svg><div style="font-size:12.5px;line-height:1.4">Subscriptions is <strong style="font-family:var(--font-heading);font-weight:600">Rp180.000 over</strong> its limit.</div></div>
+                <div style="display:flex;gap:9px;align-items:flex-start"><svg style="width:15px;height:15px;flex:none;margin-top:2px;color:var(--warn)"><use href="#i-warn"></use></svg><div style="font-size:12.5px;line-height:1.4">Food &amp; drink at 88% with 4 days remaining.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1.5fr));gap:24px;align-items:start">
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <sc-for list="{{ budgets }}" as="b" hint-placeholder-count="6">
+                <div style="border:1px solid {{ b.edge }};border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:19px 24px">
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div style="width:32px;height:32px;flex:none;display:grid;place-items:center;border:1px solid var(--color-divider);border-radius:10px;color:{{ b.color }}"><svg style="width:15px;height:15px"><use href="{{ b.icon }}"></use></svg></div>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-size:14px;font-family:var(--font-heading);font-weight:600">{{ b.label }}</div>
+                      <div style="font-size:11.5px;color:var(--muted);margin-top:1px">Alerts at {{ b.threshold }} of limit</div>
+                    </div>
+                    <span class="{{ b.tagClass }}">{{ b.status }}</span>
+                  </div>
+                  <div style="height:10px;margin-top:14px;background:color-mix(in srgb,var(--color-text) 9%,transparent);border-radius:99px;overflow:hidden">
+                    <div style="height:100%;border-radius:99px;background:{{ b.color }};width:{{ b.width }}"></div>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px;font-variant-numeric:tabular-nums">
+                    <span><span style="color:{{ b.color }};font-family:var(--font-heading);font-weight:600">{{ b.spent }}</span><span style="color:var(--muted)"> of {{ b.limit }}</span></span>
+                    <span style="color:var(--muted)">{{ b.remaining }}</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:24px;position:sticky;top:0">
+              <div style="font-family:var(--font-heading);font-size:16.5px;font-weight:600;letter-spacing:-.015em">New budget</div>
+              <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Applies from next cycle, 1 September.</div>
+              <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px">
+                <div class="field"><label>Category</label><select class="input"><option>Education</option><option>Travel</option><option>Gifts &amp; donations</option><option>Custom…</option></select></div>
+                <div class="field"><label>Monthly limit</label>
+                  <div style="display:flex;align-items:center;gap:8px;padding:0 10px;min-height:38px;border-radius:12px;background:var(--panel);border:1px solid var(--color-divider)">
+                    <span style="font-size:13px;color:var(--muted)">Rp</span>
+                    <input value="1.500.000" onChange="{{ noopInput }}" style="all:unset;flex:1;font-family:var(--font-body);font-size:14px;color:var(--color-text)">
+                  </div>
+                </div>
+                <div class="field"><label>Notify me at</label>
+                  <div class="seg" style="width:100%">
+                    <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="thr">70%</label>
+                    <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="thr" checked="{{ yes }}" onChange="{{ noopInput }}">80%</label>
+                    <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="thr">90%</label>
+                  </div>
+                </div>
+                <label class="radio" style="justify-content:space-between;width:100%;font-size:13px"><span>Roll unspent amount forward</span><input type="checkbox"><span class="dot"></span></label>
+                <button onClick="{{ tCreateBudget }}" class="btn btn-primary btn-block">Create budget</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ═══ WALLETS ═══ -->
+      <sc-if value="{{ isWallets }}">
+        <div style="display:flex;flex-direction:column;gap:24px;max-width:1200px;animation:m-fade .18s ease both">
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(262px,1fr));gap:14px">
+            <sc-for list="{{ wallets }}" as="w" hint-placeholder-count="5">
+              <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:24px;min-height:164px;display:flex;flex-direction:column">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between">
+                  <div style="width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--color-divider);border-radius:10px;color:{{ w.tone }}"><svg style="width:17px;height:17px"><use href="{{ w.icon }}"></use></svg></div>
+                  <span class="tag tag-outline">{{ w.currency }}</span>
+                </div>
+                <div style="font-size:13.5px;margin-top:16px;font-family:var(--font-heading);font-weight:600">{{ w.name }}</div>
+                <div style="font-size:11.5px;color:var(--muted);margin-top:2px">{{ w.meta }}</div>
+                <div style="flex:1"></div>
+                <div style="font-family:var(--font-heading);font-size:23px;font-weight:600;letter-spacing:-.03em;margin-top:14px;color:{{ w.balanceTone }};font-variant-numeric:tabular-nums">{{ w.balance }}</div>
+                <div style="font-size:11.5px;color:var(--muted);margin-top:3px">{{ w.sub }}</div>
+              </div>
+            </sc-for>
+            <button onClick="{{ noop }}" style="min-height:164px;border:1px dashed var(--color-divider);border-radius:16px;background:transparent;color:var(--muted);font:inherit;font-size:13px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:10px;padding:24px">
+              <svg style="width:22px;height:22px"><use href="#i-plus"></use></svg>Add wallet
+            </button>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:24px;align-items:start">
+            <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:24px">
+              <div style="font-family:var(--font-heading);font-size:16.5px;font-weight:600;letter-spacing:-.015em">Add wallet</div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:12px;margin-top:16px">
+                <div class="field" style="grid-column:1/-1"><label>Wallet name</label><input class="input" value="Jenius savings" onChange="{{ noopInput }}"></div>
+                <div class="field"><label>Type</label><select class="input"><option>Bank account</option><option>E-wallet</option><option>Credit card</option><option>Cash</option></select></div>
+                <div class="field"><label>Currency</label><select class="input"><option>IDR — Rupiah</option><option>USD — US Dollar</option><option>SGD — Singapore Dollar</option></select></div>
+                <div class="field" style="grid-column:1/-1"><label>Opening balance</label><input class="input" value="Rp0" onChange="{{ noopInput }}"></div>
+                <label class="radio" style="grid-column:1/-1;justify-content:space-between;width:100%;font-size:13px"><span>Include in total balance</span><input type="checkbox" checked="{{ yes }}" onChange="{{ noopInput }}"><span class="dot"></span></label>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:16px"><button onClick="{{ tSaveWallet }}" class="btn btn-primary">Save wallet</button><button onClick="{{ noop }}" class="btn btn-secondary">Cancel</button></div>
+            </div>
+            <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:24px">
+              <div style="font-family:var(--font-heading);font-size:16.5px;font-weight:600;letter-spacing:-.015em">Connected institutions</div>
+              <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Synced transactions arrive tagged for review.</div>
+              <div style="margin-top:14px">
+                <sc-for list="{{ integrations }}" as="i" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--color-divider)">
+                    <svg style="width:17px;height:17px;flex:none;color:var(--muted)"><use href="{{ i.icon }}"></use></svg>
+                    <div style="flex:1;min-width:0"><div style="font-size:13.5px">{{ i.name }}</div><div style="font-size:11.5px;color:var(--muted)">{{ i.meta }}</div></div>
+                    <span class="{{ i.tagClass }}">{{ i.status }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <button onClick="{{ tConnect }}" class="btn btn-secondary btn-block" style="margin-top:14px"><svg style="width:15px;height:15px"><use href="#i-link"></use></svg>Connect another account</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ═══ GOALS ═══ -->
+      <sc-if value="{{ isGoals }}">
+        <div style="display:flex;flex-direction:column;gap:24px;max-width:1200px;animation:m-fade .18s ease both">
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(316px,1fr));gap:14px">
+            <sc-for list="{{ goals }}" as="g" hint-placeholder-count="3">
+              <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:20px">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <div style="width:34px;height:34px;flex:none;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--color-accent) 16%,transparent);color:var(--color-accent)"><svg style="width:17px;height:17px"><use href="{{ g.icon }}"></use></svg></div>
+                  <div style="flex:1;min-width:0"><div style="font-size:14.5px;font-family:var(--font-heading);font-weight:600">{{ g.name }}</div><div style="font-size:11.5px;color:var(--muted);margin-top:1px">{{ g.deadline }}</div></div>
+                  <span style="font-family:var(--font-heading);font-weight:600;font-size:17px">{{ g.pct }}</span>
+                </div>
+                <div style="display:flex;align-items:baseline;gap:8px;margin-top:20px">
+                  <span style="font-family:var(--font-heading);font-size:25px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums">{{ g.saved }}</span>
+                  <span style="font-size:12.5px;color:var(--muted)">of {{ g.target }}</span>
+                </div>
+                <div style="height:10px;margin-top:12px;background:color-mix(in srgb,var(--color-text) 9%,transparent);border-radius:99px;overflow:hidden">
+                  <div style="height:100%;border-radius:99px;background:var(--color-accent);width:{{ g.pct }}"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-top:9px;font-size:11.5px;color:var(--muted)">
+                  <span>{{ g.monthly }} / month</span><span>{{ g.eta }}</span>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:18px">
+                  <button onClick="{{ tAddFunds }}" class="btn btn-primary" style="font-size:13px">Add funds</button>
+                  <button onClick="{{ noop }}" class="btn btn-secondary" style="font-size:13px">Edit goal</button>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:24px;align-items:start">
+            <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:24px">
+              <div style="font-family:var(--font-heading);font-size:16.5px;font-weight:600;letter-spacing:-.015em">New goal</div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:12px;margin-top:16px">
+                <div class="field" style="grid-column:1/-1"><label>Goal name</label><input class="input" value="Motorcycle service fund" onChange="{{ noopInput }}"></div>
+                <div class="field"><label>Target amount</label><input class="input" value="Rp8.000.000" onChange="{{ noopInput }}"></div>
+                <div class="field"><label>Target date</label><input class="input" value="2027-03-01" onChange="{{ noopInput }}"></div>
+                <div class="field" style="grid-column:1/-1"><label>Funding wallet</label><select class="input"><option>BCA Payroll</option><option>Jenius savings</option><option>Wise USD</option></select></div>
+                <label class="radio" style="grid-column:1/-1;justify-content:space-between;width:100%;font-size:13px"><span>Auto-transfer on payday</span><input type="checkbox" checked="{{ yes }}" onChange="{{ noopInput }}"><span class="dot"></span></label>
+              </div>
+              <button onClick="{{ tCreateGoal }}" class="btn btn-primary btn-block">Create goal</button>
+            </div>
+            <div style="border:1px solid color-mix(in srgb,var(--color-accent) 45%,transparent);border-radius:16px;background:color-mix(in srgb,var(--color-accent) 9%,transparent);background:var(--color-surface);padding:24px">
+              <div style="display:flex;align-items:center;gap:9px;color:var(--color-accent)"><svg style="width:17px;height:17px"><use href="#i-flame"></use></svg><span style="font-family:var(--font-heading);font-weight:600;font-size:13px;letter-spacing:.08em;text-transform:uppercase">Savings streak</span></div>
+              <div style="font-family:var(--font-heading);font-size:44px;font-weight:600;letter-spacing:-.04em;margin-top:12px">7 months</div>
+              <div style="font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.5">You have put aside at least 30% of income every month since February. Two more months matches your longest run.</div>
+              <div style="display:flex;gap:4px;margin-top:18px">
+                <sc-for list="{{ streakMonths }}" as="m" hint-placeholder-count="12">
+                  <div style="flex:1;height:38px;border-radius:8px;background:{{ m.bg }};display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;font-size:9px;color:{{ m.fg }};font-family:var(--font-heading);font-weight:600">{{ m.label }}</div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ═══ RECURRING ═══ -->
+      <sc-if value="{{ isRecurring }}">
+        <div style="display:flex;flex-direction:column;gap:24px;max-width:1200px;animation:m-fade .18s ease both">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:16px">
+            <sc-for list="{{ recurStats }}" as="s" hint-placeholder-count="3">
+              <div style="padding:19px 22px;min-width:0;border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface)">
+                <span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-family:var(--font-heading);font-weight:600">{{ s.label }}</span>
+                <div style="font-family:var(--font-heading);font-size:24px;font-weight:600;margin-top:8px;color:{{ s.tone }};font-variant-numeric:tabular-nums">{{ s.value }}</div>
+                <div style="font-size:11.5px;color:var(--muted);margin-top:3px">{{ s.note }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1.5fr));gap:24px;align-items:start">
+            <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface)">
+              <div style="display:grid;grid-template-columns:1fr 120px 130px 110px;gap:14px;padding:15px 24px;background:var(--color-bg);border-bottom:1px solid var(--color-divider);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-family:var(--font-heading);font-weight:600;color:var(--muted)">
+                <span>Item</span><span>Frequency</span><span>Next due</span><span style="text-align:right">Amount</span>
+              </div>
+              <sc-for list="{{ recurring }}" as="r" hint-placeholder-count="7">
+                <div style="display:grid;grid-template-columns:1fr 120px 130px 110px;gap:14px;align-items:center;padding:15px 24px;border-bottom:1px solid var(--color-divider)">
+                  <div style="display:flex;align-items:center;gap:12px;min-width:0">
+                    <div style="width:32px;height:32px;flex:none;display:grid;place-items:center;border:1px solid var(--color-divider);border-radius:10px;color:{{ r.tone }}"><svg style="width:15px;height:15px"><use href="{{ r.icon }}"></use></svg></div>
+                    <div style="min-width:0"><div style="font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.name }}</div><div style="font-size:11.5px;color:var(--muted)">{{ r.wallet }}</div></div>
+                  </div>
+                  <span style="font-size:12px;color:var(--muted)">{{ r.freq }}</span>
+                  <span style="font-size:12px"><span class="{{ r.tagClass }}">{{ r.due }}</span></span>
+                  <span style="text-align:right;font-size:13.5px;font-family:var(--font-heading);font-weight:600;font-variant-numeric:tabular-nums;color:{{ r.amountTone }}">{{ r.amount }}</span>
+                </div>
+              </sc-for>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:16px 24px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:12px;color:var(--muted)">Show</span>
+                <select value="{{ recurBar.size }}" onChange="{{ recurBar.setSize }}" class="input" style="width:auto;min-width:72px;height:34px;padding:0 10px">
+                  <option value="5">5</option>
+                  <option value="10">10</option>
+                  <option value="25">25</option>
+                </select>
+                <span style="font-size:12px;color:var(--muted)">{{ recurBar.range }} items</span>
+              </div>
+              <sc-if value="{{ recurBar.multi }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <button onClick="{{ recurBar.prev }}" style="{{ recurBar.prevStyle }}" title="Previous page"><svg style="width:14px;height:14px;transform:rotate(180deg)"><use href="#i-right"></use></svg></button>
+                  <sc-for list="{{ recurBar.nums }}" as="p" hint-placeholder-count="4">
+                    <sc-if value="{{ p.gap }}"><span style="min-width:22px;text-align:center;color:var(--muted);font-size:12px">…</span></sc-if>
+                    <sc-if value="{{ p.active }}"><button onClick="{{ p.go }}" style="{{ p.style }}">{{ p.label }}</button></sc-if>
+                    <sc-if value="{{ p.idle }}"><button onClick="{{ p.go }}" style="{{ p.style }}">{{ p.label }}</button></sc-if>
+                  </sc-for>
+                  <button onClick="{{ recurBar.next }}" style="{{ recurBar.nextStyle }}" title="Next page"><svg style="width:14px;height:14px"><use href="#i-right"></use></svg></button>
+                </div>
+              </sc-if>
+            </div>
+            </div>
+            <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:24px">
+              <div style="font-family:var(--font-heading);font-size:16.5px;font-weight:600;letter-spacing:-.015em">New recurring item</div>
+              <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px">
+                <div class="field"><label>Name</label><input class="input" value="Notion Plus" onChange="{{ noopInput }}"></div>
+                <div class="field"><label>Amount</label><input class="input" value="Rp150.000" onChange="{{ noopInput }}"></div>
+                <div class="field"><label>Frequency</label><select class="input"><option>Monthly</option><option>Weekly</option><option>Quarterly</option><option>Annual</option></select></div>
+                <div class="field"><label>Next due</label><input class="input" value="2026-09-05" onChange="{{ noopInput }}"></div>
+                <div class="field"><label>Wallet</label><select class="input"><option>BCA Card</option><option>GoPay</option><option>BCA Payroll</option></select></div>
+                <label class="radio" style="justify-content:space-between;width:100%;font-size:13px"><span>Remind me 3 days before</span><input type="checkbox" checked="{{ yes }}" onChange="{{ noopInput }}"><span class="dot"></span></label>
+                <button onClick="{{ tSchedule }}" class="btn btn-primary btn-block">Schedule item</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ═══ INSIGHTS ═══ -->
+      <sc-if value="{{ isInsights }}">
+        <div style="display:flex;flex-direction:column;gap:24px;max-width:1200px;animation:m-fade .18s ease both">
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">
+            <sc-for list="{{ insights }}" as="i" hint-placeholder-count="4">
+              <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:24px;display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:center;gap:8px;color:{{ i.tone }}">
+                  <svg style="width:15px;height:15px"><use href="{{ i.icon }}"></use></svg>
+                  <span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-family:var(--font-heading);font-weight:600">{{ i.kicker }}</span>
+                </div>
+                <div style="font-family:var(--font-heading);font-weight:600;font-size:18px;line-height:1.2;letter-spacing:-.02em">{{ i.title }}</div>
+                <div style="font-size:12.5px;color:var(--muted);line-height:1.5">{{ i.body }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1.4fr));gap:24px;align-items:start">
+            <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:24px">
+              <div style="font-family:var(--font-heading);font-size:16.5px;font-weight:600;letter-spacing:-.015em">Category by month</div>
+              <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Six months, top four categories</div>
+              <div style="display:flex;align-items:flex-end;gap:12px;height:190px;margin-top:20px">
+                <sc-for list="{{ compare }}" as="c" hint-placeholder-count="6">
+                  <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end">
+                    <div style="width:100%;display:flex;flex-direction:column;justify-content:flex-end;height:100%">
+                      <sc-for list="{{ c.parts }}" as="p" hint-placeholder-count="4">
+                        <div title="{{ p.title }}" style="width:100%;background:{{ p.color }};height:{{ p.h }}"></div>
+                      </sc-for>
+                    </div>
+                    <span style="font-size:11px;color:var(--muted);font-family:var(--font-heading);font-weight:600">{{ c.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:16px;padding-top:14px;border-top:1px solid var(--color-divider);font-size:11.5px;color:var(--muted)">
+                <sc-for list="{{ compareLegend }}" as="l" hint-placeholder-count="4">
+                  <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:{{ l.color }}"></span>{{ l.label }}</span>
+                </sc-for>
+              </div>
+            </div>
+            <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface)">
+              <div style="padding:19px 24px;border-bottom:1px solid var(--color-divider);font-family:var(--font-heading);font-size:16.5px;font-weight:600;letter-spacing:-.015em">Top categories</div>
+              <sc-for list="{{ ranking }}" as="r" hint-placeholder-count="6">
+                <div style="display:flex;align-items:center;gap:12px;padding:15px 24px;border-bottom:1px solid var(--color-divider)">
+                  <span style="font-family:var(--font-heading);font-weight:600;font-size:13px;color:var(--muted);width:18px">{{ r.rank }}</span>
+                  <span style="flex:1;min-width:0;font-size:13.5px">{{ r.label }}</span>
+                  <span style="font-size:12px;color:{{ r.deltaTone }};font-family:var(--font-heading);font-weight:600">{{ r.delta }}</span>
+                  <span style="font-size:13px;font-variant-numeric:tabular-nums;width:104px;text-align:right">{{ r.value }}</span>
+                </div>
+              </sc-for>
+              <div style="padding:17px 24px"><button onClick="{{ tExport }}" class="btn btn-secondary btn-block" style="margin:0"><svg style="width:15px;height:15px"><use href="#i-download"></use></svg>Export analysis (CSV)</button></div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ═══ SHARED ═══ -->
+      <sc-if value="{{ isShared }}">
+        <div style="display:flex;flex-direction:column;gap:24px;max-width:1200px;animation:m-fade .18s ease both">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1.4fr));gap:24px;align-items:start">
+            <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:24px">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between">
+                <div>
+                  <div style="font-family:var(--font-heading);font-size:16.5px;font-weight:600;letter-spacing:-.015em">Household — August</div>
+                  <div style="font-size:11.5px;color:var(--muted);margin-top:2px">2 members · shared limit Rp9.000.000</div>
+                </div>
+                <span class="tag tag-accent">Owner</span>
+              </div>
+              <div style="display:flex;align-items:baseline;gap:12px;margin-top:18px">
+                <span style="font-family:var(--font-heading);font-size:30px;font-weight:600;letter-spacing:-.03em">Rp7.240.000</span>
+                <span style="font-size:12.5px;color:var(--muted)">spent · 80% of shared limit</span>
+              </div>
+              <div style="display:flex;height:10px;margin-top:14px;background:color-mix(in srgb,var(--color-text) 9%,transparent);border-radius:99px;overflow:hidden">
+                <div style="width:48%;background:var(--c1)"></div><div style="width:32%;background:var(--c3)"></div>
+              </div>
+              <div style="display:flex;gap:18px;margin-top:10px;font-size:11.5px;color:var(--muted)">
+                <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:var(--c1)"></span>Rangga Rp4.350.000</span>
+                <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:var(--c3)"></span>Sari Rp2.890.000</span>
+              </div>
+              <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--color-divider)">
+                <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-family:var(--font-heading);font-weight:600">Shared categories</div>
+                <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
+                  <sc-for list="{{ sharedCats }}" as="s" hint-placeholder-count="4">
+                    <div>
+                      <div style="display:flex;align-items:baseline;gap:8px;font-size:12.5px"><span style="flex:1">{{ s.label }}</span><span style="color:var(--muted);font-variant-numeric:tabular-nums">{{ s.spent }} / {{ s.limit }}</span></div>
+                      <div style="height:8px;margin-top:6px;background:color-mix(in srgb,var(--color-text) 9%,transparent);border-radius:99px;overflow:hidden"><div style="height:100%;border-radius:99px;background:{{ s.color }};width:{{ s.width }}"></div></div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+            <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface)">
+              <div style="padding:19px 24px;border-bottom:1px solid var(--color-divider);font-family:var(--font-heading);font-size:16.5px;font-weight:600;letter-spacing:-.015em">Members</div>
+              <sc-for list="{{ members }}" as="m" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:12px;padding:17px 24px;border-bottom:1px solid var(--color-divider)">
+                  <div style="width:38px;height:38px;flex:none;border-radius:50%;display:grid;place-items:center;background:{{ m.avatarBg }};color:{{ m.avatarFg }};font-family:var(--font-heading);font-weight:600;font-size:13px">{{ m.initials }}</div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13.5px">{{ m.name }}</div>
+                    <div style="font-size:11.5px;color:var(--muted);margin-top:1px">{{ m.contribution }}</div>
+                  </div>
+                  <span class="{{ m.tagClass }}">{{ m.role }}</span>
+                </div>
+              </sc-for>
+              <div style="padding:17px 24px"><button onClick="{{ tInvite }}" class="btn btn-secondary btn-block" style="margin:0"><svg style="width:15px;height:15px"><use href="#i-mail"></use></svg>Invite member</button></div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ═══ REMINDERS ═══ -->
+      <sc-if value="{{ isNotifications }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1.4fr));gap:24px;max-width:1200px;animation:m-fade .18s ease both;align-items:start">
+          <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface)">
+            <div style="padding:19px 24px;border-bottom:1px solid var(--color-divider);display:flex;align-items:center;justify-content:space-between">
+              <div style="font-family:var(--font-heading);font-size:16.5px;font-weight:600;letter-spacing:-.015em">Upcoming bills</div>
+              <span class="tag tag-neutral">Next 30 days</span>
+            </div>
+            <sc-for list="{{ bills }}" as="b" hint-placeholder-count="6">
+              <div style="display:flex;align-items:center;gap:14px;padding:16px 24px;border-bottom:1px solid var(--color-divider)">
+                <div style="width:44px;flex:none;text-align:center;border:1px solid var(--color-divider);border-radius:12px;padding:4px 0">
+                  <div style="font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">{{ b.mon }}</div>
+                  <div style="font-family:var(--font-heading);font-weight:600;font-size:17px;line-height:1.1">{{ b.dayNum }}</div>
+                </div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13.5px">{{ b.name }}</div>
+                  <div style="font-size:11.5px;color:var(--muted);margin-top:1px">{{ b.meta }}</div>
+                </div>
+                <span class="{{ b.tagClass }}">{{ b.state }}</span>
+                <span style="font-size:13.5px;font-family:var(--font-heading);font-weight:600;font-variant-numeric:tabular-nums;width:120px;text-align:right">{{ b.amount }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface)">
+              <div style="padding:19px 24px;border-bottom:1px solid var(--color-divider);font-family:var(--font-heading);font-size:16.5px;font-weight:600;letter-spacing:-.015em">Budget alerts</div>
+              <sc-for list="{{ alerts }}" as="a" hint-placeholder-count="3">
+                <div style="display:flex;gap:11px;padding:16px 24px;border-bottom:1px solid var(--color-divider)">
+                  <svg style="width:16px;height:16px;flex:none;margin-top:2px;color:{{ a.tone }}"><use href="{{ a.icon }}"></use></svg>
+                  <div><div style="font-size:13px;line-height:1.4">{{ a.title }}</div><div style="font-size:11.5px;color:var(--muted);margin-top:2px">{{ a.meta }}</div></div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:24px">
+              <div style="font-family:var(--font-heading);font-size:16.5px;font-weight:600;letter-spacing:-.015em">Delivery</div>
+              <div style="display:flex;flex-direction:column;gap:12px;margin-top:14px">
+                <label class="radio" style="justify-content:space-between;width:100%;font-size:13px"><span>Push notifications</span><input type="checkbox" checked="{{ yes }}" onChange="{{ noopInput }}"><span class="dot"></span></label>
+                <label class="radio" style="justify-content:space-between;width:100%;font-size:13px"><span>Email digest, Mondays</span><input type="checkbox" checked="{{ yes }}" onChange="{{ noopInput }}"><span class="dot"></span></label>
+                <label class="radio" style="justify-content:space-between;width:100%;font-size:13px"><span>WhatsApp bill reminders</span><input type="checkbox"><span class="dot"></span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ═══ SETTINGS ═══ -->
+      <sc-if value="{{ isSettings }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:24px;max-width:1200px;animation:m-fade .18s ease both;align-items:start">
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:24px">
+              <div style="font-family:var(--font-heading);font-size:16.5px;font-weight:600;letter-spacing:-.015em">Profile</div>
+              <div style="display:flex;align-items:center;gap:14px;margin-top:16px">
+                <div style="width:58px;height:58px;border-radius:50%;background:var(--panel);border:1px solid var(--color-divider);color:var(--color-text);display:grid;place-items:center;font-family:var(--font-heading);font-weight:600;font-size:19px">RA</div>
+                <div><div style="font-size:15px;font-family:var(--font-heading);font-weight:600">Rangga Aditama</div><div style="font-size:12px;color:var(--muted)">rangga@studioaksa.id · Jakarta</div></div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:12px;margin-top:16px">
+                <div class="field"><label>Display name</label><input class="input" value="Rangga Aditama" onChange="{{ noopInput }}"></div>
+                <div class="field"><label>Email</label><input class="input" value="rangga@studioaksa.id" onChange="{{ noopInput }}"></div>
+              </div>
+            </div>
+            <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:24px">
+              <div style="font-family:var(--font-heading);font-size:16.5px;font-weight:600;letter-spacing:-.015em">Security</div>
+              <div style="display:flex;flex-direction:column;gap:14px;margin-top:14px">
+                <div style="display:flex;align-items:center;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--color-divider)">
+                  <svg style="width:17px;height:17px;color:var(--muted)"><use href="#i-lock"></use></svg>
+                  <div style="flex:1"><div style="font-size:13.5px">Password</div><div style="font-size:11.5px;color:var(--muted)">Changed 4 months ago</div></div>
+                  <button onClick="{{ noop }}" class="btn btn-secondary" style="font-size:12.5px">Change</button>
+                </div>
+                <label class="radio" style="justify-content:space-between;width:100%;font-size:13px"><span>Biometric lock on mobile</span><input type="checkbox" checked="{{ yes }}" onChange="{{ noopInput }}"><span class="dot"></span></label>
+                <label class="radio" style="justify-content:space-between;width:100%;font-size:13px"><span>Two-factor authentication</span><input type="checkbox" checked="{{ yes }}" onChange="{{ noopInput }}"><span class="dot"></span></label>
+                <label class="radio" style="justify-content:space-between;width:100%;font-size:13px"><span>Require PIN for exports</span><input type="checkbox"><span class="dot"></span></label>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:24px">
+              <div style="font-family:var(--font-heading);font-size:16.5px;font-weight:600;letter-spacing:-.015em">Preferences</div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:12px;margin-top:16px">
+                <div class="field"><label>Primary currency</label><select class="input"><option>IDR — Rupiah</option><option>USD — US Dollar</option></select></div>
+                <div class="field"><label>Language</label><select class="input"><option>Bahasa Indonesia</option><option>English</option></select></div>
+                <div class="field"><label>Week starts</label><select class="input"><option>Monday</option><option>Sunday</option></select></div>
+                <div class="field"><label>Number format</label><select class="input"><option>1.234.567</option><option>1,234,567</option></select></div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:14px;border-top:1px solid var(--color-divider)">
+                <div><div style="font-size:13.5px">Appearance</div><div style="font-size:11.5px;color:var(--muted)">{{ themeLabel }}</div></div>
+                <div class="seg">
+                  <label class="seg-opt"><input type="radio" name="thm" checked="{{ isLight }}" onChange="{{ setLight }}">Light</label>
+                  <label class="seg-opt"><input type="radio" name="thm" checked="{{ isDark }}" onChange="{{ setDark }}">Dark</label>
+                </div>
+              </div>
+            </div>
+            <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:24px">
+              <div style="font-family:var(--font-heading);font-size:16.5px;font-weight:600;letter-spacing:-.015em">Data</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:4px">Exports cover the selected date range across all wallets.</div>
+              <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+                <button onClick="{{ tExport }}" class="btn btn-secondary"><svg style="width:15px;height:15px"><use href="#i-download"></use></svg>CSV</button>
+                <button onClick="{{ tExport }}" class="btn btn-secondary"><svg style="width:15px;height:15px"><use href="#i-download"></use></svg>Excel</button>
+                <button onClick="{{ tExport }}" class="btn btn-secondary"><svg style="width:15px;height:15px"><use href="#i-download"></use></svg>PDF</button>
+              </div>
+              <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--color-divider)">
+                <button onClick="{{ goAuth }}" class="btn btn-ghost" style="font-size:13px">View auth screens<svg style="width:14px;height:14px"><use href="#i-right"></use></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ═══ MOBILE ═══ -->
+      <sc-if value="{{ isMobile }}">
+        <div style="display:flex;gap:26px;flex-wrap:wrap;animation:m-fade .18s ease both">
+          <div style="width:330px">
+            <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-family:var(--font-heading);font-weight:600;color:var(--muted);margin-bottom:10px">Home</div>
+            <div style="border:1px solid var(--color-divider);border-radius:20px;box-shadow:var(--shadow-lg);background:var(--color-bg);padding:0;height:660px;display:flex;flex-direction:column">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;font-size:11px;font-family:var(--font-heading);font-weight:600;border-bottom:1px solid var(--color-divider)"><span>09:41</span><span>IDR</span></div>
+              <div style="padding:14px;border-bottom:1px solid var(--color-divider)">
+                <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Total balance</div>
+                <div style="font-family:var(--font-heading);font-weight:600;font-size:30px;letter-spacing:-.03em;margin-top:6px">Rp84.320.000</div>
+                <div style="display:flex;gap:14px;margin-top:8px;font-size:11.5px"><span style="color:var(--income)">+Rp21.450.000 in</span><span style="color:var(--expense)">−Rp12.780.000 out</span></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--color-divider)">
+                <div style="padding:12px 14px;border-right:1px solid var(--color-divider)"><div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Net saved</div><div style="font-family:var(--font-heading);font-weight:600;font-size:17px;color:var(--income);margin-top:4px">Rp8.670.000</div></div>
+                <div style="padding:12px 14px"><div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Streak</div><div style="font-family:var(--font-heading);font-weight:600;font-size:17px;margin-top:4px">7 months</div></div>
+              </div>
+              <div style="padding:12px 14px;border-bottom:1px solid var(--color-divider)">
+                <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-family:var(--font-heading);font-weight:600">Budgets</div>
+                <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
+                  <sc-for list="{{ budgetsShort }}" as="b" hint-placeholder-count="4">
+                    <div><div style="display:flex;font-size:11.5px"><span style="flex:1">{{ b.label }}</span><span style="color:var(--muted)">{{ b.width }}</span></div><div style="height:6px;margin-top:4px;background:color-mix(in srgb,var(--color-text) 9%,transparent);border-radius:99px;overflow:hidden"><div style="height:100%;border-radius:99px;background:{{ b.color }};width:{{ b.width }}"></div></div></div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="flex:1;overflow:hidden">
+                <sc-for list="{{ recent }}" as="tx" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--color-divider)">
+                    <svg style="width:15px;height:15px;flex:none;color:{{ tx.iconTone }}"><use href="{{ tx.icon }}"></use></svg>
+                    <div style="flex:1;min-width:0"><div style="font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ tx.name }}</div><div style="font-size:10.5px;color:var(--muted)">{{ tx.category }}</div></div>
+                    <span style="font-size:12.5px;font-family:var(--font-heading);font-weight:600;color:{{ tx.tone }}">{{ tx.amount }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex;border-top:1px solid var(--color-divider)">
+                <div style="flex:1;padding:11px;display:grid;place-items:center;background:color-mix(in srgb,var(--color-accent) 16%,transparent);color:var(--color-accent)"><svg style="width:18px;height:18px"><use href="#i-grid"></use></svg></div>
+                <div style="flex:1;padding:11px;display:grid;place-items:center;color:var(--muted)"><svg style="width:18px;height:18px"><use href="#i-swap"></use></svg></div>
+                <div style="flex:1;padding:11px;display:grid;place-items:center;color:var(--muted)"><svg style="width:18px;height:18px"><use href="#i-plus"></use></svg></div>
+                <div style="flex:1;padding:11px;display:grid;place-items:center;color:var(--muted)"><svg style="width:18px;height:18px"><use href="#i-target"></use></svg></div>
+                <div style="flex:1;padding:11px;display:grid;place-items:center;color:var(--muted)"><svg style="width:18px;height:18px"><use href="#i-gear"></use></svg></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="width:330px">
+            <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-family:var(--font-heading);font-weight:600;color:var(--muted);margin-bottom:10px">Transactions</div>
+            <div style="border:1px solid var(--color-divider);border-radius:20px;box-shadow:var(--shadow-lg);background:var(--color-bg);height:660px;display:flex;flex-direction:column">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;font-size:11px;font-family:var(--font-heading);font-weight:600;border-bottom:1px solid var(--color-divider)"><span>09:41</span><span>IDR</span></div>
+              <div style="padding:12px 14px;border-bottom:1px solid var(--color-divider);display:flex;gap:8px">
+                <label style="flex:1;display:flex;align-items:center;gap:8px;padding:0 10px;height:34px;border:1px solid var(--color-divider);border-radius:10px;color:var(--muted)"><svg style="width:14px;height:14px"><use href="#i-search"></use></svg><span style="font-size:12px">Search</span></label>
+                <div style="width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--color-divider);border-radius:10px;color:var(--muted)"><svg style="width:15px;height:15px"><use href="#i-chart"></use></svg></div>
+              </div>
+              <div style="flex:1;overflow:hidden">
+                <sc-for list="{{ txGroups }}" as="g" hint-placeholder-count="3">
+                  <div style="padding:9px 14px;background:var(--color-surface);border-bottom:1px solid var(--color-divider);font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-family:var(--font-heading);font-weight:600;display:flex;justify-content:space-between"><span>{{ g.date }}</span><span style="color:var(--muted)">{{ g.total }}</span></div>
+                  <sc-for list="{{ g.items }}" as="tx" hint-placeholder-count="3">
+                    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--color-divider)">
+                      <svg style="width:15px;height:15px;flex:none;color:{{ tx.iconTone }}"><use href="{{ tx.icon }}"></use></svg>
+                      <div style="flex:1;min-width:0"><div style="font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ tx.name }}</div><div style="font-size:10.5px;color:var(--muted)">{{ tx.wallet }}</div></div>
+                      <span style="font-size:12.5px;font-family:var(--font-heading);font-weight:600;color:{{ tx.tone }}">{{ tx.amount }}</span>
+                    </div>
+                  </sc-for>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+
+          <div style="width:330px">
+            <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-family:var(--font-heading);font-weight:600;color:var(--muted);margin-bottom:10px">Add transaction</div>
+            <div style="border:1px solid var(--color-divider);border-radius:20px;box-shadow:var(--shadow-lg);background:var(--color-bg);height:660px;display:flex;flex-direction:column">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;font-size:11px;font-family:var(--font-heading);font-weight:600;border-bottom:1px solid var(--color-divider)"><span>09:41</span><span>IDR</span></div>
+              <div style="padding:14px;border-bottom:1px solid var(--color-divider);display:flex;align-items:center;justify-content:space-between">
+                <span style="font-family:var(--font-heading);font-weight:600;font-size:16px">New entry</span>
+                <svg style="width:16px;height:16px;color:var(--muted)"><use href="#i-x"></use></svg>
+              </div>
+              <div style="padding:14px;display:flex;flex-direction:column;gap:14px;flex:1">
+                <div class="seg" style="width:100%"><label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="mtype" checked="{{ yes }}" onChange="{{ noopInput }}">Expense</label><label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="mtype">Income</label></div>
+                <div>
+                  <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Amount</div>
+                  <div style="font-family:var(--font-heading);font-weight:600;font-size:34px;letter-spacing:-.03em;margin-top:4px;color:var(--expense)">Rp62.000</div>
+                </div>
+                <div class="field"><label>Category</label><select class="input"><option>Food &amp; drink</option><option>Transport</option></select></div>
+                <div class="field"><label>Wallet</label><select class="input"><option>GoPay</option><option>Cash</option></select></div>
+                <div class="field"><label>Note</label><input class="input" value="Kopi Tuku, Tebet" onChange="{{ noopInput }}"></div>
+                <label class="radio" style="justify-content:space-between;width:100%;font-size:13px"><span>Recurring</span><input type="checkbox"><span class="dot"></span></label>
+              </div>
+              <div style="padding:14px;border-top:1px solid var(--color-divider)"><button onClick="{{ saveTx }}" class="btn btn-primary btn-block" style="margin:0;justify-content:center">Save transaction</button></div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ═══ USER MANAGEMENT ═══ -->
+      <sc-if value="{{ isUsers }}">
+        <div style="display:flex;flex-direction:column;gap:24px;max-width:1240px;animation:m-fade .18s ease both">
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:16px">
+            <sc-for list="{{ userStats }}" as="s" hint-placeholder-count="4">
+              <div style="padding:19px 22px;min-width:0;border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface)">
+                <span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-family:var(--font-heading);font-weight:600">{{ s.label }}</span>
+                <div style="font-family:var(--font-heading);font-size:24.5px;font-weight:600;letter-spacing:-.03em;margin-top:10px;color:{{ s.tone }};font-variant-numeric:tabular-nums">{{ s.value }}</div>
+                <div style="font-size:11.5px;color:var(--muted);margin-top:4px">{{ s.note }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface)">
+            <div style="padding:19px 24px;border-bottom:1px solid var(--color-divider);display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+              <label style="display:flex;align-items:center;gap:8px;flex:1;min-width:220px;padding:0 12px;height:38px;border:1px solid var(--color-divider);border-radius:12px;background:var(--panel);color:var(--muted)">
+                <svg style="width:15px;height:15px;flex:none"><use href="#i-search"></use></svg>
+                <input value="{{ userQuery }}" onChange="{{ setUserQuery }}" placeholder="Search name, username or email" style="all:unset;flex:1;min-width:0;font-family:var(--font-body);font-size:13.5px;color:var(--color-text)">
+              </label>
+              <select value="{{ userRoleFilter }}" onChange="{{ setUserRoleFilter }}" class="input" style="width:auto;min-width:150px;flex:none">
+                <sc-for list="{{ userRoleOptions }}" as="r" hint-placeholder-count="5"><option value="{{ r }}">{{ r }}</option></sc-for>
+              </select>
+              <select value="{{ userStatusFilter }}" onChange="{{ setUserStatusFilter }}" class="input" style="width:auto;min-width:140px;flex:none">
+                <option value="All statuses">All statuses</option><option value="Enabled">Enabled</option><option value="Disabled">Disabled</option><option value="Invited">Invited</option>
+              </select>
+              <button onClick="{{ openNewUser }}" class="btn btn-primary" style="flex:none"><svg style="width:15px;height:15px"><use href="#i-plus"></use></svg>Add new user</button>
+            </div>
+
+            <div style="overflow-x:auto"><div style="min-width:880px">
+            <div style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) 130px 150px 110px 118px;gap:14px;padding:13px 24px;border-bottom:1px solid var(--color-divider);background:var(--panel);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-family:var(--font-heading);font-weight:600;color:var(--muted)">
+              <span>Full name</span><span>Username</span><span>Role</span><span>Last updated</span><span>Status</span><span style="text-align:right">Action</span>
+            </div>
+
+            <sc-for list="{{ users }}" as="u" hint-placeholder-count="8">
+              <div style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) 130px 150px 110px 118px;gap:14px;align-items:center;padding:12px 24px;border-bottom:1px solid var(--color-divider)">
+                <div style="display:flex;align-items:center;gap:12px;min-width:0">
+                  <div style="width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;background:{{ u.avatarBg }};color:{{ u.avatarFg }};font-family:var(--font-heading);font-weight:600;font-size:12px">{{ u.initials }}</div>
+                  <div style="min-width:0">
+                    <div style="font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ u.name }}</div>
+                    <div style="font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ u.email }}</div>
+                  </div>
+                </div>
+                <span style="font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ u.username }}</span>
+                <span class="{{ u.roleTag }}" style="justify-self:start">{{ u.role }}</span>
+                <span style="font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums">{{ u.updated }}</span>
+                <span style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:{{ u.statusTone }}"><span style="width:7px;height:7px;border-radius:50%;background:{{ u.statusTone }}"></span>{{ u.status }}</span>
+                <div style="display:flex;gap:6px;justify-content:flex-end">
+                  <button onClick="{{ u.edit }}" class="btn btn-secondary" style="font-size:12px;padding:6px 11px">Edit</button>
+                  <button onClick="{{ u.remove }}" class="btn btn-ghost" style="font-size:12px;padding:6px 9px;color:var(--expense)"><svg style="width:14px;height:14px"><use href="#i-x"></use></svg></button>
+                </div>
+              </div>
+            </sc-for>
+
+            </div></div>
+            <sc-if value="{{ noUsers }}">
+              <div style="padding:52px 24px;color:var(--muted);font-size:13px">No users match this search. <button onClick="{{ resetUserFilters }}" class="btn btn-ghost" style="font-size:13px">Clear filters</button></div>
+            </sc-if>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:16px 24px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:12px;color:var(--muted)">Show</span>
+                <select value="{{ userBar.size }}" onChange="{{ userBar.setSize }}" class="input" style="width:auto;min-width:72px;height:34px;padding:0 10px">
+                  <option value="10">10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                </select>
+                <span style="font-size:12px;color:var(--muted)">{{ userBar.range }} users</span>
+              </div>
+              <sc-if value="{{ userBar.multi }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <button onClick="{{ userBar.prev }}" style="{{ userBar.prevStyle }}" title="Previous page"><svg style="width:14px;height:14px;transform:rotate(180deg)"><use href="#i-right"></use></svg></button>
+                  <sc-for list="{{ userBar.nums }}" as="p" hint-placeholder-count="4">
+                    <sc-if value="{{ p.gap }}"><span style="min-width:22px;text-align:center;color:var(--muted);font-size:12px">…</span></sc-if>
+                    <sc-if value="{{ p.active }}"><button onClick="{{ p.go }}" style="{{ p.style }}">{{ p.label }}</button></sc-if>
+                    <sc-if value="{{ p.idle }}"><button onClick="{{ p.go }}" style="{{ p.style }}">{{ p.label }}</button></sc-if>
+                  </sc-for>
+                  <button onClick="{{ userBar.next }}" style="{{ userBar.nextStyle }}" title="Next page"><svg style="width:14px;height:14px"><use href="#i-right"></use></svg></button>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ═══ AUDIT LOG ═══ -->
+      <sc-if value="{{ isAudit }}">
+        <div style="display:flex;flex-direction:column;gap:24px;max-width:1240px;animation:m-fade .18s ease both">
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:16px">
+            <sc-for list="{{ auditStats }}" as="s" hint-placeholder-count="4">
+              <div style="padding:19px 22px;min-width:0;border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface)">
+                <span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-family:var(--font-heading);font-weight:600">{{ s.label }}</span>
+                <div style="font-family:var(--font-heading);font-size:24.5px;font-weight:600;letter-spacing:-.03em;margin-top:10px;color:{{ s.tone }};font-variant-numeric:tabular-nums">{{ s.value }}</div>
+                <div style="font-size:11.5px;color:var(--muted);margin-top:4px">{{ s.note }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface)">
+            <div style="padding:19px 24px;border-bottom:1px solid var(--color-divider);display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+              <label style="display:flex;align-items:center;gap:9px;flex:1;min-width:220px;padding:0 12px;height:38px;border:1px solid var(--color-divider);border-radius:12px;background:var(--panel);color:var(--muted)">
+                <svg style="width:15px;height:15px;flex:none"><use href="#i-search"></use></svg>
+                <input value="{{ auditQuery }}" onChange="{{ setAuditQuery }}" placeholder="Search actor, action or detail" style="all:unset;flex:1;min-width:0;font-family:var(--font-body);font-size:13.5px;color:var(--color-text)">
+              </label>
+              <select value="{{ auditActor }}" onChange="{{ setAuditActor }}" class="input" style="width:auto;min-width:150px;flex:none">
+                <sc-for list="{{ auditActorOptions }}" as="o" hint-placeholder-count="6"><option value="{{ o }}">{{ o }}</option></sc-for>
+              </select>
+              <select value="{{ auditModule }}" onChange="{{ setAuditModule }}" class="input" style="width:auto;min-width:160px;flex:none">
+                <sc-for list="{{ auditModuleOptions }}" as="o" hint-placeholder-count="8"><option value="{{ o }}">{{ o }}</option></sc-for>
+              </select>
+              <select value="{{ auditSeverity }}" onChange="{{ setAuditSeverity }}" class="input" style="width:auto;min-width:150px;flex:none">
+                <option value="All events">All events</option><option value="Sensitive only">Sensitive only</option><option value="Critical only">Critical only</option>
+              </select>
+              <button onClick="{{ resetAudit }}" class="btn btn-secondary" style="flex:none">Reset</button>
+              <button onClick="{{ tExport }}" class="btn btn-primary" style="flex:none"><svg style="width:15px;height:15px"><use href="#i-download"></use></svg>Export log</button>
+            </div>
+
+            <div style="overflow-x:auto"><div style="min-width:940px">
+              <div style="display:grid;grid-template-columns:150px minmax(0,1fr) 170px minmax(0,1.4fr) 120px;gap:14px;padding:13px 24px;border-bottom:1px solid var(--color-divider);background:var(--panel);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-family:var(--font-heading);font-weight:600;color:var(--muted)">
+                <span>Timestamp</span><span>Actor</span><span>Action</span><span>Detail</span><span>IP address</span>
+              </div>
+
+              <sc-for list="{{ auditRows }}" as="a" hint-placeholder-count="10">
+                <div style="display:grid;grid-template-columns:150px minmax(0,1fr) 170px minmax(0,1.4fr) 120px;gap:14px;align-items:center;padding:12px 24px;border-bottom:1px solid var(--color-divider)">
+                  <span style="font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums">{{ a.time }}</span>
+                  <div style="display:flex;align-items:center;gap:11px;min-width:0">
+                    <div style="width:30px;height:30px;flex:none;border-radius:50%;display:grid;place-items:center;background:{{ a.avatarBg }};color:{{ a.avatarFg }};border:1px solid var(--color-divider);font-family:var(--font-heading);font-weight:600;font-size:11px">{{ a.initials }}</div>
+                    <div style="min-width:0">
+                      <div style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ a.actor }}</div>
+                      <div style="font-size:11px;color:var(--muted)">{{ a.role }}</div>
+                    </div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;min-width:0">
+                    <span style="{{ a.dotStyle }}"></span>
+                    <span style="font-size:12.5px;color:{{ a.tone }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ a.action }}</span>
+                  </div>
+                  <div style="min-width:0">
+                    <div style="font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ a.detail }}</div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:1px">{{ a.module }}</div>
+                  </div>
+                  <span style="font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums">{{ a.ip }}</span>
+                </div>
+              </sc-for>
+            </div></div>
+
+            <sc-if value="{{ noAudit }}">
+              <div style="padding:52px 24px;color:var(--muted);font-size:13px">No events match these filters. <button onClick="{{ resetAudit }}" class="btn btn-ghost" style="font-size:13px">Clear them</button></div>
+            </sc-if>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:16px 24px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:12px;color:var(--muted)">Show</span>
+                <select value="{{ auditBar.size }}" onChange="{{ auditBar.setSize }}" class="input" style="width:auto;min-width:72px;height:34px;padding:0 10px">
+                  <option value="10">10</option><option value="25">25</option><option value="50">50</option>
+                </select>
+                <span style="font-size:12px;color:var(--muted)">{{ auditBar.range }} events</span>
+              </div>
+              <sc-if value="{{ auditBar.multi }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <button onClick="{{ auditBar.prev }}" style="{{ auditBar.prevStyle }}" title="Previous page"><svg style="width:14px;height:14px;transform:rotate(180deg)"><use href="#i-right"></use></svg></button>
+                  <sc-for list="{{ auditBar.nums }}" as="p" hint-placeholder-count="4">
+                    <sc-if value="{{ p.gap }}"><span style="min-width:22px;text-align:center;color:var(--muted);font-size:12px">…</span></sc-if>
+                    <sc-if value="{{ p.active }}"><button onClick="{{ p.go }}" style="{{ p.style }}">{{ p.label }}</button></sc-if>
+                    <sc-if value="{{ p.idle }}"><button onClick="{{ p.go }}" style="{{ p.style }}">{{ p.label }}</button></sc-if>
+                  </sc-for>
+                  <button onClick="{{ auditBar.next }}" style="{{ auditBar.nextStyle }}" title="Next page"><svg style="width:14px;height:14px"><use href="#i-right"></use></svg></button>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ═══ ROLE MANAGEMENT ═══ -->
+      <sc-if value="{{ isRoles }}">
+        <div style="display:flex;flex-direction:column;gap:24px;max-width:1240px;animation:m-fade .18s ease both">
+
+          <div style="border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface)">
+            <div style="padding:19px 24px;border-bottom:1px solid var(--color-divider);display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+              <label style="display:flex;align-items:center;gap:8px;flex:1;min-width:220px;padding:0 12px;height:38px;border:1px solid var(--color-divider);border-radius:12px;background:var(--panel);color:var(--muted)">
+                <svg style="width:15px;height:15px;flex:none"><use href="#i-search"></use></svg>
+                <input value="{{ roleQuery }}" onChange="{{ setRoleQuery }}" placeholder="Search role" style="all:unset;flex:1;min-width:0;font-family:var(--font-body);font-size:13.5px;color:var(--color-text)">
+              </label>
+              <button onClick="{{ openNewRole }}" class="btn btn-primary" style="flex:none"><svg style="width:15px;height:15px"><use href="#i-plus"></use></svg>Add new role</button>
+            </div>
+
+            <div style="overflow-x:auto"><div style="min-width:900px">
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) 130px 150px 110px 90px;gap:14px;padding:13px 24px;border-bottom:1px solid var(--color-divider);background:var(--panel);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-family:var(--font-heading);font-weight:600;color:var(--muted)">
+              <span>Role name</span><span>Description</span><span>Members</span><span>Last updated</span><span>Status</span><span style="text-align:right">Action</span>
+            </div>
+
+            <sc-for list="{{ roles }}" as="r" hint-placeholder-count="5">
+              <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) 130px 150px 110px 90px;gap:14px;align-items:center;padding:14px 24px;border-bottom:1px solid var(--color-divider)">
+                <div style="display:flex;align-items:center;gap:11px;min-width:0">
+                  <div style="width:32px;height:32px;flex:none;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--color-accent) 14%,transparent);color:var(--color-accent)"><svg style="width:15px;height:15px"><use href="{{ r.icon }}"></use></svg></div>
+                  <div style="min-width:0">
+                    <div style="font-size:13.5px;font-family:var(--font-heading);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.name }}</div>
+                    <div style="font-size:11px;color:var(--muted)">{{ r.permCount }}</div>
+                  </div>
+                </div>
+                <span style="font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.description }}</span>
+                <div style="display:flex;align-items:center;gap:7px;font-size:12.5px"><svg style="width:14px;height:14px;color:var(--muted)"><use href="#i-users"></use></svg>{{ r.members }}</div>
+                <span style="font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums">{{ r.updated }}</span>
+                <span style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:{{ r.statusTone }}"><span style="width:7px;height:7px;border-radius:50%;background:{{ r.statusTone }}"></span>{{ r.status }}</span>
+                <div style="display:flex;justify-content:flex-end">
+                  <button onClick="{{ r.edit }}" class="btn btn-secondary" style="font-size:12px;padding:6px 12px">Edit</button>
+                </div>
+              </div>
+            </sc-for>
+
+            </div></div>
+            <sc-if value="{{ noRoles }}">
+              <div style="padding:52px 24px;color:var(--muted);font-size:13px">No roles match this search.</div>
+            </sc-if>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:16px 24px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:12px;color:var(--muted)">Show</span>
+                <select value="{{ roleBar.size }}" onChange="{{ roleBar.setSize }}" class="input" style="width:auto;min-width:72px;height:34px;padding:0 10px">
+                  <option value="10">10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                </select>
+                <span style="font-size:12px;color:var(--muted)">{{ roleBar.range }} roles</span>
+              </div>
+              <sc-if value="{{ roleBar.multi }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <button onClick="{{ roleBar.prev }}" style="{{ roleBar.prevStyle }}" title="Previous page"><svg style="width:14px;height:14px;transform:rotate(180deg)"><use href="#i-right"></use></svg></button>
+                  <sc-for list="{{ roleBar.nums }}" as="p" hint-placeholder-count="4">
+                    <sc-if value="{{ p.gap }}"><span style="min-width:22px;text-align:center;color:var(--muted);font-size:12px">…</span></sc-if>
+                    <sc-if value="{{ p.active }}"><button onClick="{{ p.go }}" style="{{ p.style }}">{{ p.label }}</button></sc-if>
+                    <sc-if value="{{ p.idle }}"><button onClick="{{ p.go }}" style="{{ p.style }}">{{ p.label }}</button></sc-if>
+                  </sc-for>
+                  <button onClick="{{ roleBar.next }}" style="{{ roleBar.nextStyle }}" title="Next page"><svg style="width:14px;height:14px"><use href="#i-right"></use></svg></button>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ═══ ROLE FORM (full page) ═══ -->
+      <sc-if value="{{ isRoleForm }}">
+        <div style="display:flex;flex-direction:column;gap:20px;max-width:1240px;animation:m-fade .18s ease both">
+
+          <div style="display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted)">
+            <button onClick="{{ backToRoles }}" class="btn btn-ghost" style="font-size:12.5px;padding:4px 8px">Role management</button>
+            <span>/</span><span style="color:var(--color-text)">{{ roleSaveLabel }}</span>
+          </div>
+
+          <div style="flex:none;border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:24px;display:flex;flex-direction:column;gap:18px">
+            <div class="field"><label>Role name</label><input class="input" value="{{ roleFormName }}" placeholder="Input role name" onChange="{{ setRoleFormName }}"></div>
+            <div class="field"><label>Description</label><textarea class="input" value="{{ roleFormDesc }}" placeholder="Input description" onChange="{{ setRoleFormDesc }}" style="min-height:84px;resize:vertical"></textarea></div>
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+              <label class="radio" style="font-size:13px;gap:10px"><input type="checkbox" checked="{{ roleFormEnabled }}" onChange="{{ toggleRoleStatus }}"><span class="dot"></span><span>Status — {{ roleStatusLabel }}</span></label>
+              <span style="font-size:11.5px;color:var(--muted)">{{ roleStatusNote }}</span>
+            </div>
+          </div>
+
+          <div style="flex:none;border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);overflow:hidden">
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:19px 24px;border-bottom:1px solid var(--color-divider)">
+              <div style="flex:1;min-width:0">
+                <div style="font-family:var(--font-heading);font-size:15px;font-weight:600">Menu permissions</div>
+                <div style="font-size:11.5px;color:var(--muted);margin-top:2px">{{ permSummary }}</div>
+              </div>
+              <button onClick="{{ selectAllPerms }}" class="btn btn-secondary" style="font-size:12px">Select all menus</button>
+              <button onClick="{{ clearAllPerms }}" class="btn btn-ghost" style="font-size:12px">Clear</button>
+            </div>
+
+            <div style="overflow-x:auto"><div style="min-width:760px">
+              <div style="display:grid;grid-template-columns:minmax(0,1fr) 78px 66px 66px 66px 66px 76px;gap:8px;padding:12px 24px;border-bottom:1px solid var(--color-divider);background:var(--panel);font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-family:var(--font-heading);font-weight:600;color:var(--muted)">
+                <span>Menu name</span><span style="text-align:center">Select all</span><span style="text-align:center">Read</span><span style="text-align:center">Create</span><span style="text-align:center">Update</span><span style="text-align:center">Delete</span><span style="text-align:center">Approval</span>
+              </div>
+
+              <sc-for list="{{ permRows }}" as="row" hint-placeholder-count="11">
+                <div style="display:grid;grid-template-columns:minmax(0,1fr) 78px 66px 66px 66px 66px 76px;gap:8px;align-items:center;padding:11px 24px;border-bottom:1px solid var(--color-divider)">
+                  <div style="display:flex;align-items:center;gap:11px;min-width:0">
+                    <svg style="width:15px;height:15px;flex:none;color:var(--muted)"><use href="{{ row.icon }}"></use></svg>
+                    <span style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ row.label }}</span>
+                  </div>
+                  <button onClick="{{ row.allToggle }}" title="{{ row.allTitle }}" style="{{ row.allStyle }}">
+                    <sc-if value="{{ row.allOn }}"><svg style="width:12px;height:12px"><use href="#i-check"></use></svg></sc-if>
+                  </button>
+                  <sc-for list="{{ row.cells }}" as="cell" hint-placeholder-count="5">
+                    <sc-if value="{{ cell.supported }}" hint-placeholder-val="{{ true }}">
+                      <button onClick="{{ cell.toggle }}" title="{{ cell.title }}" style="{{ cell.style }}">
+                        <sc-if value="{{ cell.on }}"><svg style="width:12px;height:12px"><use href="#i-check"></use></svg></sc-if>
+                      </button>
+                    </sc-if>
+                    <sc-if value="{{ cell.unsupported }}">
+                      <span style="display:grid;place-items:center;height:22px;color:var(--muted);opacity:.35;font-size:12px">—</span>
+                    </sc-if>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </div></div>
+
+            <div style="display:flex;align-items:center;gap:11px;padding:16px 24px">
+              <svg style="width:16px;height:16px;flex:none;color:var(--color-accent)"><use href="#i-shield"></use></svg>
+              <div style="font-size:12px;line-height:1.5;color:var(--muted)">{{ roleImpact }}</div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px">
+            <button onClick="{{ saveRole }}" class="btn btn-primary">{{ roleSaveLabel }}</button>
+            <button onClick="{{ closeRole }}" class="btn btn-secondary">Cancel</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ═══ AUTH ═══ -->
+      <sc-if value="{{ isAuth }}">
+        <div style="display:flex;gap:20px;flex-wrap:wrap;animation:m-fade .18s ease both">
+          <div style="width:400px;border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:32px">
+            <div style="width:32px;height:32px;border-radius:10px;background:var(--color-accent);color:var(--color-bg);display:grid;place-items:center;font-family:var(--font-heading);font-weight:600">L</div>
+            <div style="font-family:var(--font-heading);font-weight:600;font-size:28px;letter-spacing:-.03em;margin-top:20px;line-height:1.1">Sign in</div>
+            <div style="font-size:12.5px;color:var(--muted);margin-top:6px">Every rupiah, in one ledger.</div>
+            <div style="display:flex;flex-direction:column;gap:12px;margin-top:22px">
+              <div class="field"><label>Email</label><input class="input" value="rangga@studioaksa.id" onChange="{{ noopInput }}"></div>
+              <div class="field"><label>Password</label><input class="input" type="password" value="password" onChange="{{ noopInput }}"></div>
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <label class="radio" style="font-size:12.5px"><input type="checkbox" checked="{{ yes }}" onChange="{{ noopInput }}"><span class="dot"></span><span>Keep me signed in</span></label>
+                <button onClick="{{ noop }}" class="btn btn-ghost" style="font-size:12.5px">Forgot?</button>
+              </div>
+              <button onClick="{{ goDashboard }}" class="btn btn-primary btn-block" style="margin-top:4px">Sign in</button>
+              <div style="display:flex;align-items:center;gap:10px;margin:6px 0"><span style="flex:1;height:1px;background:var(--color-divider)"></span><span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">or</span><span style="flex:1;height:1px;background:var(--color-divider)"></span></div>
+              <button onClick="{{ goDashboard }}" class="btn btn-secondary btn-block" style="margin:0"><svg style="width:15px;height:15px"><use href="#i-globe"></use></svg>Continue with Google</button>
+            </div>
+          </div>
+          <div style="width:400px;border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:32px">
+            <div style="font-family:var(--font-heading);font-weight:600;font-size:23px;letter-spacing:-.03em">Create account</div>
+            <div style="display:flex;flex-direction:column;gap:12px;margin-top:20px">
+              <div class="field"><label>Full name</label><input class="input" value="" placeholder="Rangga Aditama" onChange="{{ noopInput }}"></div>
+              <div class="field"><label>Email</label><input class="input" value="" placeholder="you@studio.id" onChange="{{ noopInput }}"></div>
+              <div class="field"><label>Password</label><input class="input" type="password" value="" placeholder="At least 10 characters" onChange="{{ noopInput }}"></div>
+              <div class="field"><label>Primary currency</label><select class="input"><option>IDR — Rupiah</option><option>USD — US Dollar</option></select></div>
+              <label class="radio" style="font-size:12.5px"><input type="checkbox"><span class="dot"></span><span>I agree to the terms and privacy policy</span></label>
+              <button onClick="{{ noop }}" class="btn btn-primary btn-block">Create account</button>
+            </div>
+          </div>
+          <div style="width:340px;border:1px solid var(--color-divider);border-radius:16px;box-shadow:var(--shadow-md);background:var(--color-surface);padding:32px">
+            <div style="font-family:var(--font-heading);font-weight:600;font-size:23px;letter-spacing:-.03em">Reset password</div>
+            <div style="font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.5">Enter the email on your account. We send a single-use link valid for 30 minutes.</div>
+            <div style="display:flex;flex-direction:column;gap:12px;margin-top:20px">
+              <div class="field"><label>Email</label><input class="input" value="" placeholder="you@studio.id" onChange="{{ noopInput }}"></div>
+              <button onClick="{{ noop }}" class="btn btn-primary btn-block">Send reset link</button>
+              <button onClick="{{ noop }}" class="btn btn-ghost" style="font-size:12.5px">Back to sign in</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+    </main>
+  </div>
+
+  <!-- ═══ ADD TRANSACTION SLIDE-OVER ═══ -->
+  <sc-if value="{{ txOpen }}">
+    <div style="position:fixed;inset:0;z-index:80;display:flex;justify-content:flex-end;background:color-mix(in srgb,var(--color-neutral-900) 45%,transparent);animation:m-fade .14s ease both">
+      <div onClick="{{ closeTx }}" style="flex:1"></div>
+      <div style="width:420px;max-width:100%;background:var(--color-bg);border-left:1px solid var(--color-divider);display:flex;flex-direction:column;animation:m-slide .2s ease both">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:22px 26px;border-bottom:1px solid var(--color-divider)">
+          <div>
+            <div style="font-family:var(--font-heading);font-weight:600;font-size:19px;letter-spacing:-.025em">Add transaction</div>
+            <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Wednesday, 27 August 2026</div>
+          </div>
+          <button onClick="{{ closeTx }}" class="btn btn-secondary btn-icon" style="justify-content:center"><svg style="width:16px;height:16px"><use href="#i-x"></use></svg></button>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px">
+          <div class="seg" style="width:100%">
+            <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="txtype" checked="{{ txIsExpense }}" onChange="{{ setTxExpense }}">Expense</label>
+            <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="txtype" checked="{{ txIsIncome }}" onChange="{{ setTxIncome }}">Income</label>
+          </div>
+          <div>
+            <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-family:var(--font-heading);font-weight:600">Amount</div>
+            <div style="display:flex;align-items:baseline;gap:8px;min-width:0;margin-top:8px;padding-bottom:10px;border-bottom:1px solid var(--color-divider)">
+              <span style="font-size:16px;color:var(--muted)">Rp</span>
+              <input value="{{ txAmount }}" onChange="{{ setTxAmount }}" style="all:unset;flex:1;min-width:0;width:100%;font-family:var(--font-heading);font-weight:600;font-size:34px;letter-spacing:-.03em;color:{{ txTone }}">
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
+              <sc-for list="{{ quickAmounts }}" as="q" hint-placeholder-count="4">
+                <button onClick="{{ q.set }}" class="btn btn-secondary" style="font-size:12px;padding:5px 9px">{{ q.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div class="field"><label>Category</label><select value="{{ txCategory }}" onChange="{{ setTxCategory }}" class="input">
+            <sc-for list="{{ txCategoryOptions }}" as="c" hint-placeholder-count="7"><option value="{{ c }}">{{ c }}</option></sc-for>
+          </select></div>
+          <div class="field"><label>Wallet</label><select value="{{ txWallet }}" onChange="{{ setTxWallet }}" class="input">
+            <sc-for list="{{ txWalletOptions }}" as="w" hint-placeholder-count="4"><option value="{{ w }}">{{ w }}</option></sc-for>
+          </select></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="field"><label>Date</label><input class="input" value="2026-08-27" onChange="{{ noopInput }}"></div>
+            <div class="field"><label>Time</label><input class="input" value="19:40" onChange="{{ noopInput }}"></div>
+          </div>
+          <div class="field"><label>Note</label><textarea class="input" value="" placeholder="Merchant, project or reference" onChange="{{ noopInput }}"></textarea></div>
+          <label class="radio" style="justify-content:space-between;width:100%;font-size:13px"><span>Repeat this every month</span><input type="checkbox" checked="{{ txRecurring }}" onChange="{{ toggleTxRecurring }}"><span class="dot"></span></label>
+          <sc-if value="{{ txRecurring }}">
+            <div style="border:1px solid var(--color-divider);border-radius:12px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="field"><label>Frequency</label><select class="input"><option>Monthly</option><option>Weekly</option><option>Annual</option></select></div>
+              <div class="field"><label>Ends</label><select class="input"><option>Never</option><option>After 12 times</option><option>On a date</option></select></div>
+            </div>
+          </sc-if>
+          <div style="font-size:11.5px;color:var(--muted);line-height:1.5;padding-top:4px">{{ txImpact }}</div>
+        </div>
+        <div style="padding:19px 24px;border-top:1px solid var(--color-divider);display:flex;gap:10px">
+          <button onClick="{{ saveTx }}" class="btn btn-primary" style="flex:1;justify-content:flex-start">Save transaction</button>
+          <button onClick="{{ closeTx }}" class="btn btn-secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ═══ USER EDITOR ═══ -->
+  <sc-if value="{{ userPanel }}">
+    <div style="position:fixed;inset:0;z-index:90;display:flex;justify-content:flex-end;background:color-mix(in srgb,#03050a 55%,transparent);animation:m-fade .14s ease both">
+      <div onClick="{{ closeUser }}" style="flex:1"></div>
+      <div style="width:440px;max-width:100%;background:var(--color-bg);border-left:1px solid var(--color-divider);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;animation:m-slide .22s cubic-bezier(.22,1,.36,1) both">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:22px 26px;border-bottom:1px solid var(--color-divider)">
+          <div style="min-width:0">
+            <div style="font-family:var(--font-heading);font-weight:600;font-size:19px;letter-spacing:-.025em">{{ userPanelTitle }}</div>
+            <div style="font-size:11.5px;color:var(--muted);margin-top:2px">{{ userPanelSub }}</div>
+          </div>
+          <button onClick="{{ closeUser }}" class="btn btn-secondary btn-icon" style="justify-content:center"><svg style="width:16px;height:16px"><use href="#i-x"></use></svg></button>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:16px">
+          <div class="field"><label>Full name</label><input class="input" value="{{ formName }}" onChange="{{ setFormName }}"></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:12px">
+            <div class="field"><label>Username</label><input class="input" value="{{ formUsername }}" onChange="{{ setFormUsername }}"></div>
+            <div class="field"><label>Role</label><select value="{{ formRole }}" onChange="{{ setFormRole }}" class="input">
+              <sc-for list="{{ roleNames }}" as="r" hint-placeholder-count="5"><option value="{{ r }}">{{ r }}</option></sc-for>
+            </select></div>
+          </div>
+          <div class="field"><label>Email</label><input class="input" value="{{ formEmail }}" onChange="{{ setFormEmail }}"></div>
+          <div class="field"><label>Status</label>
+            <div class="seg" style="width:100%">
+              <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="ustat" checked="{{ formEnabled }}" onChange="{{ setFormEnabled }}">Enabled</label>
+              <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="ustat" checked="{{ formDisabled }}" onChange="{{ setFormDisabled }}">Disabled</label>
+            </div>
+          </div>
+          <div style="flex:none;padding:16px;border:1px solid var(--color-divider);border-radius:12px;background:var(--panel)">
+            <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-family:var(--font-heading);font-weight:600">Inherited from {{ formRole }}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:11px">
+              <sc-for list="{{ inheritedPerms }}" as="p" hint-placeholder-count="5"><span class="tag tag-neutral" style="font-size:11px">{{ p }}</span></sc-for>
+            </div>
+            <div style="font-size:11.5px;color:var(--muted);margin-top:11px;line-height:1.5">Change permissions on the role itself — <button onClick="{{ goRoles }}" class="btn btn-ghost" style="font-size:11.5px;padding:0">open Role management</button></div>
+          </div>
+          <label class="radio" style="justify-content:space-between;width:100%;font-size:13px"><span>Send an invite email now</span><input type="checkbox" checked="{{ yes }}" onChange="{{ noopInput }}"><span class="dot"></span></label>
+          <label class="radio" style="justify-content:space-between;width:100%;font-size:13px"><span>Require password reset on first sign-in</span><input type="checkbox" onChange="{{ noopInput }}"><span class="dot"></span></label>
+        </div>
+        <div style="padding:19px 26px;border-top:1px solid var(--color-divider);display:flex;gap:10px">
+          <button onClick="{{ saveUser }}" class="btn btn-primary" style="flex:1;justify-content:flex-start">{{ userSaveLabel }}</button>
+          <button onClick="{{ closeUser }}" class="btn btn-secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toast }}">
+    <div style="position:fixed;left:50%;bottom:30px;z-index:120;display:flex;align-items:center;gap:11px;padding:14px 20px;border-radius:12px;background:var(--color-surface);border:1px solid var(--color-divider);box-shadow:var(--shadow-lg);animation:m-toast .3s cubic-bezier(.22,1,.36,1) both">
+      <svg style="width:17px;height:17px;flex:none;color:var(--income)"><use href="#i-check"></use></svg>
+      <span style="font-size:13px;white-space:nowrap">{{ toast }}</span>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showStreak&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Content&quot;}}">
+const F = n => 'Rp' + Math.abs(n).toLocaleString('de-DE');
+
+const CATS = {
+  housing:{label:'Housing',icon:'#i-home'},
+  food:{label:'Food & drink',icon:'#i-cup'},
+  transport:{label:'Transport',icon:'#i-car'},
+  subs:{label:'Subscriptions',icon:'#i-monitor'},
+  utilities:{label:'Utilities',icon:'#i-wifi'},
+  health:{label:'Health',icon:'#i-heart'},
+  other:{label:'Other',icon:'#i-bag'},
+  income:{label:'Client income',icon:'#i-bank'}
+};
+
+const TX = [
+  {d:'Wednesday, 27 August', n:'Kopi Tuku', note:'Tebet · morning', c:'food', w:'GoPay', wi:'#i-phone', a:-62000},
+  {d:'Wednesday, 27 August', n:'Gojek ride', note:'Kuningan → Tebet', c:'transport', w:'GoPay', wi:'#i-phone', a:-38000},
+  {d:'Wednesday, 27 August', n:'Figma Professional', note:'Annual seat, monthly billing', c:'subs', w:'BCA Card', wi:'#i-card', a:-180000},
+  {d:'Tuesday, 26 August', n:'Invoice #2026-114 — Kalium Labs', note:'Retainer, August sprint', c:'income', w:'BCA Payroll', wi:'#i-bank', a:6800000},
+  {d:'Tuesday, 26 August', n:'Superindo groceries', note:'Weekly shop', c:'food', w:'BCA Card', wi:'#i-card', a:-427000},
+  {d:'Tuesday, 26 August', n:'Biznet Home', note:'Internet, 100 Mbps', c:'utilities', w:'BCA Payroll', wi:'#i-bank', a:-425000},
+  {d:'Monday, 25 August', n:'Apotek K-24', note:'Prescription refill', c:'health', w:'Cash', wi:'#i-cash', a:-164000},
+  {d:'Monday, 25 August', n:'Warung Tegal', note:'Lunch with Sari', c:'food', w:'Cash', wi:'#i-cash', a:-54000},
+  {d:'Monday, 25 August', n:'MRT top-up', note:'Kartu Jelajah', c:'transport', w:'GoPay', wi:'#i-phone', a:-150000},
+  {d:'Sunday, 24 August', n:'August rent', note:'Kost Tebet Barat', c:'housing', w:'BCA Payroll', wi:'#i-bank', a:-4500000},
+  {d:'Sunday, 24 August', n:'Invoice #2026-113 — Nusatek', note:'Design system audit', c:'income', w:'Wise USD', wi:'#i-globe', a:4650000},
+  {d:'Sunday, 24 August', n:'GitHub Copilot', note:'Individual plan', c:'subs', w:'BCA Card', wi:'#i-card', a:-160000},
+  {d:'Saturday, 23 August', n:'Uniqlo', note:'Two shirts', c:'other', w:'BCA Card', wi:'#i-card', a:-598000},
+  {d:'Saturday, 23 August', n:'PLN token', note:'Electricity, 200k', c:'utilities', w:'GoPay', wi:'#i-phone', a:-200000}
+];
+
+const DONUT = [
+  ['Housing', 4500000, 'var(--c1)'],
+  ['Food & drink', 2640000, 'var(--c2)'],
+  ['Transport', 1380000, 'var(--c3)'],
+  ['Subscriptions', 1180000, 'var(--c4)'],
+  ['Utilities', 980000, 'var(--c5)'],
+  ['Health', 740000, 'var(--c6)'],
+  ['Other', 1360000, 'var(--c7)']
+];
+
+const WEEKLY = [['W1',5200000,3400000],['W2',4100000,2600000],['W3',6800000,3100000],['W4',3900000,2900000],['W5',1450000,780000]];
+const MONTHLY = [['Mar',16200000,11400000],['Apr',19800000,12900000],['May',15400000,10800000],['Jun',22100000,13600000],['Jul',18900000,12200000],['Aug',21450000,12780000]];
+
+const ACTIONS = ['read', 'create', 'update', 'delete', 'approval'];
+
+// module key, label, icon, which actions the module actually supports
+const MODULES = [
+  ['dashboard', 'Dashboard', '#i-grid', ['read']],
+  ['transactions', 'Transactions', '#i-swap', ['read', 'create', 'update', 'delete', 'approval']],
+  ['budgets', 'Budgets', '#i-target', ['read', 'create', 'update', 'delete']],
+  ['wallets', 'Wallets & accounts', '#i-wallet', ['read', 'create', 'update', 'delete']],
+  ['goals', 'Savings goals', '#i-flag', ['read', 'create', 'update', 'delete']],
+  ['recurring', 'Recurring items', '#i-repeat', ['read', 'create', 'update', 'delete', 'approval']],
+  ['insights', 'Insights & reports', '#i-chart', ['read']],
+  ['shared', 'Shared budgets', '#i-users', ['read', 'create', 'update', 'delete', 'approval']],
+  ['exports', 'Data export', '#i-download', ['read', 'create']],
+  ['users', 'User management', '#i-lock', ['read', 'create', 'update', 'delete']],
+  ['roles', 'Role management', '#i-shield', ['read', 'create', 'update', 'delete']]
+];
+const SUPPORTS = (mod, act) => (MODULES.find(m => m[0] === mod) || [, , , []])[3].includes(act);
+
+const full = (...mods) => {
+  const o = {};
+  mods.forEach(m => {
+    o[m] = {};
+    ACTIONS.forEach(a => { if (SUPPORTS(m, a)) o[m][a] = true; });
+  });
+  return o;
+};
+const viewOnly = (...mods) => {
+  const o = {};
+  mods.forEach(m => { o[m] = { read: true }; });
+  return o;
+};
+
+const ROLES = [
+  { key: 'owner', name: 'Owner', description: 'Full access, including billing and roles', members: 1, updated: '09-08-2026 09:34', status: 'Enabled', icon: '#i-shield', perms: full(...MODULES.map(m => m[0])) },
+  { key: 'admin', name: 'Admin', description: 'Everything except role management', members: 2, updated: '21-08-2026 10:03', status: 'Enabled', icon: '#i-lock', perms: { ...full('dashboard', 'transactions', 'budgets', 'wallets', 'goals', 'recurring', 'insights', 'shared', 'exports', 'users'), ...viewOnly('roles') } },
+  { key: 'finance', name: 'Finance', description: 'Books the money, cannot touch users', members: 3, updated: '18-08-2026 15:00', status: 'Enabled', icon: '#i-swap', perms: { ...full('transactions', 'budgets', 'recurring', 'wallets'), ...viewOnly('dashboard', 'insights', 'exports') } },
+  { key: 'partner', name: 'Partner', description: 'Shared household budget only', members: 1, updated: '12-08-2026 11:21', status: 'Enabled', icon: '#i-users', perms: { ...full('shared'), ...viewOnly('dashboard', 'budgets') } },
+  { key: 'viewer', name: 'Viewer', description: 'Read-only, for the accountant', members: 2, updated: '02-07-2026 14:28', status: 'Enabled', icon: '#i-chart', perms: viewOnly('dashboard', 'transactions', 'budgets', 'insights', 'exports') },
+  { key: 'audit', name: 'Auditor', description: 'Temporary review access, disabled between cycles', members: 0, updated: '20-05-2026 14:28', status: 'Disabled', icon: '#i-search', perms: viewOnly('transactions', 'insights') }
+];
+
+const USERS = [
+  { name: 'Rangga Aditama', username: 'rangga', email: 'rangga@studioaksa.id', role: 'Owner', updated: '27-08-2026 19:40', status: 'Enabled' },
+  { name: 'Sari Puspita', username: 'saripus', email: 'sari@studioaksa.id', role: 'Partner', updated: '26-08-2026 08:12', status: 'Enabled' },
+  { name: 'Bagas Priyono', username: 'bagas', email: 'bagas@studioaksa.id', role: 'Admin', updated: '25-08-2026 16:55', status: 'Enabled' },
+  { name: 'Dewi Anggraini', username: 'dewi.a', email: 'dewi@kaliumlabs.co', role: 'Finance', updated: '24-08-2026 11:04', status: 'Enabled' },
+  { name: 'Hendra Wijaya', username: 'hendraw', email: 'hendra@nusatek.id', role: 'Finance', updated: '21-08-2026 10:03', status: 'Enabled' },
+  { name: 'Putri Maharani', username: 'putri.m', email: 'putri@studioaksa.id', role: 'Viewer', updated: '19-08-2026 09:47', status: 'Invited' },
+  { name: 'Yoga Saputra', username: 'yoga', email: 'yoga@akuntanmitra.id', role: 'Viewer', updated: '14-08-2026 13:22', status: 'Enabled' },
+  { name: 'Lina Kartika', username: 'lina.k', email: 'lina@studioaksa.id', role: 'Admin', updated: '09-08-2026 15:31', status: 'Enabled' },
+  { name: 'Fajar Nugroho', username: 'fajarn', email: 'fajar@vendorpajak.id', role: 'Finance', updated: '03-08-2026 10:18', status: 'Disabled' },
+  { name: 'Intan Permata', username: 'intanp', email: 'intan@studioaksa.id', role: 'Viewer', updated: '28-07-2026 17:02', status: 'Invited' }
+];
+
+const RECURRING = [
+        { name: 'Kost Tebet Barat', wallet: 'BCA Payroll', icon: '#i-home', tone: 'var(--muted)', freq: 'Monthly', due: '1 Sep', tagClass: 'tag tag-accent', amount: 'Rp4.500.000', amountTone: 'var(--color-text)' },
+        { name: 'Biznet Home', wallet: 'BCA Payroll', icon: '#i-wifi', tone: 'var(--muted)', freq: 'Monthly', due: '1 Sep', tagClass: 'tag tag-accent', amount: 'Rp425.000', amountTone: 'var(--color-text)' },
+        { name: 'Figma Professional', wallet: 'BCA Card', icon: '#i-monitor', tone: 'var(--muted)', freq: 'Monthly', due: '3 Sep', tagClass: 'tag tag-neutral', amount: 'Rp180.000', amountTone: 'var(--color-text)' },
+        { name: 'Adobe Creative Cloud', wallet: 'BCA Card', icon: '#i-monitor', tone: 'var(--muted)', freq: 'Monthly', due: '6 Sep', tagClass: 'tag tag-neutral', amount: 'Rp290.000', amountTone: 'var(--color-text)' },
+        { name: 'GitHub Copilot', wallet: 'BCA Card', icon: '#i-monitor', tone: 'var(--muted)', freq: 'Monthly', due: '9 Sep', tagClass: 'tag tag-neutral', amount: 'Rp160.000', amountTone: 'var(--color-text)' },
+        { name: 'BPJS Kesehatan', wallet: 'BCA Payroll', icon: '#i-heart', tone: 'var(--muted)', freq: 'Monthly', due: '10 Sep', tagClass: 'tag tag-neutral', amount: 'Rp150.000', amountTone: 'var(--color-text)' },
+        { name: 'Netflix', wallet: 'GoPay', icon: '#i-monitor', tone: 'var(--muted)', freq: 'Monthly', due: 'Paused', tagClass: 'tag tag-neutral', amount: 'Rp186.000', amountTone: 'var(--muted)' }
+];
+
+const AUDIT = [
+  ['27-08-2026 19:41', 'Rangga Aditama', 'Owner', 'Signed in', 'Auth', 'Email + password · Chrome on macOS', '103.28.14.7', 'info'],
+  ['27-08-2026 19:38', 'Rangga Aditama', 'Owner', 'Updated role permissions', 'Role management', 'Finance — granted Approval on Transactions', '103.28.14.7', 'warn'],
+  ['27-08-2026 18:02', 'Bagas Priyono', 'Admin', 'Created transaction', 'Transactions', 'Rp180.000 · Figma Professional · BCA Card', '118.99.72.140', 'info'],
+  ['27-08-2026 17:47', 'Dewi Anggraini', 'Finance', 'Exported data', 'Data export', 'CSV · 184 rows · August 2026', '36.72.211.9', 'warn'],
+  ['27-08-2026 16:20', 'Sari Puspita', 'Partner', 'Updated shared budget', 'Shared budgets', 'Groceries limit Rp2.200.000 → Rp2.500.000', '103.28.14.7', 'info'],
+  ['27-08-2026 14:55', 'Bagas Priyono', 'Admin', 'Deleted transaction', 'Transactions', 'Rp54.000 · duplicate entry', '118.99.72.140', 'danger'],
+  ['27-08-2026 11:12', 'Rangga Aditama', 'Owner', 'Invited user', 'User management', 'putri@studioaksa.id as Viewer', '103.28.14.7', 'warn'],
+  ['27-08-2026 09:31', 'Hendra Wijaya', 'Finance', 'Signed in', 'Auth', 'Google OAuth · Chrome on Windows', '202.80.216.44', 'info'],
+  ['26-08-2026 22:04', 'System', 'Automation', 'Recurring item charged', 'Recurring items', 'Biznet Home · Rp425.000 · BCA Payroll', '—', 'info'],
+  ['26-08-2026 20:18', 'Dewi Anggraini', 'Finance', 'Updated budget', 'Budgets', 'Subscriptions limit Rp900.000 → Rp1.000.000', '36.72.211.9', 'info'],
+  ['26-08-2026 17:39', 'Unknown', '—', 'Failed sign-in', 'Auth', '4 attempts · fajar@vendorpajak.id', '45.121.88.3', 'danger'],
+  ['26-08-2026 15:02', 'Rangga Aditama', 'Owner', 'Disabled user', 'User management', 'Fajar Nugroho — contract ended', '103.28.14.7', 'danger'],
+  ['26-08-2026 12:44', 'Bagas Priyono', 'Admin', 'Connected institution', 'Wallets & accounts', 'Wise — USD balance linked', '118.99.72.140', 'warn'],
+  ['26-08-2026 10:07', 'Sari Puspita', 'Partner', 'Signed in', 'Auth', 'Biometric · iOS PWA', '103.28.14.7', 'info'],
+  ['25-08-2026 21:16', 'System', 'Automation', 'Budget alert sent', 'Budgets', 'Food & drink crossed 80%', '—', 'warn'],
+  ['25-08-2026 18:50', 'Yoga Saputra', 'Viewer', 'Viewed report', 'Insights & reports', 'Category comparison · Mar–Aug', '112.215.44.18', 'info'],
+  ['25-08-2026 16:33', 'Dewi Anggraini', 'Finance', 'Created wallet', 'Wallets & accounts', 'Jenius savings · IDR', '36.72.211.9', 'info'],
+  ['25-08-2026 14:09', 'Rangga Aditama', 'Owner', 'Created role', 'Role management', 'Auditor — read-only, 2 permissions', '103.28.14.7', 'warn'],
+  ['25-08-2026 09:58', 'Lina Kartika', 'Admin', 'Updated profile', 'Settings', 'Two-factor authentication enabled', '182.253.60.71', 'info'],
+  ['24-08-2026 20:41', 'System', 'Automation', 'Recurring item charged', 'Recurring items', 'Kost Tebet Barat · Rp4.500.000', '—', 'info'],
+  ['24-08-2026 17:25', 'Bagas Priyono', 'Admin', 'Created goal', 'Savings goals', 'New laptop · target Rp32.000.000', '118.99.72.140', 'info'],
+  ['24-08-2026 13:12', 'Intan Permata', 'Viewer', 'Signed in', 'Auth', 'Invite link accepted', '114.79.18.202', 'info'],
+  ['24-08-2026 08:36', 'Rangga Aditama', 'Owner', 'Exported data', 'Data export', 'PDF · shared budget summary', '103.28.14.7', 'warn'],
+  ['23-08-2026 19:03', 'Hendra Wijaya', 'Finance', 'Deleted budget', 'Budgets', 'Gifts & donations — unused', '202.80.216.44', 'danger'],
+  ['23-08-2026 15:47', 'Sari Puspita', 'Partner', 'Created transaction', 'Shared budgets', 'Rp427.000 · Superindo groceries', '103.28.14.7', 'info'],
+  ['23-08-2026 11:29', 'System', 'Automation', 'Sync completed', 'Wallets & accounts', 'BCA — 12 transactions imported', '—', 'info'],
+  ['22-08-2026 18:14', 'Lina Kartika', 'Admin', 'Updated user', 'User management', 'Yoga Saputra — role Viewer', '182.253.60.71', 'warn'],
+  ['22-08-2026 09:22', 'Rangga Aditama', 'Owner', 'Signed in', 'Auth', 'Email + password · Chrome on macOS', '103.28.14.7', 'info']
+];
+
+class Component extends DCLogic {
+  state = {
+    auditQuery: '', auditActor: 'All actors', auditModule: 'All modules', auditSeverity: 'All events',
+    pg: {}, pgSize: {},
+    userQuery: '', userRoleFilter: 'All roles', userStatusFilter: 'All statuses',
+    roleQuery: '', userPanel: null, rolePanel: null, form: null, roleForm: null,
+    page: 'dashboard', theme: 'dark', railOpen: true, notifOpen: false, txOpen: false,
+    trend: 'weekly', query: '', cat: 'All categories', wallet: 'All wallets',
+    range: 'This month', amount: 'Any amount', hoverBar: -1, hoverSlice: -1,
+    toast: null, txType: 'expense', txAmount: '62.000', txCategory: 'Food & drink', txWallet: 'GoPay', txRecurring: false
+  };
+
+  componentDidMount() {
+    this.applyTheme(this.state.theme);
+    this.rip = e => {
+      const b = e.target.closest && e.target.closest('.btn');
+      if (!b) return;
+      const r = b.getBoundingClientRect(), s = document.createElement('span');
+      const d = Math.max(r.width, r.height) * 2.2;
+      s.className = 'm-rip';
+      s.style.width = s.style.height = d + 'px';
+      s.style.left = (e.clientX - r.left) + 'px';
+      s.style.top = (e.clientY - r.top) + 'px';
+      b.appendChild(s);
+      setTimeout(() => s.remove(), 650);
+    };
+    document.addEventListener('pointerdown', this.rip);
+  }
+  componentWillUnmount() { document.removeEventListener('pointerdown', this.rip); clearTimeout(this.tt); }
+  toast = m => () => {
+    this.setState({ toast: m });
+    clearTimeout(this.tt);
+    this.tt = setTimeout(() => this.setState({ toast: null }), 2800);
+  };
+  saveTx = () => { this.setState({ txOpen: false }); this.toast('Transaction saved to ' + this.state.txWallet)(); };
+  applyTheme(t) { document.documentElement.dataset.theme = t; }
+  setTheme = t => { this.applyTheme(t); this.setState({ theme: t }); };
+  go = p => () => this.setState({ page: p, notifOpen: false });
+
+  arc(i) {
+    const total = DONUT.reduce((s, d) => s + d[1], 0);
+    let a = -Math.PI / 2;
+    for (let k = 0; k < i; k++) a += (DONUT[k][1] / total) * Math.PI * 2;
+    const b = a + (DONUT[i][1] / total) * Math.PI * 2 - 0.022;
+    const cx = 90, cy = 90, r1 = 88, r0 = 52;
+    const p = (r, ang) => [cx + r * Math.cos(ang), cy + r * Math.sin(ang)];
+    const [x1, y1] = p(r1, a), [x2, y2] = p(r1, b), [x3, y3] = p(r0, b), [x4, y4] = p(r0, a);
+    const lg = b - a > Math.PI ? 1 : 0;
+    return `M${x1} ${y1}A${r1} ${r1} 0 ${lg} 1 ${x2} ${y2}L${x3} ${y3}A${r0} ${r0} 0 ${lg} 0 ${x4} ${y4}Z`;
+  }
+
+  // ── pagination (one engine, every growing list) ─────────────────────
+  setPage = (key, n) => () => this.setState(st => ({ pg: { ...st.pg, [key]: n } }));
+  setSize = key => e => {
+    const v = Number(e.target.value);
+    this.setState(st => ({ pgSize: { ...st.pgSize, [key]: v }, pg: { ...st.pg, [key]: 1 } }));
+  };
+
+  // returns the visible slice plus everything the pagination bar needs
+  pager(key, list, defaultSize) {
+    const size = this.state.pgSize[key] || defaultSize;
+    const total = list.length;
+    const pages = Math.max(1, Math.ceil(total / size));
+    const page = Math.min(Math.max(1, this.state.pg[key] || 1), pages);
+    const from = (page - 1) * size;
+    const items = list.slice(from, from + size);
+
+    // 1 … n-1 [n] n+1 … last
+    const nums = [];
+    const push = n => nums.push({
+      label: String(n), gap: false, active: n === page, idle: n !== page,
+      go: this.setPage(key, n),
+      style: `min-width:34px;height:34px;padding:0 9px;display:grid;place-items:center;cursor:pointer;border-radius:10px;font-family:var(--font-heading);font-weight:600;font-size:12.5px;font-variant-numeric:tabular-nums;transition:background-color .16s ease,border-color .16s ease,color .16s ease;border:1px solid ${n === page ? 'transparent' : 'var(--color-divider)'};background:${n === page ? 'var(--color-accent)' : 'transparent'};color:${n === page ? '#fff' : 'var(--muted)'}`
+    });
+    const gap = () => nums.push({ label: '…', gap: true, active: false, idle: false });
+    const window = 1;
+    for (let n = 1; n <= pages; n++) {
+      if (n === 1 || n === pages || Math.abs(n - page) <= window) push(n);
+      else if (!nums.length || !nums[nums.length - 1].gap) gap();
+    }
+
+    const arrow = enabled => `width:34px;height:34px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--color-divider);background:transparent;color:var(--muted);cursor:${enabled ? 'pointer' : 'not-allowed'};opacity:${enabled ? 1 : .38};transition:background-color .16s ease,border-color .16s ease`;
+
+    return {
+      items,
+      bar: {
+        size: String(size), setSize: this.setSize(key),
+        range: total ? `${from + 1}–${Math.min(from + size, total)} of ${total}` : '0 of 0',
+        nums,
+        multi: pages > 1,
+        prevStyle: arrow(page > 1), nextStyle: arrow(page < pages),
+        prev: page > 1 ? this.setPage(key, page - 1) : () => {},
+        next: page < pages ? this.setPage(key, page + 1) : () => {}
+      }
+    };
+  }
+
+  // ── user & role management ──────────────────────────────────────────
+  openUser = u => () => this.setState({
+    userPanel: u ? 'edit' : 'new',
+    form: u ? { ...u } : { name: '', username: '', email: '', role: 'Viewer', status: 'Enabled' }
+  });
+  openRole = r => () => this.setState({
+    page: 'roleform', notifOpen: false,
+    rolePanel: r ? 'edit' : 'new',
+    roleForm: r
+      ? { key: r.key, name: r.name, description: r.description, status: r.status, perms: JSON.parse(JSON.stringify(r.perms)) }
+      : { key: null, name: '', description: '', status: 'Enabled', perms: {} }
+  });
+  togglePerm = (mod, act) => () => this.setState(st => {
+    const perms = { ...st.roleForm.perms };
+    const row = { ...(perms[mod] || {}) };
+    row[act] = !row[act];
+    if (act !== 'read' && row[act]) row.read = true;
+    if (act === 'read' && !row.read) ACTIONS.forEach(a => { if (a !== 'read') row[a] = false; });
+    perms[mod] = row;
+    return { roleForm: { ...st.roleForm, perms } };
+  });
+  toggleRowAll = mod => () => this.setState(st => {
+    const perms = { ...st.roleForm.perms };
+    const acts = (MODULES.find(m => m[0] === mod) || [, , , []])[3];
+    const allOn = acts.every(a => (perms[mod] || {})[a]);
+    const row = {};
+    acts.forEach(a => { row[a] = !allOn; });
+    perms[mod] = row;
+    return { roleForm: { ...st.roleForm, perms } };
+  });
+  allPerms = on => () => this.setState(st => {
+    const perms = {};
+    MODULES.forEach(m => {
+      perms[m[0]] = {};
+      m[3].forEach(a => { perms[m[0]][a] = on; });
+    });
+    return { roleForm: { ...st.roleForm, perms } };
+  });
+
+  accessVals() {
+    const s = this.state, INC = 'var(--income)', EXP = 'var(--expense)';
+    const roleTagFor = r => (r === 'Owner' || r === 'Admin' ? 'tag tag-accent' : 'tag tag-neutral');
+    const statusTone = st => (st === 'Enabled' ? INC : st === 'Invited' ? 'var(--warn)' : 'var(--muted)');
+
+    const uq = s.userQuery.trim().toLowerCase();
+    const users = USERS.filter(u =>
+      (!uq || (u.name + ' ' + u.username + ' ' + u.email).toLowerCase().includes(uq)) &&
+      (s.userRoleFilter === 'All roles' || u.role === s.userRoleFilter) &&
+      (s.userStatusFilter === 'All statuses' || u.status === s.userStatusFilter)
+    );
+    const rq = s.roleQuery.trim().toLowerCase();
+    const roles = ROLES.filter(r => !rq || (r.name + ' ' + r.description).toLowerCase().includes(rq));
+
+    const aq = s.auditQuery.trim().toLowerCase();
+    const auditAll = AUDIT.filter(a =>
+      (!aq || (a[1] + ' ' + a[3] + ' ' + a[5]).toLowerCase().includes(aq)) &&
+      (s.auditActor === 'All actors' || a[1] === s.auditActor) &&
+      (s.auditModule === 'All modules' || a[4] === s.auditModule) &&
+      (s.auditSeverity === 'All events' ||
+        (s.auditSeverity === 'Sensitive only' ? a[7] !== 'info' : a[7] === 'danger'))
+    );
+    const sevTone = k => (k === 'danger' ? 'var(--expense)' : k === 'warn' ? 'var(--warn)' : 'var(--muted)');
+    const auditPage = this.pager('audit', auditAll, 10);
+    const usersPage = this.pager('users', users, 10);
+    const rolesPage = this.pager('roles', roles, 10);
+
+    const permCount = r => Object.values(r.perms).reduce((a, row) => a + Object.values(row).filter(Boolean).length, 0);
+    const rf = s.roleForm;
+    const granted = rf ? Object.values(rf.perms).reduce((a, row) => a + Object.values(row).filter(Boolean).length, 0) : 0;
+    const modulesTouched = rf ? Object.values(rf.perms).filter(row => Object.values(row).some(Boolean)).length : 0;
+
+    const cellStyle = on => `width:22px;height:22px;padding:0;margin:0 auto;display:grid;place-items:center;cursor:pointer;border-radius:6px;border:1.5px solid ${on ? 'var(--color-accent)' : 'color-mix(in srgb,var(--color-text) 42%,transparent)'};background:${on ? 'var(--color-accent)' : 'color-mix(in srgb,var(--color-text) 6%,transparent)'};color:${on ? '#fff' : 'var(--muted)'};transition:background-color .16s ease,border-color .16s ease,transform .12s ease`;
+
+    const formRole = s.form ? s.form.role : 'Viewer';
+    const inheritedRole = ROLES.find(r => r.name === formRole);
+
+    return {
+      userQuery: s.userQuery, setUserQuery: e => this.setState({ userQuery: e.target.value }),
+      userRoleFilter: s.userRoleFilter, setUserRoleFilter: e => this.setState({ userRoleFilter: e.target.value }),
+      userStatusFilter: s.userStatusFilter, setUserStatusFilter: e => this.setState({ userStatusFilter: e.target.value }),
+      userRoleOptions: ['All roles', ...ROLES.map(r => r.name)],
+      resetUserFilters: () => this.setState({ userQuery: '', userRoleFilter: 'All roles', userStatusFilter: 'All statuses' }),
+      auditQuery: s.auditQuery, setAuditQuery: e => this.setState({ auditQuery: e.target.value, pg: { ...s.pg, audit: 1 } }),
+      auditActor: s.auditActor, setAuditActor: e => this.setState({ auditActor: e.target.value, pg: { ...s.pg, audit: 1 } }),
+      auditModule: s.auditModule, setAuditModule: e => this.setState({ auditModule: e.target.value, pg: { ...s.pg, audit: 1 } }),
+      auditSeverity: s.auditSeverity, setAuditSeverity: e => this.setState({ auditSeverity: e.target.value, pg: { ...s.pg, audit: 1 } }),
+      auditActorOptions: ['All actors', ...[...new Set(AUDIT.map(a => a[1]))]],
+      auditModuleOptions: ['All modules', ...[...new Set(AUDIT.map(a => a[4]))].sort()],
+      resetAudit: () => this.setState({ auditQuery: '', auditActor: 'All actors', auditModule: 'All modules', auditSeverity: 'All events', pg: { ...s.pg, audit: 1 } }),
+      noAudit: auditAll.length === 0,
+      auditBar: auditPage.bar,
+      auditStats: [
+        { label: 'Events, 7 days', value: String(AUDIT.length), tone: 'var(--color-text)', note: 'Across 9 modules' },
+        { label: 'Sensitive', value: String(AUDIT.filter(a => a[7] !== 'info').length), tone: 'var(--warn)', note: 'Permission, export, delete' },
+        { label: 'Failed sign-ins', value: String(AUDIT.filter(a => a[3] === 'Failed sign-in').length), tone: EXP, note: 'From 1 unknown address' },
+        { label: 'Retention', value: '365 days', tone: 'var(--color-text)', note: 'Then archived to cold storage' }
+      ],
+      auditRows: auditPage.items.map(a => ({
+        time: a[0], actor: a[1], role: a[2], action: a[3], module: a[4], detail: a[5], ip: a[6],
+        initials: a[1] === 'System' ? 'SY' : a[1].split(' ').map(w => w[0]).slice(0, 2).join(''),
+        tone: sevTone(a[7]),
+        dotStyle: `width:7px;height:7px;flex:none;border-radius:50%;background:${sevTone(a[7])}`,
+        roleTag: a[2] === 'Automation' ? 'tag tag-neutral' : roleTagFor(a[2]),
+        avatarBg: a[1] === 'System' ? 'var(--panel)' : a[7] === 'danger' ? 'color-mix(in srgb,var(--expense) 18%,transparent)' : 'var(--panel)',
+        avatarFg: a[7] === 'danger' ? 'var(--expense)' : 'var(--color-text)'
+      })),
+
+      userBar: usersPage.bar,
+      users: usersPage.items.map(u => ({
+        ...u, initials: u.name.split(' ').map(w => w[0]).slice(0, 2).join(''),
+        roleTag: roleTagFor(u.role), statusTone: statusTone(u.status),
+        avatarBg: u.role === 'Owner' ? 'color-mix(in srgb,var(--color-accent) 18%,transparent)' : 'var(--panel)',
+        avatarFg: u.role === 'Owner' ? 'var(--color-accent)' : 'var(--color-text)',
+        edit: this.openUser(u), remove: this.toast('Removed ' + u.name + ' from the workspace')
+      })),
+      noUsers: users.length === 0,
+      userCount: `${users.length} match${users.length === 1 ? 'es' : ''} of ${USERS.length} users`,
+      userStats: [
+        { label: 'Total users', value: String(USERS.length), tone: 'var(--color-text)', note: 'Across 5 roles' },
+        { label: 'Enabled', value: String(USERS.filter(u => u.status === 'Enabled').length), tone: INC, note: 'Can sign in today' },
+        { label: 'Invited', value: String(USERS.filter(u => u.status === 'Invited').length), tone: 'var(--warn)', note: 'Awaiting first sign-in' },
+        { label: 'Disabled', value: String(USERS.filter(u => u.status === 'Disabled').length), tone: 'var(--muted)', note: 'Access revoked' }
+      ],
+      openNewUser: this.openUser(null),
+
+      roleQuery: s.roleQuery, setRoleQuery: e => this.setState({ roleQuery: e.target.value }),
+      roleBar: rolesPage.bar,
+      roles: rolesPage.items.map(r => ({
+        ...r, statusTone: statusTone(r.status), permCount: permCount(r) + ' permissions',
+        edit: this.openRole(r)
+      })),
+      noRoles: roles.length === 0,
+      roleCount: `${roles.length} of ${ROLES.length} roles · ${USERS.length} users assigned`,
+      roleNames: ROLES.map(r => r.name),
+      openNewRole: this.openRole(null),
+
+      userPanel: s.userPanel,
+      userPanelTitle: s.userPanel === 'edit' ? 'Edit user' : 'Add new user',
+      userPanelSub: s.userPanel === 'edit' ? 'Changes apply at the next sign-in' : 'They receive an invite by email',
+      userSaveLabel: s.userPanel === 'edit' ? 'Save changes' : 'Create user',
+      closeUser: () => this.setState({ userPanel: null }),
+      saveUser: () => { this.setState({ userPanel: null }); this.toast(s.userPanel === 'edit' ? 'User updated' : 'Invite sent')(); },
+      formName: s.form ? s.form.name : '', setFormName: e => this.setState({ form: { ...s.form, name: e.target.value } }),
+      formUsername: s.form ? s.form.username : '', setFormUsername: e => this.setState({ form: { ...s.form, username: e.target.value } }),
+      formEmail: s.form ? s.form.email : '', setFormEmail: e => this.setState({ form: { ...s.form, email: e.target.value } }),
+      formRole, setFormRole: e => this.setState({ form: { ...s.form, role: e.target.value } }),
+      formEnabled: s.form ? s.form.status === 'Enabled' : true,
+      formDisabled: s.form ? s.form.status === 'Disabled' : false,
+      setFormEnabled: () => this.setState({ form: { ...s.form, status: 'Enabled' } }),
+      setFormDisabled: () => this.setState({ form: { ...s.form, status: 'Disabled' } }),
+      inheritedPerms: inheritedRole
+        ? MODULES.filter(m => (inheritedRole.perms[m[0]] || {}).view).map(m => m[1]).slice(0, 8)
+        : ['No permissions yet'],
+
+      rolePanel: s.rolePanel,
+      rolePanelTitle: s.rolePanel === 'edit' ? 'Edit role' : 'Add new role',
+      rolePanelSub: s.rolePanel === 'edit' ? 'Applies to every member of this role' : 'Pick the modules this role can reach',
+      roleSaveLabel: s.rolePanel === 'edit' ? 'Save role' : 'Create role',
+      closeRole: () => this.setState({ rolePanel: null, page: 'roles' }),
+      saveRole: () => { this.setState({ rolePanel: null, page: 'roles' }); this.toast(s.rolePanel === 'edit' ? 'Role permissions saved' : 'Role created')(); },
+      roleFormName: rf ? rf.name : '', setRoleFormName: e => this.setState({ roleForm: { ...rf, name: e.target.value } }),
+      roleFormDesc: rf ? rf.description : '', setRoleFormDesc: e => this.setState({ roleForm: { ...rf, description: e.target.value } }),
+      roleFormEnabled: rf ? rf.status === 'Enabled' : true,
+      roleFormDisabled: rf ? rf.status === 'Disabled' : false,
+      setRoleEnabled: () => this.setState({ roleForm: { ...rf, status: 'Enabled' } }),
+      setRoleDisabled: () => this.setState({ roleForm: { ...rf, status: 'Disabled' } }),
+      toggleRoleStatus: () => this.setState({ roleForm: { ...rf, status: rf && rf.status === 'Enabled' ? 'Disabled' : 'Enabled' } }),
+      roleStatusLabel: rf && rf.status === 'Disabled' ? 'Disabled' : 'Enabled',
+      roleStatusNote: rf && rf.status === 'Disabled'
+        ? 'Members keep the role but cannot sign in with it.'
+        : 'Members can use this role immediately after saving.',
+      selectAllPerms: this.allPerms(true), clearAllPerms: this.allPerms(false),
+      permSummary: `${granted} granted across ${modulesTouched} of ${MODULES.length} modules`,
+      permRows: MODULES.map(m => {
+        const row = (rf && rf.perms[m[0]]) || {};
+        const rowAll = m[3].every(a => row[a]);
+        return {
+          label: m[1], icon: m[2],
+          allOn: rowAll, allStyle: cellStyle(rowAll), allToggle: this.toggleRowAll(m[0]),
+          allTitle: (rowAll ? 'Clear all on ' : 'Select all on ') + m[1],
+          cells: ACTIONS.map(act => ({
+            supported: SUPPORTS(m[0], act), unsupported: !SUPPORTS(m[0], act),
+            on: !!row[act], style: cellStyle(!!row[act]),
+            title: act[0].toUpperCase() + act.slice(1) + ' ' + m[1],
+            toggle: this.togglePerm(m[0], act)
+          }))
+        };
+      }),
+      backToRoles: this.go('roles'),
+      roleImpact: rf && rf.key
+        ? `${(ROLES.find(r => r.key === rf.key) || {}).members || 0} member(s) hold this role — saving changes their access immediately.`
+        : 'View is granted automatically whenever you allow create, edit or delete on a module.'
+    };
+  }
+
+  renderVals() {
+    const s = this.state, page = s.page, dark = s.theme === 'dark';
+    const INC = 'var(--income)', EXP = 'var(--expense)';
+    const navGroups = [
+      ['Overview', [['dashboard', 'Dashboard', '#i-grid']]],
+      ['Money', [
+        ['transactions', 'Transactions', '#i-swap'], ['budgets', 'Budgets', '#i-target'],
+        ['wallets', 'Wallets', '#i-wallet'], ['goals', 'Goals', '#i-flag'],
+        ['recurring', 'Recurring', '#i-repeat']
+      ]],
+      ['Analysis', [
+        ['insights', 'Insights', '#i-chart'], ['shared', 'Shared', '#i-users'],
+        ['notifications', 'Reminders', '#i-bell']
+      ]],
+      ['Access control', [
+        ['users', 'Users', '#i-users'], ['roles', 'Roles', '#i-shield'],
+        ['audit', 'Audit log', '#i-search']
+      ]],
+      ['Workspace', [
+        ['settings', 'Settings', '#i-gear'], ['mobile', 'Mobile', '#i-phone'],
+        ['auth', 'Auth', '#i-lock']
+      ]]
+    ];
+    const nav = navGroups.flatMap(g => g[1]);
+    const titles = {
+      dashboard: ['Dashboard', 'August 2026 · 4 days left in the cycle'],
+      transactions: ['Transactions', '184 entries this month across 5 wallets'],
+      budgets: ['Budgets', '6 category budgets · alerts on at 80%'],
+      wallets: ['Wallets', '5 accounts · 2 currencies · 3 synced'],
+      goals: ['Goals', '3 active goals · Rp206.400.000 saved'],
+      recurring: ['Recurring', '7 scheduled items · Rp5.891.000 per month'],
+      insights: ['Insights', 'Generated 27 August, 06:00'],
+      shared: ['Shared budget', 'Household with Sari · you are the owner'],
+      notifications: ['Reminders', '6 bills upcoming · 2 budget alerts'],
+      settings: ['Settings', 'Profile, security, integrations, export'],
+      mobile: ['Mobile', 'PWA screens at 330 × 660'],
+      users: ['User management', 'People with access to this workspace'],
+      roles: ['Role management', 'Roles and the permissions attached to them'],
+      audit: ['Audit log', 'Every action taken in this workspace, newest first'],
+      roleform: [s.rolePanel === 'edit' ? 'Role management / Edit role' : 'Role management / Add new role',
+        'Pick the menus this role can reach and what it may do there'],
+      auth: ['Authentication', 'Sign in, register, reset']
+    };
+
+    // trend
+    const rows = s.trend === 'weekly' ? WEEKLY : MONTHLY;
+    const peak = Math.max(...rows.map(r => Math.max(r[1], r[2])));
+    const trend = rows.map((r, i) => ({
+      label: r[0], inH: (r[1] / peak * 100).toFixed(1) + '%', exH: (r[2] / peak * 100).toFixed(1) + '%',
+      bg: s.hoverBar === i ? 'color-mix(in srgb,var(--color-text) 6%,transparent)' : 'transparent',
+      enter: () => this.setState({ hoverBar: i })
+    }));
+    const hb = rows[s.hoverBar];
+    const barTip = hb ? { label: hb[0], income: F(hb[1]), expense: F(hb[2]), net: F(hb[1] - hb[2]) } : null;
+    const tipLeft = Math.min(74, (s.hoverBar / rows.length) * 100 + 3);
+    const barTipStyle = `position:absolute;left:${tipLeft}%;top:-6px;z-index:5;pointer-events:none;background:var(--color-bg);border:1px solid var(--color-divider);border-radius:20px;box-shadow:var(--shadow-lg);padding:9px 11px;min-width:140px`;
+
+    // donut
+    const dTotal = DONUT.reduce((a, d) => a + d[1], 0);
+    const donut = DONUT.map((d, i) => ({
+      label: d[0], color: d[2], path: this.arc(i),
+      pct: Math.round(d[1] / dTotal * 100) + '%',
+      opacity: s.hoverSlice === -1 || s.hoverSlice === i ? 1 : 0.32,
+      rowBg: s.hoverSlice === i ? 'color-mix(in srgb,var(--color-text) 7%,transparent)' : 'transparent',
+      enter: () => this.setState({ hoverSlice: i })
+    }));
+    const hs = DONUT[s.hoverSlice];
+
+    // budgets
+    const B = [
+      ['Housing', 4500000, 4500000, '#i-home', '90%'],
+      ['Food & drink', 2640000, 3000000, '#i-cup', '80%'],
+      ['Transport', 1380000, 1800000, '#i-car', '80%'],
+      ['Subscriptions', 1180000, 1000000, '#i-monitor', '80%'],
+      ['Utilities', 980000, 1200000, '#i-wifi', '75%'],
+      ['Health', 740000, 1200000, '#i-heart', '80%']
+    ];
+    const budgets = B.map(b => {
+      const r = b[1] / b[2], over = r > 1, near = r >= 0.85;
+      const color = over ? EXP : near ? 'var(--warn)' : 'var(--color-text)';
+      return {
+        label: b[0], icon: b[3], threshold: b[4], color,
+        edge: over ? 'var(--color-accent)' : 'var(--color-divider)',
+        width: Math.min(100, r * 100).toFixed(0) + '%',
+        spent: F(b[1]), limit: F(b[2]),
+        remaining: over ? F(b[1] - b[2]) + ' over' : F(b[2] - b[1]) + ' left',
+        status: over ? 'Over limit' : near ? Math.round(r * 100) + '%' : Math.round(r * 100) + '%',
+        tagClass: over ? 'tag tag-accent' : 'tag tag-neutral'
+      };
+    });
+
+    // transactions filtering
+    const q = s.query.trim().toLowerCase();
+    const inAmount = a => {
+      const v = Math.abs(a);
+      if (s.amount === 'Under Rp100.000') return v < 100000;
+      if (s.amount === 'Rp100.000 – Rp1.000.000') return v >= 100000 && v <= 1000000;
+      if (s.amount === 'Over Rp1.000.000') return v > 1000000;
+      return true;
+    };
+    const filtered = TX.filter(t =>
+      (!q || (t.n + ' ' + t.note).toLowerCase().includes(q)) &&
+      (s.cat === 'All categories' || CATS[t.c].label === s.cat) &&
+      (s.wallet === 'All wallets' || t.w === s.wallet) && inAmount(t.a)
+    );
+    const mapTx = t => ({
+      name: t.n, note: t.note, category: CATS[t.c].label, icon: CATS[t.c].icon,
+      wallet: t.w, walletIcon: t.wi, day: t.d.split(', ')[1],
+      amount: (t.a > 0 ? '+ ' : '− ') + F(t.a),
+      tone: t.a > 0 ? INC : 'var(--color-text)',
+      iconTone: t.a > 0 ? INC : 'var(--muted)'
+    });
+    const txPage = this.pager('tx', filtered, 10);
+    const dates = [...new Set(txPage.items.map(t => t.d))];
+    const txGroups = dates.map(d => {
+      const items = txPage.items.filter(t => t.d === d);
+      const net = items.reduce((a, t) => a + t.a, 0);
+      return { date: d, total: (net > 0 ? '+ ' : '− ') + F(net), items: items.map(mapTx) };
+    });
+    const fIn = filtered.filter(t => t.a > 0).reduce((a, t) => a + t.a, 0);
+    const fOut = filtered.filter(t => t.a < 0).reduce((a, t) => a - t.a, 0);
+
+    const quick = ['25.000', '62.000', '150.000', '425.000'].map(v => ({
+      label: 'Rp' + v, set: () => this.setState({ txAmount: v })
+    }));
+
+    return {
+      yes: true, noop: () => {}, noopInput: () => {},
+      toast: s.toast, saveTx: this.saveTx,
+      tCreateBudget: this.toast('Budget created — active from 1 September'),
+      tAdjust: this.toast('Opening limit editor'),
+      tSaveWallet: this.toast('Wallet saved'),
+      tConnect: this.toast('Redirecting to bank consent'),
+      tAddFunds: this.toast('Rp1.000.000 moved into the goal'),
+      tCreateGoal: this.toast('Goal created'),
+      tSchedule: this.toast('Recurring item scheduled'),
+      tInvite: this.toast('Invite sent to Sari'),
+      tExport: this.toast('Export queued — check your email'),
+      railOpen: s.railOpen,
+      streakOpen: s.railOpen && (this.props.showStreak ?? true),
+      railStyle: `flex:none;width:${s.railOpen ? 208 : 62}px;background:var(--rail);border-right:1px solid var(--color-divider);display:flex;flex-direction:column;padding:18px 12px;gap:3px;overflow-y:auto;overflow-x:hidden;transition:width .2s ease`,
+      toggleRail: () => this.setState({ railOpen: !s.railOpen }),
+      navGroups: navGroups.map((g, gi) => ({
+        label: g[0],
+        showLabel: s.railOpen,
+        dividerStyle: `height:1px;margin:${gi === 0 ? '2px' : '10px'} 8px 6px;background:${gi === 0 ? 'transparent' : 'var(--color-divider)'}`,
+        items: g[1].map(n => ({
+          label: n[1], icon: n[2], go: this.go(n[0]),
+          style: `display:flex;align-items:center;gap:12px;padding:10px 12px;border:0;border-radius:12px;font:inherit;font-size:13.5px;cursor:pointer;text-align:left;font-family:${page === n[0] ? 'var(--font-heading);font-weight:600' : 'var(--font-body);font-weight:400'};background:${page === n[0] ? 'color-mix(in srgb,var(--color-accent) 15%,transparent)' : 'transparent'};color:${page === n[0] ? 'var(--color-accent)' : 'var(--muted)'}`
+        }))
+      })),
+      navItems: nav.map(n => ({
+        label: n[1], icon: n[2], go: this.go(n[0]),
+        style: `display:flex;align-items:center;gap:12px;padding:10px 12px;border:0;border-radius:12px;font:inherit;font-size:13.5px;cursor:pointer;text-align:left;font-family:${page === n[0] ? 'var(--font-heading);font-weight:600' : 'var(--font-body);font-weight:400'};background:${page === n[0] ? 'color-mix(in srgb,var(--color-accent) 15%,transparent)' : 'transparent'};color:${page === n[0] ? 'var(--color-accent)' : 'var(--muted)'}`
+      })),
+      pageTitle: titles[page][0], pageSub: titles[page][1],
+      isDashboard: page === 'dashboard', isTransactions: page === 'transactions', isBudgets: page === 'budgets',
+      isWallets: page === 'wallets', isGoals: page === 'goals', isRecurring: page === 'recurring',
+      isInsights: page === 'insights', isShared: page === 'shared', isNotifications: page === 'notifications',
+      isSettings: page === 'settings', isMobile: page === 'mobile', isAuth: page === 'auth',
+      isUsers: page === 'users', isRoles: page === 'roles', isRoleForm: page === 'roleform',
+      isAudit: page === 'audit',
+      goRoles: this.go('roles'),
+      ...this.accessVals(),
+      goTransactions: this.go('transactions'), goBudgets: this.go('budgets'),
+      goNotifications: this.go('notifications'), goAuth: this.go('auth'), goDashboard: this.go('dashboard'),
+      query: s.query, setQuery: e => this.setState({ query: e.target.value }),
+      notifOpen: s.notifOpen, toggleNotif: () => this.setState({ notifOpen: !s.notifOpen }),
+      themeIcon: dark ? '#i-sun' : '#i-moon',
+      themeLabel: dark ? 'Dark — cool ink ground, one warm accent' : 'Light — soft paper ground, one warm accent',
+      isLight: !dark, isDark: dark, setLight: () => this.setTheme('light'), setDark: () => this.setTheme('dark'),
+      toggleTheme: () => this.setTheme(dark ? 'light' : 'dark'),
+      notifications: [
+        { icon: '#i-warn', color: EXP, title: 'Subscriptions budget exceeded', meta: 'Rp1.180.000 of Rp1.000.000 · today' },
+        { icon: '#i-calendar', color: 'var(--color-text)', title: 'Biznet Home due in 5 days', meta: 'Rp425.000 · 1 September' },
+        { icon: '#i-warn', color: 'var(--warn)', title: 'Food & drink at 88%', meta: 'Rp360.000 left · 4 days remaining' },
+        { icon: '#i-flag', color: 'var(--color-text)', title: 'House down payment hit 38%', meta: 'Rp152.000.000 of Rp400.000.000' }
+      ],
+
+      summary: [
+        { label: 'Total balance', value: 'Rp84.320.000', icon: '#i-wallet', tone: 'var(--muted)', valueTone: 'var(--color-text)', delta: '+3.4%', deltaTone: INC, deltaNote: 'vs last month' },
+        { label: 'Income, August', value: 'Rp21.450.000', icon: '#i-up', tone: INC, valueTone: INC, delta: '+13.5%', deltaTone: INC, deltaNote: 'four client invoices' },
+        { label: 'Expense, August', value: 'Rp12.780.000', icon: '#i-down', tone: EXP, valueTone: 'var(--color-text)', delta: '+4.8%', deltaTone: EXP, deltaNote: 'driven by subscriptions' },
+        { label: 'Net saved', value: 'Rp8.670.000', icon: '#i-flag', tone: 'var(--color-accent)', valueTone: 'var(--color-text)', delta: '40.4%', deltaTone: INC, deltaNote: 'of income kept' }
+      ],
+      trend, trendRange: s.trend === 'weekly' ? 'Weeks 1–5, August 2026' : 'March – August 2026',
+      isWeekly: s.trend === 'weekly', isMonthly: s.trend === 'monthly',
+      setWeekly: () => this.setState({ trend: 'weekly', hoverBar: -1 }),
+      setMonthly: () => this.setState({ trend: 'monthly', hoverBar: -1 }),
+      barTip, barTipStyle, leaveBar: () => this.setState({ hoverBar: -1 }),
+      donut, leaveSlice: () => this.setState({ hoverSlice: -1 }),
+      donutCenterLabel: hs ? hs[0] : 'Total spent',
+      donutCenterValue: hs ? F(hs[1]) : 'Rp12.780.000',
+      donutCenterNote: hs ? Math.round(hs[1] / dTotal * 100) + '% of spend' : '7 categories',
+      recent: TX.slice(0, 7).map(mapTx),
+      budgetsShort: budgets.slice(0, 5), budgets,
+
+      categoryOptions: ['All categories', ...Object.values(CATS).map(c => c.label)],
+      walletOptions: ['All wallets', 'BCA Payroll', 'BCA Card', 'GoPay', 'Cash', 'Wise USD'],
+      filterCat: s.cat, setCat: e => this.setState({ cat: e.target.value }),
+      filterWallet: s.wallet, setWallet: e => this.setState({ wallet: e.target.value }),
+      filterRange: s.range, setRange: e => this.setState({ range: e.target.value }),
+      filterAmount: s.amount, setAmount: e => this.setState({ amount: e.target.value }),
+      resetFilters: () => this.setState({ query: '', cat: 'All categories', wallet: 'All wallets', range: 'This month', amount: 'Any amount' }),
+      txGroups, noResults: filtered.length === 0, txBar: txPage.bar,
+      txStats: [
+        { label: 'Shown', value: filtered.length + ' entries', tone: 'var(--color-text)' },
+        { label: 'Money in', value: F(fIn), tone: INC },
+        { label: 'Money out', value: F(fOut), tone: EXP },
+        { label: 'Net', value: (fIn - fOut >= 0 ? '+ ' : '− ') + F(fIn - fOut), tone: fIn - fOut >= 0 ? INC : EXP }
+      ],
+
+      wallets: [
+        { name: 'BCA Payroll', meta: 'Bank account · ••4192', icon: '#i-bank', tone: 'var(--color-text)', currency: 'IDR', balance: 'Rp41.200.000', balanceTone: 'var(--color-text)', sub: 'Synced 12 minutes ago' },
+        { name: 'Wise USD', meta: 'Multi-currency · ••8830', icon: '#i-globe', tone: 'var(--color-text)', currency: 'USD', balance: '$1.480,00', balanceTone: 'var(--color-text)', sub: '≈ Rp24.100.000 at 16.284' },
+        { name: 'GoPay', meta: 'E-wallet · 0812••4471', icon: '#i-phone', tone: 'var(--color-text)', currency: 'IDR', balance: 'Rp1.860.000', balanceTone: 'var(--color-text)', sub: 'Synced 3 hours ago' },
+        { name: 'BCA Card', meta: 'Credit card · ••7702', icon: '#i-card', tone: EXP, currency: 'IDR', balance: '−Rp3.240.000', balanceTone: EXP, sub: 'Rp21.760.000 of limit free · due 18 Sep' },
+        { name: 'Cash', meta: 'Manual entry', icon: '#i-cash', tone: 'var(--color-text)', currency: 'IDR', balance: 'Rp620.000', balanceTone: 'var(--color-text)', sub: 'Last counted 25 August' }
+      ],
+      integrations: [
+        { name: 'BCA', meta: 'Payroll + credit card', icon: '#i-bank', status: 'Synced', tagClass: 'tag tag-neutral' },
+        { name: 'GoPay', meta: 'E-wallet', icon: '#i-phone', status: 'Synced', tagClass: 'tag tag-neutral' },
+        { name: 'Wise', meta: 'USD balance', icon: '#i-globe', status: 'Synced', tagClass: 'tag tag-neutral' },
+        { name: 'Mandiri', meta: 'Consent expired 21 August', icon: '#i-bank', status: 'Reconnect', tagClass: 'tag tag-accent' }
+      ],
+
+      goals: [
+        { name: 'House down payment', deadline: 'Target December 2028', icon: '#i-home', pct: '38%', saved: 'Rp152.000.000', target: 'Rp400.000.000', monthly: 'Rp6.500.000', eta: 'On track' },
+        { name: 'Emergency fund', deadline: '6 months of expenses', icon: '#i-shield', pct: '78%', saved: 'Rp42.000.000', target: 'Rp54.000.000', monthly: 'Rp1.500.000', eta: 'Done by May 2027' },
+        { name: 'New laptop', deadline: 'Target March 2027', icon: '#i-monitor', pct: '39%', saved: 'Rp12.400.000', target: 'Rp32.000.000', monthly: 'Rp1.200.000', eta: '2 months behind' }
+      ],
+      streakMonths: ['S', 'O', 'N', 'D', 'J', 'F', 'M', 'A', 'M', 'J', 'J', 'A'].map((m, i) => ({
+        label: m,
+        radius: '8px',
+        bg: i >= 5 ? 'var(--color-accent)' : 'color-mix(in srgb,var(--color-text) 10%,transparent)',
+        fg: i >= 5 ? 'var(--color-bg)' : 'var(--muted)'
+      })),
+
+      recurStats: [
+        { label: 'Monthly commitment', value: 'Rp5.891.000', tone: 'var(--color-text)', note: '27% of average income' },
+        { label: 'Due in 7 days', value: 'Rp5.111.000', tone: EXP, note: 'Rent, internet, two subscriptions' },
+        { label: 'Active items', value: '7', tone: 'var(--color-text)', note: '1 paused since July' }
+      ],
+      recurBar: this.pager('recurring', RECURRING, 5).bar,
+      recurring: this.pager('recurring', RECURRING, 5).items,
+
+      insights: [
+        { kicker: 'Up 34%', icon: '#i-up', tone: EXP, title: 'Subscriptions climbed for the third month', body: 'Rp1.180.000 in August against a Rp1.000.000 limit. Adobe and Copilot both started inside this cycle.' },
+        { kicker: 'Down 18%', icon: '#i-down', tone: INC, title: 'Transport is your cheapest month since March', body: 'Rp1.380.000 — Rp310.000 below your six-month average, mostly fewer late-night rides.' },
+        { kicker: 'Savings rate', icon: '#i-flag', tone: 'var(--color-text)', title: '40% kept for the seventh month running', body: 'Two more months at this rate finishes the emergency fund ahead of the December target.' },
+        { kicker: 'Cash flow', icon: '#i-calendar', tone: 'var(--warn)', title: 'Rp5.111.000 leaves in the first six days of September', body: 'Rent and two bills land before your first invoice clears. BCA Payroll covers it with Rp36m to spare.' }
+      ],
+      compare: MONTHLY.map(m => {
+        const parts = [
+          ['Housing', 4500000, 'var(--c1)'], ['Food & drink', m[2] * 0.21, 'var(--c2)'],
+          ['Transport', m[2] * 0.11, 'var(--c3)'], ['Subscriptions', m[2] * 0.09, 'var(--c4)']
+        ];
+        return {
+          label: m[0],
+          parts: parts.map(p => ({ color: p[2], h: (p[1] / 14000000 * 100).toFixed(1) + '%', title: p[0] + ' · ' + F(p[1]) }))
+        };
+      }),
+      compareLegend: [
+        { label: 'Housing', color: 'var(--c1)' }, { label: 'Food & drink', color: 'var(--c2)' },
+        { label: 'Transport', color: 'var(--c3)' }, { label: 'Subscriptions', color: 'var(--c4)' }
+      ],
+      ranking: DONUT.slice(0, 6).map((d, i) => ({
+        rank: String(i + 1).padStart(2, '0'), label: d[0], value: F(d[1]),
+        delta: ['0%', '+6%', '−18%', '+34%', '+2%', '−9%'][i],
+        deltaTone: ['var(--muted)', EXP, INC, EXP, EXP, INC][i]
+      })),
+
+      sharedCats: [
+        { label: 'Rent & utilities', spent: 'Rp4.925.000', limit: 'Rp5.000.000', width: '99%', color: 'var(--expense)' },
+        { label: 'Groceries', spent: 'Rp1.640.000', limit: 'Rp2.500.000', width: '66%', color: 'var(--color-text)' },
+        { label: 'Eating out', spent: 'Rp485.000', limit: 'Rp1.000.000', width: '49%', color: 'var(--color-text)' },
+        { label: 'Household goods', spent: 'Rp190.000', limit: 'Rp500.000', width: '38%', color: 'var(--color-text)' }
+      ],
+      members: [
+        { initials: 'RA', name: 'Rangga Aditama', contribution: 'Contributed Rp5.000.000 · spent Rp4.350.000', role: 'Owner', tagClass: 'tag tag-accent', avatarBg: 'var(--color-accent)', avatarFg: 'var(--color-bg)' },
+        { initials: 'SP', name: 'Sari Puspita', contribution: 'Contributed Rp4.000.000 · spent Rp2.890.000', role: 'Member', tagClass: 'tag tag-neutral', avatarBg: 'var(--color-text)', avatarFg: 'var(--color-bg)' }
+      ],
+
+      bills: [
+        { mon: 'Sep', dayNum: '01', name: 'Kost Tebet Barat', meta: 'Rent · BCA Payroll · autopay on', state: 'In 5 days', tagClass: 'tag tag-accent', amount: 'Rp4.500.000' },
+        { mon: 'Sep', dayNum: '01', name: 'Biznet Home', meta: 'Internet · BCA Payroll', state: 'In 5 days', tagClass: 'tag tag-accent', amount: 'Rp425.000' },
+        { mon: 'Sep', dayNum: '03', name: 'Figma Professional', meta: 'Subscription · BCA Card', state: 'In 7 days', tagClass: 'tag tag-neutral', amount: 'Rp180.000' },
+        { mon: 'Sep', dayNum: '06', name: 'Adobe Creative Cloud', meta: 'Subscription · BCA Card', state: 'In 10 days', tagClass: 'tag tag-neutral', amount: 'Rp290.000' },
+        { mon: 'Sep', dayNum: '10', name: 'BPJS Kesehatan', meta: 'Insurance · BCA Payroll', state: 'In 14 days', tagClass: 'tag tag-neutral', amount: 'Rp150.000' },
+        { mon: 'Sep', dayNum: '18', name: 'BCA Card statement', meta: 'Credit card · minimum Rp324.000', state: 'In 22 days', tagClass: 'tag tag-neutral', amount: 'Rp3.240.000' }
+      ],
+      alerts: [
+        { icon: '#i-warn', tone: EXP, title: 'Subscriptions is Rp180.000 over its Rp1.000.000 limit', meta: 'Triggered 26 August' },
+        { icon: '#i-warn', tone: 'var(--warn)', title: 'Food & drink crossed 80% of its limit', meta: 'Triggered 24 August' },
+        { icon: '#i-check', tone: INC, title: 'Health spending closed the month 38% under', meta: '27 August' }
+      ],
+
+      txOpen: s.txOpen, openTx: () => this.setState({ txOpen: true, notifOpen: false }),
+      closeTx: () => this.setState({ txOpen: false }),
+      txIsExpense: s.txType === 'expense', txIsIncome: s.txType === 'income',
+      setTxExpense: () => this.setState({ txType: 'expense' }), setTxIncome: () => this.setState({ txType: 'income' }),
+      txAmount: s.txAmount, setTxAmount: e => this.setState({ txAmount: e.target.value }),
+      txTone: s.txType === 'income' ? INC : EXP,
+      quickAmounts: quick,
+      txCategory: s.txCategory, setTxCategory: e => this.setState({ txCategory: e.target.value }),
+      txCategoryOptions: Object.values(CATS).map(c => c.label),
+      txWallet: s.txWallet, setTxWallet: e => this.setState({ txWallet: e.target.value }),
+      txWalletOptions: ['BCA Payroll', 'BCA Card', 'GoPay', 'Cash', 'Wise USD'],
+      txRecurring: s.txRecurring, toggleTxRecurring: () => this.setState({ txRecurring: !s.txRecurring }),
+      txImpact: s.txType === 'income'
+        ? 'Adds to August income and lifts your savings rate above 41%.'
+        : `Counts against ${s.txCategory} — that budget sits at ${(budgets.find(b => b.label === s.txCategory) || {}).width || '—'} of its limit.`
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+
+    // The exported Claude Design canvas. It is the design specification we
+    // read from, not source we own — its bundled runtime is vendor output and
+    // linting it only produces noise. See AGENTS.md section 1.
+    "Ledgerline/**",
   ]),
 ]);
 
