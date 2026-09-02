@@ -1,11 +1,12 @@
 import { TODAY } from "@/lib/data/transactions";
 import { formatDayMonth, formatSince, nextDueDate } from "@/lib/dates";
-import { formatBalance, formatMoney } from "@/lib/format";
+import { formatBalance, formatFigure, formatMoney } from "@/lib/format";
 import type {
   CurrencyCode,
   RampStep,
   Wallet,
   WalletCard,
+  WalletDraft,
   WalletKind,
   WalletShare,
   WalletSummary,
@@ -115,6 +116,33 @@ function walletSub(wallet: Wallet): string {
   return `Updated ${formatSince(wallet.updatedOn, TODAY)}`;
 }
 
+/** Cards carry two fields nothing else does; blank rather than "0" on the rest. */
+function optionalFigure(
+  value: number | null,
+  currency: CurrencyCode,
+): string {
+  return value === null ? "" : formatFigure(value, currency);
+}
+
+/**
+ * What the edit slide-over opens with. A balance only ever changes because
+ * someone typed it here, so the draft carries how old the current figure is.
+ */
+function toDraft(wallet: Wallet): WalletDraft {
+  return {
+    id: wallet.id,
+    name: wallet.name,
+    kind: wallet.kind,
+    currency: wallet.currency,
+    reference: wallet.reference,
+    balance: formatFigure(wallet.balance, wallet.currency),
+    creditLimit: optionalFigure(wallet.creditLimit, wallet.currency),
+    dueDay: wallet.dueDay === null ? "" : String(wallet.dueDay),
+    includeInTotal: wallet.includeInTotal,
+    updatedSince: formatSince(wallet.updatedOn, TODAY),
+  };
+}
+
 function toCard(wallet: Wallet): WalletCard {
   return {
     id: wallet.id,
@@ -125,6 +153,7 @@ function toCard(wallet: Wallet): WalletCard {
     balance: formatBalance(wallet.balance, wallet.currency),
     sub: walletSub(wallet),
     isNegative: wallet.balance < 0,
+    draft: toDraft(wallet),
   };
 }
 
@@ -228,18 +257,31 @@ function accountsLine(count: number): string {
 
 /* ── queries ───────────────────────────────────────────────────────────── */
 
-export const WALLET_KINDS = [
-  "Bank account",
-  "E-wallet",
-  "Credit card",
-  "Cash",
-] as const;
+/** The type select. The value is the stored `kind`; the label is what prints. */
+export const WALLET_KIND_OPTIONS: readonly {
+  readonly value: WalletKind;
+  readonly label: string;
+}[] = [
+  { value: "bank", label: KIND_LABEL.bank },
+  { value: "ewallet", label: KIND_LABEL.ewallet },
+  { value: "card", label: KIND_LABEL.card },
+  { value: "cash", label: KIND_LABEL.cash },
+];
 
-export const WALLET_CURRENCIES = [
-  "IDR — Rupiah",
-  "USD — US Dollar",
-  "SGD — Singapore Dollar",
-] as const;
+const CURRENCY_LABEL: Readonly<Record<CurrencyCode, string>> = {
+  IDR: "IDR — Rupiah",
+  USD: "USD — US Dollar",
+  SGD: "SGD — Singapore Dollar",
+};
+
+export const WALLET_CURRENCY_OPTIONS: readonly {
+  readonly value: CurrencyCode;
+  readonly label: string;
+}[] = [
+  { value: "IDR", label: CURRENCY_LABEL.IDR },
+  { value: "USD", label: CURRENCY_LABEL.USD },
+  { value: "SGD", label: CURRENCY_LABEL.SGD },
+];
 
 export async function getWallets(): Promise<readonly WalletCard[]> {
   return WALLETS.map(toCard);

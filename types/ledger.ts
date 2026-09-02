@@ -94,6 +94,34 @@ export type Wallet = {
   readonly includeInTotal: boolean;
 };
 
+/** One choice in a select: a stored code, and the words shown for it. */
+export type SelectChoice = {
+  readonly value: string;
+  readonly label: string;
+};
+
+/**
+ * A wallet as the editor edits it: every figure is a string, because that is
+ * what a text field holds. Nothing syncs, so this is also the only way a
+ * balance ever changes.
+ */
+export type WalletDraft = {
+  readonly id: string;
+  readonly name: string;
+  readonly kind: WalletKind;
+  readonly currency: CurrencyCode;
+  readonly reference: string;
+  /** Grouped the Indonesian way, with a plain hyphen so it can be typed over. */
+  readonly balance: string;
+  /** Cards only. Blank on everything else. */
+  readonly creditLimit: string;
+  /** Cards only, as a day of the month. Blank on everything else. */
+  readonly dueDay: string;
+  readonly includeInTotal: boolean;
+  /** "6 days ago" — how stale the figure is, since nothing refreshes it. */
+  readonly updatedSince: string;
+};
+
 /** One wallet card, with every figure already formatted for print. */
 export type WalletCard = {
   readonly id: string;
@@ -104,6 +132,8 @@ export type WalletCard = {
   readonly balance: string;
   readonly sub: string;
   readonly isNegative: boolean;
+  /** What the edit slide-over opens with. */
+  readonly draft: WalletDraft;
 };
 
 /** One wallet's share of the money held in a single currency. */

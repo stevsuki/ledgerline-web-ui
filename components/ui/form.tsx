@@ -116,18 +116,39 @@ export function TextAreaField({
   );
 }
 
+/**
+ * A bare string is both the value and the label; a pair separates them, for the
+ * lists whose value is a stored code rather than the words on screen.
+ */
+export type SelectOption =
+  | string
+  | { readonly value: string; readonly label: string };
+
+function optionValue(option: SelectOption): string {
+  return typeof option === "string" ? option : option.value;
+}
+
+function optionLabel(option: SelectOption): string {
+  return typeof option === "string" ? option : option.label;
+}
+
 export function SelectField({
   id,
   label,
   options,
   defaultValue,
+  value,
+  onChange,
   className,
   name,
 }: {
   readonly id: string;
   readonly label: string;
-  readonly options: readonly string[];
+  readonly options: readonly SelectOption[];
   readonly defaultValue?: string;
+  /** Pass both to drive the select from state; omit both for a plain form. */
+  readonly value?: string;
+  readonly onChange?: (next: string) => void;
   readonly className?: string;
   readonly name?: string;
 }) {
@@ -138,10 +159,12 @@ export function SelectField({
         id={id}
         name={name ?? id}
         defaultValue={defaultValue}
+        value={value}
+        onChange={onChange ? (event) => onChange(event.target.value) : undefined}
       >
         {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
+          <option key={optionValue(option)} value={optionValue(option)}>
+            {optionLabel(option)}
           </option>
         ))}
       </select>

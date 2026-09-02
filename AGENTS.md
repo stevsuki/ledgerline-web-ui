@@ -228,6 +228,32 @@ A wallet is stored as data, not as the sentences the artboard printed: `kind` +
 `balance` is a number in the wallet's own currency (negative on a card is money owed).
 `formatMoney` / `formatBalance` in `lib/format.ts` handle the non-rupiah currencies.
 
+### The fifth departure: one wallet form, and the screen reordered around it
+
+Because nothing refreshes a balance, editing one has to be reachable — and the
+artboard has no edit affordance at all. Every card now carries a pencil, and
+both it and the dashed card at the end of the grid open the same
+`<WalletEditorProvider>` slide-over: name, kind, currency, reference, balance,
+`includeInTotal`, plus `creditLimit` + `dueDay` when the kind is `card`. It opens
+saying how stale the figure is, and closes on a toast, because the screen is
+still fixture-backed; the day a mutation exists its `onSubmit` becomes a
+`<form action={saveWalletAction}>` and nothing else about the sheet moves.
+
+Two things fell out of that, and both must stay:
+
+1. **The artboard's inline "Add wallet" panel is gone.** It sat directly under
+   the dashed card that linked to it, so the link scrolled the page a few pixels
+   and nothing appeared to happen. Worse, it carried fewer fields than the
+   editor — no reference, no credit limit — so a card could not be created
+   whole. Add and edit are one form for that reason; splitting them is what let
+   them drift apart in the first place.
+2. **Balance summary leads the screen** as a full-width panel above the grid,
+   rather than sharing a `SplitGrid` row with the panel that was deleted. Inside
+   it, `MoneyHeld` (stat + the card-debt and non-base-currency lines) and
+   `HeldSplit` (the `StackedBar` + legend) are the two halves of a `SplitGrid`
+   that collapses to one column on a phone. Read top-down the legend now names
+   the very cards printed under it.
+
 The replacement for syncing, when it comes, is **CSV import** of an m-BCA or Livin'
 e-statement — free, and nobody's permission is needed. It belongs to transactions, not
 here.
@@ -265,6 +291,7 @@ Keep it this short. Adding one is a decision, not a detail.
 | `TrendChart` | hover tooltip over the bars |
 | `CategoryDonut` | hover highlights slice + legend row |
 | `TransactionSlideOver` | modal state, focus trap, Escape |
+| `WalletEditorProvider` | the add/edit slide-over, plus the kind select that reveals a card’s fields |
 | `UserEditorProvider` | same, plus `useActionState` over `saveUserAction` |
 | `RoleForm` | the live permission grid, posting to `saveRoleAction` |
 | `RemoveUserButton` / `RemoveRoleButton` | confirm before the delete form posts |

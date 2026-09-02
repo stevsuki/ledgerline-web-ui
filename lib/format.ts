@@ -52,6 +52,17 @@ export function formatBalance(value: number, currency: CurrencyCode): string {
   return value < 0 ? `${MINUS_SIGN}${money}` : money;
 }
 
+/**
+ * The bare grouped figure a text field edits — no currency symbol, and a plain
+ * hyphen rather than the print minus, because the field is typed back into and
+ * a keyboard has no U+2212 on it.
+ */
+export function formatFigure(value: number, currency: CurrencyCode): string {
+  const grouped = CURRENCY_HAS_CENTS[currency] ? GROUPED_CENTS : GROUPED;
+  const digits = grouped.format(Math.abs(value));
+  return value < 0 ? `-${digits}` : digits;
+}
+
 export function formatPercent(ratio: number): string {
   return `${Math.round(ratio * 100)}%`;
 }

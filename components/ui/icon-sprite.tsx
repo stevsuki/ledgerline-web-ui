@@ -42,6 +42,7 @@ export const ICON_NAMES = [
   "calendar",
   "shield",
   "globe",
+  "pencil",
 ] as const;
 
 export type IconName = (typeof ICON_NAMES)[number];
@@ -182,6 +183,9 @@ export function IconSprite() {
         </symbol>
         <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10" /><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" /><path d="M2 12h20" />
+        </symbol>
+        <symbol id="i-pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /><path d="m15 5 4 4" />
         </symbol>
       </defs>
     </svg>
