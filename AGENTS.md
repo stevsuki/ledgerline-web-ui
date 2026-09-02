@@ -206,6 +206,32 @@ fill that in, and every new screen must hold them:
 - **Sticky is a two-column idea.** `lg:sticky` only, or a stacked phone gets a panel that
   pins itself over the list it belongs beside.
 
+### The fourth departure: nothing syncs with a bank
+
+The artboard draws Ledgerline as an app wired into BCA, GoPay and Wise — "Synced 12
+minutes ago" under a balance, a **Connected institutions** panel, a "Reconnect" tag.
+None of that is reachable: BCA's production API wants a corporate agreement, and every
+aggregator that covers Indonesian banks is paid B2B. **Ledgerline is manual entry**, and
+the screens have to say so rather than imply a connection that is not there.
+
+So on `/wallets`: the integrations panel is gone (with the `Integration` type and
+`getIntegrations` behind it), and the sync line is now `Updated {formatSince(...)}` —
+how stale a figure is has to be stated when nothing refreshes it for you. Its slot in
+the `SplitGrid` holds **Balance summary** instead: money held, a `StackedBar` of each
+wallet's share, and — below it — card debt and any non-base currency as their own lines.
+That split is not decoration. With no exchange rate to hand, one figure covering an IDR
+account, a USD account and a credit card would be a guess, so `BASE_CURRENCY` states the
+total and everything it cannot honestly absorb sits under the bar.
+
+A wallet is stored as data, not as the sentences the artboard printed: `kind` +
+`reference` compose the meta line, `creditLimit` + `dueDay` compose a card's, and
+`balance` is a number in the wallet's own currency (negative on a card is money owed).
+`formatMoney` / `formatBalance` in `lib/format.ts` handle the non-rupiah currencies.
+
+The replacement for syncing, when it comes, is **CSV import** of an m-BCA or Livin'
+e-statement — free, and nobody's permission is needed. It belongs to transactions, not
+here.
+
 ---
 
 ## 4. Architecture — SSR first, CSR only where it must be
@@ -245,6 +271,7 @@ Keep it this short. Adding one is a decision, not a detail.
 | `Toast` | timed dismissal |
 | `SignInForm` / `RegisterForm` | `useActionState` — pending state, inline errors |
 | `ResetRequestForm` / `NewPasswordForm` | same |
+| `AppError` (`app/error.tsx`) | an error boundary must be a client component |
 
 The auth forms and the two access editors post to real mutations — Server Actions in
 `lib/auth/actions.ts` and `lib/access/actions.ts`. Each is a thin
@@ -301,6 +328,28 @@ module narrows its payload into a real type; an expected failure — a rejected 
 validation error, an unreachable API — comes back as `{ ok: false }` rather than a
 throw. The access token is read from the http-only cookie by `requireAccessToken()` and
 never enters a React tree.
+
+**`code` is the contract, `message` is for people.** The backend publishes its catalogue
+in `ERROR_CODES.md` (generated from `internal/domain/error_codes.go`); `API_ERROR_CODES`
+in `types/api.ts` mirrors it, and `MESSAGE_BY_CODE` in `lib/auth/form-state.ts` is the
+only place a code becomes a sentence. Never branch on `message`, and never parse it. A
+code released after this client was written lands on `UNKNOWN` and keeps the message the
+API sent, so a new backend release degrades to the backend's own wording rather than to
+"we could not read that".
+
+Two fields ride along with every failure. `request_id` matches the `X-Request-ID` header
+and the server's log line, so it is printed — but only on `INTERNAL_ERROR`, where the
+fault is theirs and someone will go looking for the log. `retryAfterSeconds` comes off
+the `Retry-After` header, which the backend sets on a locked account, the reset
+cooldown, and the rate limiter; `WAIT_LEAD` turns it into "try in about 4 minutes"
+rather than a vague "wait a moment".
+
+**A failed `/auth/me` is not automatically a dead session.** Only `AUTH_TOKEN_MISSING`,
+`AUTH_TOKEN_INVALID`, `AUTH_TOKEN_EXPIRED` and `UNAUTHORIZED` end one; a 500, a timeout
+or an unreachable API means the backend is unwell while the cookie is still good.
+`requireProfile()` redirects on the first set and **throws** on the second — redirecting
+there would both lie and loop, because the proxy sends a live cookie straight back to
+`/dashboard`. `app/error.tsx` catches the throw.
 
 Three gaps in the API the screens work around today, each marked where it bites:
 

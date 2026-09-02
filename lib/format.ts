@@ -1,3 +1,5 @@
+import type { CurrencyCode } from "@/types/ledger";
+
 /** Money formatting, ported from the artboard's `F()` helper. */
 
 const GROUPED = new Intl.NumberFormat("de-DE");
@@ -13,6 +15,41 @@ export function formatRupiah(value: number): string {
 export function formatSignedRupiah(value: number): string {
   const sign = value >= 0 ? "+" : MINUS_SIGN;
   return `${sign} ${formatRupiah(value)}`;
+}
+
+/* ── other currencies ──────────────────────────────────────────────────── */
+
+/** The artboard groups every currency the German way — "$1.480,00". */
+const GROUPED_CENTS = new Intl.NumberFormat("de-DE", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const CURRENCY_PREFIX: Readonly<Record<CurrencyCode, string>> = {
+  IDR: "Rp",
+  USD: "$",
+  SGD: "S$",
+};
+
+/** Rupiah is quoted whole; the rest carry cents. */
+const CURRENCY_HAS_CENTS: Readonly<Record<CurrencyCode, boolean>> = {
+  IDR: false,
+  USD: true,
+  SGD: true,
+};
+
+export function formatMoney(value: number, currency: CurrencyCode): string {
+  const grouped = CURRENCY_HAS_CENTS[currency] ? GROUPED_CENTS : GROUPED;
+  return `${CURRENCY_PREFIX[currency]}${grouped.format(Math.abs(value))}`;
+}
+
+/**
+ * "−Rp3.240.000" — a balance that is owed rather than held. The minus is glued
+ * to the figure here, unlike the spaced sign a ledger row prints.
+ */
+export function formatBalance(value: number, currency: CurrencyCode): string {
+  const money = formatMoney(value, currency);
+  return value < 0 ? `${MINUS_SIGN}${money}` : money;
 }
 
 export function formatPercent(ratio: number): string {

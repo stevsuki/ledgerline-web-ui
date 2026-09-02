@@ -33,7 +33,7 @@ export const PAGE_META = {
   },
   wallets: {
     title: "Wallets",
-    subtitle: "5 accounts · 2 currencies · 3 synced",
+    subtitle: "Accounts and balances you keep by hand",
   },
   goals: { title: "Goals", subtitle: "3 active goals · Rp206.400.000 saved" },
   recurring: {

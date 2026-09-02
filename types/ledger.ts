@@ -65,24 +65,69 @@ export type BudgetView = Budget & {
   readonly isNear: boolean;
 };
 
+/** What kind of thing the wallet is. Drives its label, and the card-only fields. */
+export type WalletKind = "bank" | "ewallet" | "card" | "cash";
+
+/**
+ * Currencies a wallet may be kept in. Nothing here fetches an exchange rate, so
+ * a total never crosses one — each currency is summed on its own.
+ */
+export type CurrencyCode = "IDR" | "USD" | "SGD";
+
+/** A wallet as it is stored: figures are numbers, never formatted strings. */
 export type Wallet = {
   readonly id: string;
   readonly name: string;
-  readonly meta: string;
+  readonly kind: WalletKind;
   readonly icon: IconName;
-  readonly currency: string;
+  /** The tail printed after the kind — "••4192", "0812••4471". Blank for cash. */
+  readonly reference: string;
+  readonly currency: CurrencyCode;
+  /** In the wallet's own currency. Negative on a card is money owed. */
+  readonly balance: number;
+  /** Cards only: the ceiling the balance is drawn against. */
+  readonly creditLimit: number | null;
+  /** Cards only: day of the month the statement falls due. */
+  readonly dueDay: number | null;
+  /** ISO day the owner last touched the balance. Nothing syncs it for them. */
+  readonly updatedOn: string;
+  readonly includeInTotal: boolean;
+};
+
+/** One wallet card, with every figure already formatted for print. */
+export type WalletCard = {
+  readonly id: string;
+  readonly name: string;
+  readonly icon: IconName;
+  readonly currency: CurrencyCode;
+  readonly meta: string;
   readonly balance: string;
   readonly sub: string;
   readonly isNegative: boolean;
 };
 
-export type Integration = {
+/** One wallet's share of the money held in a single currency. */
+export type WalletShare = {
   readonly id: string;
-  readonly name: string;
+  readonly label: string;
+  readonly width: string;
+  readonly step: RampStep;
+};
+
+/** A line under the split: card debt, or a balance held in another currency. */
+export type WalletSummaryRow = {
+  readonly id: string;
+  readonly label: string;
+  readonly value: string;
+  readonly tone: Tone;
+};
+
+export type WalletSummary = {
+  /** The headline total, in the one currency it can honestly be stated in. */
+  readonly total: string;
   readonly meta: string;
-  readonly icon: IconName;
-  readonly status: string;
-  readonly needsAttention: boolean;
+  readonly shares: readonly WalletShare[];
+  readonly rows: readonly WalletSummaryRow[];
 };
 
 export type Goal = {

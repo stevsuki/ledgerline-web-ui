@@ -14,6 +14,9 @@ const DEFAULT_BASE_URL = "http://localhost:8080/api/v1";
 /** No HTTP exchange happened, so there is no status to report. */
 const NO_STATUS = 0;
 
+/** The backend answers a wait in seconds, never as an HTTP date. */
+const RETRY_AFTER_HEADER = "Retry-After";
+
 const UNREACHABLE_MESSAGE =
   "Cannot reach the Ledgerline API. Check that the backend is running.";
 const UNREADABLE_MESSAGE = "The API returned a response we could not read.";
@@ -103,28 +106,60 @@ function readMeta(envelope: Record<string, unknown>): ApiMeta | null {
   };
 }
 
-function failure(
-  code: ApiFailure["code"],
-  message: string,
-  status: number,
-  fieldErrors: readonly ApiFieldError[] = [],
-): ApiResult<never> {
-  return { ok: false, error: { code, message, status, fieldErrors } };
+/** How long the backend asked the caller to wait, in whole seconds. */
+function readRetryAfter(response: Response): number {
+  const raw = response.headers.get(RETRY_AFTER_HEADER);
+  if (!raw) {
+    return 0;
+  }
+  const seconds = Number(raw);
+  return Number.isFinite(seconds) && seconds > 0 ? Math.ceil(seconds) : 0;
+}
+
+type FailureParts = {
+  readonly code: ApiFailure["code"];
+  readonly message: string;
+  readonly status: number;
+  readonly fieldErrors?: readonly ApiFieldError[];
+  readonly requestId?: string;
+  readonly retryAfterSeconds?: number;
+};
+
+function failure(parts: FailureParts): ApiResult<never> {
+  return {
+    ok: false,
+    error: {
+      code: parts.code,
+      message: parts.message,
+      status: parts.status,
+      fieldErrors: parts.fieldErrors ?? [],
+      requestId: parts.requestId ?? "",
+      retryAfterSeconds: parts.retryAfterSeconds ?? 0,
+    },
+  };
 }
 
 function toFailure(
-  status: number,
+  response: Response,
   envelope: Record<string, unknown> | null,
 ): ApiResult<never> {
   if (!envelope) {
-    return failure("UNREADABLE", UNREADABLE_MESSAGE, status);
+    return failure({
+      code: "UNREADABLE",
+      message: UNREADABLE_MESSAGE,
+      status: response.status,
+    });
   }
-  return failure(
-    readEnum(envelope, "code", API_ERROR_CODES, "UNREADABLE"),
-    readString(envelope, "message") ?? FALLBACK_ERROR_MESSAGE,
-    status,
-    readFieldErrors(envelope),
-  );
+
+  return failure({
+    // A code released after this client was written keeps its own message.
+    code: readEnum(envelope, "code", API_ERROR_CODES, "UNKNOWN"),
+    message: readString(envelope, "message") ?? FALLBACK_ERROR_MESSAGE,
+    status: response.status,
+    fieldErrors: readFieldErrors(envelope),
+    requestId: readString(envelope, "request_id") ?? "",
+    retryAfterSeconds: readRetryAfter(response),
+  });
 }
 
 /** Performs the call and unwraps the envelope. */
@@ -133,15 +168,23 @@ export async function apiRequest(
 ): Promise<ApiResult<unknown>> {
   const response = await send(request);
   if (!response) {
-    return failure("UNREACHABLE", UNREACHABLE_MESSAGE, NO_STATUS);
+    return failure({
+      code: "UNREACHABLE",
+      message: UNREACHABLE_MESSAGE,
+      status: NO_STATUS,
+    });
   }
 
   const envelope = await readEnvelope(response);
   if (!response.ok) {
-    return toFailure(response.status, envelope);
+    return toFailure(response, envelope);
   }
   if (!envelope) {
-    return failure("UNREADABLE", UNREADABLE_MESSAGE, response.status);
+    return failure({
+      code: "UNREADABLE",
+      message: UNREADABLE_MESSAGE,
+      status: response.status,
+    });
   }
 
   return {
@@ -170,7 +213,11 @@ export function withParsed<T>(
 
   const parsed = parse(result.data);
   if (!parsed) {
-    return failure("UNREADABLE", UNREADABLE_MESSAGE, NO_STATUS);
+    return failure({
+      code: "UNREADABLE",
+      message: UNREADABLE_MESSAGE,
+      status: NO_STATUS,
+    });
   }
   return { ok: true, data: parsed, message: result.message, meta: result.meta };
 }

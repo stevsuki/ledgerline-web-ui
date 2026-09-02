@@ -152,10 +152,16 @@ export async function resetRequestAction(
   return verifyOtpStep(formData);
 }
 
-/** On this card a rejected grant is a stale link, not a lapsed session. */
+/**
+ * On this card a rejected grant is a stale reset, not a lapsed session — the
+ * token manager can reject it as either expired or invalid, so both are named.
+ */
+const STALE_RESET = "That reset is no longer valid. Request a new code to continue.";
+
 const RESET_GRANT_MESSAGES: Partial<Readonly<Record<ApiErrorCode, string>>> = {
-  UNAUTHORIZED:
-    "That reset is no longer valid. Request a new code to continue.",
+  AUTH_TOKEN_EXPIRED: STALE_RESET,
+  AUTH_TOKEN_INVALID: STALE_RESET,
+  UNAUTHORIZED: STALE_RESET,
 };
 
 /* ── reset, leg two: the new password ──────────────────────────────────── */

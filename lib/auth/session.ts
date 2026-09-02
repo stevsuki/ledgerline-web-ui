@@ -12,6 +12,7 @@ import {
   sessionCookieWrites,
 } from "@/lib/auth/cookies";
 import { signInHref } from "@/lib/auth/routes";
+import type { ApiErrorCode } from "@/types/api";
 import type { AuthTokens, Profile, ResetGrant } from "@/types/auth";
 
 /** The session, read and written on the server. */
@@ -70,24 +71,61 @@ export async function clearResetGrant(): Promise<void> {
 
 /* ── who is signed in ──────────────────────────────────────────────────── */
 
+/**
+ * Codes that mean the session itself is over. Anything else — a 500, a timeout,
+ * an unreachable API — is the backend being unwell, and must not be mistaken
+ * for a lapsed sign-in: the backend stopped answering 401 for those on purpose.
+ */
+const SESSION_ENDED_CODES: readonly ApiErrorCode[] = [
+  "AUTH_TOKEN_MISSING",
+  "AUTH_TOKEN_INVALID",
+  "AUTH_TOKEN_EXPIRED",
+  "UNAUTHORIZED",
+];
+
+type ProfileResult =
+  | { readonly ok: true; readonly profile: Profile }
+  | { readonly ok: false; readonly sessionEnded: boolean; readonly reason: string };
+
 /** The one place the app asks who the caller is. */
-export const getProfile = cache(async (): Promise<Profile | null> => {
+const loadProfile = cache(async (): Promise<ProfileResult> => {
   const accessToken = await readAccessToken();
   if (!accessToken) {
-    return null;
+    return { ok: false, sessionEnded: true, reason: "no access token" };
   }
 
   const result = await fetchProfile(accessToken);
-  return result.ok ? result.data : null;
+  if (result.ok) {
+    return { ok: true, profile: result.data };
+  }
+
+  return {
+    ok: false,
+    sessionEnded: SESSION_ENDED_CODES.includes(result.error.code),
+    reason: `${result.error.code}: ${result.error.message}`,
+  };
 });
+
+/** For callers that treat "not signed in" and "cannot tell" the same way. */
+export async function getProfile(): Promise<Profile | null> {
+  const result = await loadProfile();
+  return result.ok ? result.profile : null;
+}
 
 /** Guard for anything behind the gate, returning the sidebar with the account. */
 export async function requireProfile(returnTo?: string): Promise<Profile> {
-  const profile = await getProfile();
-  if (!profile) {
+  const result = await loadProfile();
+  if (result.ok) {
+    return result.profile;
+  }
+
+  if (result.sessionEnded) {
     redirect(signInHref(returnTo, "session-expired"));
   }
-  return profile;
+
+  // Sending them to sign-in would be a lie, and the proxy would bounce them
+  // straight back here while the cookie is still good. Let the boundary show.
+  throw new Error(`/auth/me failed — ${result.reason}`);
 }
 
 /** The token every call to the API carries. */

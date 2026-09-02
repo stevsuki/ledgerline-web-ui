@@ -1,25 +1,69 @@
 /** The shapes the Go backend puts on the wire. */
 
-/** The codes `handleError` in the backend's `internal/delivery/http/handler` can emit. */
+/**
+ * The backend's published catalogue, mirrored from `ERROR_CODES.md` — whose own
+ * source is `internal/domain/error_codes.go`. `code` is the contract and the
+ * only thing to branch on; `message` is for people and is never parsed.
+ *
+ * A code the backend adds later still arrives readable: it lands on `UNKNOWN`
+ * and keeps the message the API sent with it.
+ */
 export const API_ERROR_CODES = [
-  "BAD_REQUEST",
+  /* generic */
+  "INTERNAL_ERROR",
   "VALIDATION_ERROR",
+  "BAD_REQUEST",
+  "INVALID_PARAM",
   "INVALID_INPUT",
-  "INVALID_CREDENTIALS",
-  "INVALID_OTP",
-  "MAX_ATTEMPTS_EXCEEDED",
-  "TOKEN_EXPIRED",
-  "TOKEN_INVALID",
-  "UNAUTHORIZED",
-  "FORBIDDEN",
   "NOT_FOUND",
   "CONFLICT",
+  "UNAUTHORIZED",
+  "FORBIDDEN",
   "TOO_MANY_REQUESTS",
-  "INTERNAL_ERROR",
+  "REQUEST_TIMEOUT",
+  "ROUTE_NOT_FOUND",
+  "METHOD_NOT_ALLOWED",
+  "DB_UNAVAILABLE",
+
+  /* auth */
+  "AUTH_INVALID_CREDENTIALS",
+  "AUTH_ACCOUNT_LOCKED",
+  "AUTH_TOKEN_MISSING",
+  "AUTH_TOKEN_INVALID",
+  "AUTH_TOKEN_EXPIRED",
+  "AUTH_INVALID_OTP",
+  "AUTH_OTP_MAX_ATTEMPTS",
+  "AUTH_RESET_REQUESTED_TOO_SOON",
+
+  /* user */
+  "USER_NOT_FOUND",
+  "USER_EMAIL_TAKEN",
+  "USER_INVALID_ROLE",
+  "USER_INVALID_DATA",
+
+  /* category */
+  "CATEGORY_NOT_FOUND",
+  "CATEGORY_NAME_TAKEN",
+  "CATEGORY_INVALID_TYPE",
+  "CATEGORY_INVALID_DATA",
+
+  /* role */
+  "ROLE_NOT_FOUND",
+  "ROLE_NAME_TAKEN",
+  "ROLE_SYSTEM_IMMUTABLE",
+  "ROLE_INVALID_MENU",
+  "ROLE_INVALID_DATA",
+
+  /* menu and audit log */
+  "MENU_NOT_FOUND",
+  "AUDIT_LOG_NOT_FOUND",
+
   /** The request never reached the API. */
   "UNREACHABLE",
   /** It answered, but not with a body this client recognises. */
   "UNREADABLE",
+  /** It answered with a code released after this list was written. */
+  "UNKNOWN",
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];
@@ -43,6 +87,10 @@ export type ApiFailure = {
   /** The HTTP status, or 0 when the request never completed. */
   readonly status: number;
   readonly fieldErrors: readonly ApiFieldError[];
+  /** Matches `X-Request-ID` and the server log line. "" when none was sent. */
+  readonly requestId: string;
+  /** Seconds off the `Retry-After` header; 0 when the failure has no wait. */
+  readonly retryAfterSeconds: number;
 };
 
 export type ApiResult<T> =

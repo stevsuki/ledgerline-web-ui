@@ -110,6 +110,61 @@ function shortDay(iso: string): string {
   return `${dayAndMonth(date)} ${date.getFullYear()}`;
 }
 
+const MS_PER_DAY = 86_400_000;
+
+/** Past this, "N days ago" stops being easier to read than the date itself. */
+const RELATIVE_DAY_LIMIT = 30;
+
+/** "18 Sep" — the short day a wallet card prints. */
+export function formatDayMonth(iso: string): string {
+  const date = parseIsoDate(iso);
+  return date ? dayAndMonth(date) : iso;
+}
+
+/**
+ * "today" / "yesterday" / "6 days ago" / "on 18 Jul". Nothing in the app syncs,
+ * so how stale a figure is has to be stated rather than implied.
+ */
+export function formatSince(iso: string, todayIso: string): string {
+  const then = parseIsoDate(iso);
+  const today = parseIsoDate(todayIso);
+  if (!then || !today) {
+    return "—";
+  }
+
+  const days = Math.round((today.getTime() - then.getTime()) / MS_PER_DAY);
+  if (days <= 0) {
+    return "today";
+  }
+  if (days === 1) {
+    return "yesterday";
+  }
+  return days < RELATIVE_DAY_LIMIT ? `${days} days ago` : `on ${formatDayMonth(iso)}`;
+}
+
+/**
+ * The next time a statement day comes round — this month if it is still ahead,
+ * otherwise the next one. A 31st is pulled back to the length of the month.
+ */
+export function nextDueDate(dueDay: number, todayIso: string): string {
+  const today = parseIsoDate(todayIso);
+  if (!today) {
+    return "";
+  }
+
+  const monthOffset = today.getDate() <= dueDay ? 0 : 1;
+  const month = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+  const lastDay = new Date(
+    month.getFullYear(),
+    month.getMonth() + 1,
+    0,
+  ).getDate();
+
+  return toIsoDate(
+    new Date(month.getFullYear(), month.getMonth(), Math.min(dueDay, lastDay)),
+  );
+}
+
 /** What the trigger button and the export summary print. */
 export function formatRangeLabel(range: DateRange, fallback: string): string {
   if (!range.from && !range.to) {
