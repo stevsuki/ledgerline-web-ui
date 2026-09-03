@@ -314,6 +314,8 @@ Keep it this short. Adding one is a decision, not a detail.
 | `CategoryDonut` | hover highlights slice + legend row |
 | `TransactionSlideOver` | modal state, focus trap, Escape |
 | `WalletEditorProvider` | the add/edit slide-over over `saveWalletAction`, plus the kind select that reveals a card’s fields |
+| `BudgetEditorProvider` / `NewBudgetForm` | the shared budget form over `saveBudgetAction`, and the sheet every row's pencil opens |
+| `ThresholdField` | the Notify-me-at segments, the Custom field they reveal, and the line pricing the choice |
 | `UserEditorProvider` | same, plus `useActionState` over `saveUserAction` |
 | `RoleForm` | the live permission grid, posting to `saveRoleAction` |
 | `RemoveUserButton` / `RemoveRoleButton` | confirm before the delete form posts |
@@ -457,6 +459,69 @@ Gaps in the API the screens work around today, each marked where it bites:
   *read*, which is the right list for the rail and the wrong one for the role editor,
   so `MENU_CATALOGUE` in `lib/access/menus.ts` carries the ids migration 000008 pins.
   Delete it the day that endpoint exists.
+
+### The ledger is the only place a money figure is typed
+
+The artboard hand-wrote its rows *and* its totals, and the two never agreed: its
+fourteen transactions add up to Rp6.958.000 against a headline of Rp12.780.000,
+its recurring rows to Rp5.705.000 a month against a stated Rp5.891.000, and its
+balance card claimed +3.4% on a month that kept Rp8.670.000 — a figure no
+opening balance can make true. So the totals were deleted, and August 2026 was
+written out in full instead: 54 rows in `lib/data/transactions.ts`.
+
+`lib/data/ledger.ts` is the one reducer over those rows, and **nothing
+downstream of it states a money figure of its own**. The dashboard's four stats,
+both trend charts, the donut, what each budget has spent, the insights ranking
+and every subtitle that counts something are all the same rows asked a different
+question, so a figure on one screen cannot disagree with the same figure on
+another. Adding a transaction moves all of them at once, which is the whole
+point — and the day `getTransactions` starts calling the API, only the reader
+under `ledger.ts` changes.
+
+Four things are genuinely input rather than derived, and each says so where it
+sits: the `limit` and `threshold` on a budget (someone chose those), the
+`OPENING_BALANCE` August started from (a month of movements says how much the
+balance changed, never what it started at), the five month-end rollups before
+the ledger begins, and the recurring schedule's `dueDay` + `amount`.
+
+Two of the artboard's own bugs were fixed on the way and must stay fixed: the
+bar under "August allocated" now splits the *limits* rather than the spending
+donut it was drawing, and a budget turns amber at its own stated threshold
+rather than at one flat 85% for every row. Weekdays are derived from the row's
+ISO date — every one the artboard printed was a day out.
+
+### A budget is a limit somebody chose, and nothing else
+
+Its `limit`, `threshold`, `icon` and `rollover` are input; what it has spent is
+`categorySpend` and is never stored. `lib/data/budget-store.ts` is the one mutable
+thing in `lib/data/` and says so — there is no `/budgets` endpoint yet, so an edit
+lives as long as the server process. `saveBudgetAction` is already shaped like the
+call that will replace it, so swapping two lines is the whole change.
+
+**Notify me at is a threshold, not a menu of three.** The artboard offered 70/80/90
+— 70% was used by nothing, and the 75% Utilities was already set to could not be
+reached at all. `THRESHOLD_PRESETS` is now the values actually in use (75/80/90) and
+`Custom` reveals a field for everything else, read by `parsePercent`, which answers
+`null` rather than 0 for the same reason `parseFigure` does: a threshold read as 0%
+would alert on every budget at once and give no sign that it failed. The presets post
+`alert_threshold` as native radios, so the three common answers still work with
+JavaScript off; only Custom needs it. Under the control sits the figure the
+percentage lands on, because nobody thinks "85%" — they think about when they will be
+told, and the limit is already on screen to say it with.
+
+Add and edit are one `<BudgetFields>`, the lesson wallets already records. It matters
+twice over here: before this a threshold could only be chosen at creation, and the
+six budgets that already existed had no edit affordance at all. A budget's category
+cannot be changed, because the pairing of a category with a limit is what the budget
+*is*; and only the seven spending categories can be budgeted, since a budget for
+anything a transaction cannot carry would read Rp0 for ever — the artboard's own
+select offered Education, Travel and Gifts & donations, none of which qualify.
+
+`budgets.icon` holds the same `""`-means-default contract as `roles.icon` and
+`wallets.icon`; for a budget the read path resolves it to the category's own tile,
+and `ICON_BY_CATEGORY` sits in `lib/budget-fields.ts` rather than `lib/data/` because
+the picker re-reads it on every change of the Category select — the same trade
+`ICON_BY_KIND` makes for wallets.
 
 `lib/format.ts` owns money formatting. The artboard's `F()` is
 `'Rp' + Math.abs(n).toLocaleString('de-DE')` — Indonesian dot grouping, with the sign

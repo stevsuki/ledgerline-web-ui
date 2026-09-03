@@ -124,6 +124,19 @@ function dayAndMonth(date: Date): string {
   return `${date.getDate()} ${MONTH_NAMES[date.getMonth()].slice(0, 3)}`;
 }
 
+/**
+ * "Thursday, 27 August" — the day heading a ledger group prints. Derived from
+ * the row's own ISO date rather than typed beside it, so a weekday can never
+ * disagree with the date it labels.
+ */
+export function formatDayHeading(iso: string): string {
+  const date = parseIsoDate(iso);
+  if (!date) {
+    return iso;
+  }
+  return `${WEEKDAYS[date.getDay()].label}, ${date.getDate()} ${MONTH_NAMES[date.getMonth()]}`;
+}
+
 function shortDay(iso: string): string {
   const date = parseIsoDate(iso);
   if (!date) {

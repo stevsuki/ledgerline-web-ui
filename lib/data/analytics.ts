@@ -1,46 +1,58 @@
-import { formatPercent, formatRupiah } from "@/lib/format";
+import { savingStreakLength } from "@/lib/data/goals";
+import {
+  REPORTING_MONTH_LABEL,
+  balanceGrowth,
+  categorySpend,
+  expenseGrowth,
+  incomeGrowth,
+  incomeRowCount,
+  largestRowIn,
+  lastCheaperMonth,
+  monthTotals,
+  monthlySeries,
+  monthlySpendByCategory,
+  priorSpendOn,
+  risingStreak,
+  shareOf,
+  spendByCategory,
+  weeklyTrend,
+  type CategorySpend,
+} from "@/lib/data/ledger";
+import { firstDaysNames, firstDaysTotal } from "@/lib/data/recurring";
+import {
+  formatPercent,
+  formatPrecisePercent,
+  formatRupiah,
+  formatSignedPercent,
+} from "@/lib/format";
 import type {
+  CategoryKey,
   CategoryRank,
-  DonutSlice,
   Insight,
   RampStep,
   SummaryStat,
+  Tone,
   TrendMode,
   TrendPoint,
 } from "@/types/ledger";
 
-/** `DONUT` from the artboard (lines ~1536-1544), in ramp order. */
-const SPEND_BY_CATEGORY: readonly DonutSlice[] = [
-  { label: "Housing", value: 4500000, step: "c1" },
-  { label: "Food & drink", value: 2640000, step: "c2" },
-  { label: "Transport", value: 1380000, step: "c3" },
-  { label: "Subscriptions", value: 1180000, step: "c4" },
-  { label: "Utilities", value: 980000, step: "c5" },
-  { label: "Health", value: 740000, step: "c6" },
-  { label: "Other", value: 1360000, step: "c7" },
-];
+/**
+ * Everything the dashboard and the insights screen print, phrased from the
+ * ledger's own totals. No figure below is typed: each one is `lib/data/ledger.ts`
+ * asked a question and then formatted.
+ */
 
-/** `WEEKLY` and `MONTHLY` from the artboard (line ~1546-1547). */
-const WEEKLY: readonly TrendPoint[] = [
-  { label: "W1", income: 5200000, expense: 3400000 },
-  { label: "W2", income: 4100000, expense: 2600000 },
-  { label: "W3", income: 6800000, expense: 3100000 },
-  { label: "W4", income: 3900000, expense: 2900000 },
-  { label: "W5", income: 1450000, expense: 780000 },
-];
+/* ── the trend chart ───────────────────────────────────────────────────── */
 
-const MONTHLY: readonly TrendPoint[] = [
-  { label: "Mar", income: 16200000, expense: 11400000 },
-  { label: "Apr", income: 19800000, expense: 12900000 },
-  { label: "May", income: 15400000, expense: 10800000 },
-  { label: "Jun", income: 22100000, expense: 13600000 },
-  { label: "Jul", income: 18900000, expense: 12200000 },
-  { label: "Aug", income: 21450000, expense: 12780000 },
-];
+const SERIES_BY_MODE: Readonly<Record<TrendMode, () => readonly TrendPoint[]>> =
+  {
+    weekly: weeklyTrend,
+    monthly: monthlySeries,
+  };
 
 export const TREND_RANGE_LABEL: Readonly<Record<TrendMode, string>> = {
-  weekly: "Weeks 1–5, August 2026",
-  monthly: "March – August 2026",
+  weekly: `Weeks 1–${weeklyTrend().length}, ${REPORTING_MONTH_LABEL}`,
+  monthly: `${monthlySeries().length} months to ${REPORTING_MONTH_LABEL}`,
 };
 
 export type TrendBar = {
@@ -52,23 +64,31 @@ export type TrendBar = {
   readonly netLabel: string;
 };
 
+const FULL_PERCENT = 100;
+const HEIGHT_PRECISION = 1;
+
 export async function getTrend(mode: TrendMode): Promise<readonly TrendBar[]> {
-  const rows = mode === "weekly" ? WEEKLY : MONTHLY;
+  const rows = SERIES_BY_MODE[mode]();
+
+  // Bars are scaled against the tallest one, so the chart always fills its box.
   const peak = Math.max(
     ...rows.map((row) => Math.max(row.income, row.expense)),
   );
 
+  const height = (value: number): string =>
+    `${(shareOf(value, peak) * FULL_PERCENT).toFixed(HEIGHT_PRECISION)}%`;
+
   return rows.map((row) => ({
     label: row.label,
-    incomeHeight: `${((row.income / peak) * 100).toFixed(1)}%`,
-    expenseHeight: `${((row.expense / peak) * 100).toFixed(1)}%`,
+    incomeHeight: height(row.income),
+    expenseHeight: height(row.expense),
     incomeLabel: formatRupiah(row.income),
     expenseLabel: formatRupiah(row.expense),
     netLabel: formatRupiah(row.income - row.expense),
   }));
 }
 
-/* donut geometry — Ported from the artboard's `arc(i)`. */
+/* ── donut geometry — ported from the artboard's `arc(i)` ──────────────── */
 
 const CENTER = 90;
 const OUTER_RADIUS = 88;
@@ -114,20 +134,24 @@ export type DonutData = {
 };
 
 export async function getSpendDonut(): Promise<DonutData> {
-  const total = SPEND_BY_CATEGORY.reduce((sum, slice) => sum + slice.value, 0);
+  const slices = spendByCategory();
+  const total = slices.reduce((sum, slice) => sum + slice.value, 0);
+
+  // The ring starts at twelve o'clock and is walked clockwise, one slice at a
+  // time, each taking the share of a full turn its own share of the spend is.
   let angle = -QUARTER_TURN;
 
-  const segments = SPEND_BY_CATEGORY.map((slice) => {
+  const segments = slices.map((slice) => {
     const start = angle;
-    const end = start + (slice.value / total) * FULL_TURN;
+    const end = start + shareOf(slice.value, total) * FULL_TURN;
     angle = end;
 
     return {
-      id: slice.label,
+      id: slice.key,
       label: slice.label,
       step: slice.step,
       path: arcPath(start, end - SLICE_GAP),
-      percent: formatPercent(slice.value / total),
+      percent: formatPercent(shareOf(slice.value, total)),
       value: formatRupiah(slice.value),
     };
   });
@@ -136,73 +160,210 @@ export async function getSpendDonut(): Promise<DonutData> {
     segments,
     totalLabel: "Total spent",
     totalValue: formatRupiah(total),
-    totalNote: `${SPEND_BY_CATEGORY.length} categories`,
+    totalNote: `${slices.length} categories`,
   };
 }
 
-/** Widths for the Budgets page allocation bar — same slices, no geometry. */
-export async function getAllocationShares(): Promise<
-  readonly { readonly id: string; readonly step: RampStep; readonly width: string }[]
-> {
-  const total = SPEND_BY_CATEGORY.reduce((sum, slice) => sum + slice.value, 0);
-  return SPEND_BY_CATEGORY.map((slice) => ({
-    id: slice.label,
-    step: slice.step,
-    width: formatPercent(slice.value / total),
-  }));
+/** The donut's caption: which month, and what it totalled. */
+export function donutCaption(): string {
+  return `${REPORTING_MONTH_LABEL} · ${formatRupiah(monthTotals().expense)}`;
 }
 
-/* ── insights screen ───────────────────────────────────────────────────── */
+/* ── the dashboard's four stats ────────────────────────────────────────── */
 
-export const INSIGHTS: readonly Insight[] = [
-  {
+/** A rising expense is bad news, a rising income is good — hence two of these. */
+function toneForSpendChange(ratio: number): Tone {
+  if (ratio === 0) {
+    return "muted";
+  }
+  return ratio > 0 ? "expense" : "income";
+}
+
+const STAT_DELTA_DIGITS = 1;
+
+export async function getSummaryStats(): Promise<readonly SummaryStat[]> {
+  const { closingBalance, income, expense, net, savingsRate } = monthTotals();
+
+  return [
+    {
+      id: "balance",
+      label: "Total balance",
+      value: formatRupiah(closingBalance),
+      icon: "wallet",
+      iconTone: "muted",
+      valueTone: "text",
+      delta: formatSignedPercent(balanceGrowth(), STAT_DELTA_DIGITS),
+      deltaTone: "income",
+      deltaNote: "vs last month",
+    },
+    {
+      id: "income",
+      label: `Income, ${REPORTING_MONTH_LABEL.split(" ")[0]}`,
+      value: formatRupiah(income),
+      icon: "up",
+      iconTone: "income",
+      valueTone: "income",
+      delta: formatSignedPercent(incomeGrowth(), STAT_DELTA_DIGITS),
+      deltaTone: "income",
+      deltaNote: `${incomeRowCount()} client invoices`,
+    },
+    {
+      id: "expense",
+      label: `Expense, ${REPORTING_MONTH_LABEL.split(" ")[0]}`,
+      value: formatRupiah(expense),
+      icon: "down",
+      iconTone: "expense",
+      valueTone: "text",
+      delta: formatSignedPercent(expenseGrowth(), STAT_DELTA_DIGITS),
+      deltaTone: toneForSpendChange(expenseGrowth()),
+      deltaNote: `driven by ${fastestRisingCategory().label.toLowerCase()}`,
+    },
+    {
+      id: "saved",
+      label: "Net saved",
+      value: formatRupiah(net),
+      icon: "flag",
+      iconTone: "accent",
+      valueTone: "text",
+      delta: formatPrecisePercent(savingsRate),
+      deltaTone: "income",
+      deltaNote: "of income kept",
+    },
+  ];
+}
+
+/* ── the insights screen ───────────────────────────────────────────────── */
+
+/**
+ * The category that grew the most against last month, ignoring the catch-all.
+ * "Driven by other" names the bucket for everything unclassified, which is not
+ * an explanation of anything — the point of the line is to say what to look at.
+ */
+const UNCLASSIFIED: CategoryKey = "other";
+
+function fastestRisingCategory(): CategorySpend {
+  const [first, ...rest] = spendByCategory().filter(
+    (entry) => entry.key !== UNCLASSIFIED,
+  );
+  return rest.reduce(
+    (leader, entry) => (entry.change > leader.change ? entry : leader),
+    first,
+  );
+}
+
+const ORDINALS = [
+  "",
+  "first",
+  "second",
+  "third",
+  "fourth",
+  "fifth",
+  "sixth",
+  "seventh",
+  "eighth",
+  "ninth",
+  "tenth",
+  "eleventh",
+  "twelfth",
+] as const;
+
+function ordinal(count: number): string {
+  return ORDINALS[count] ?? `${count}th`;
+}
+
+/** "Up 34%" / "Down 18%" — a change said out loud rather than signed. */
+function changeWord(ratio: number): string {
+  const direction = ratio >= 0 ? "Up" : "Down";
+  return `${direction} ${formatPercent(Math.abs(ratio))}`;
+}
+
+function subscriptionInsight(): Insight {
+  const subs = categorySpend("subs");
+  const biggest = largestRowIn("subs");
+
+  return {
     id: "ins-subs",
-    kicker: "Up 34%",
+    kicker: changeWord(subs.change),
     icon: "up",
     tone: "expense",
-    title: "Subscriptions climbed for the third month",
-    body: "Rp1.180.000 in August against a Rp1.000.000 limit. Adobe and Copilot both started inside this cycle.",
-  },
-  {
+    title: `Subscriptions climbed for the ${ordinal(risingStreak("subs"))} month`,
+    body: `${formatRupiah(subs.value)} in August, ${formatRupiah(
+      Math.abs(subs.value - priorSpendOn("subs")),
+    )} more than July. ${biggest.name} is the largest single charge at ${formatRupiah(
+      biggest.amount,
+    )}.`,
+  };
+}
+
+function transportInsight(): Insight {
+  const transport = categorySpend("transport");
+  const cheaper = lastCheaperMonth("transport");
+  const since = cheaper === null ? "your record began" : cheaper;
+
+  return {
     id: "ins-transport",
-    kicker: "Down 18%",
+    kicker: changeWord(transport.change),
     icon: "down",
     tone: "income",
-    title: "Transport is your cheapest month since March",
-    body: "Rp1.380.000 — Rp310.000 below your six-month average, mostly fewer late-night rides.",
-  },
-  {
+    title: `Transport is your cheapest month since ${since}`,
+    body: `${formatRupiah(transport.value)} — ${formatRupiah(
+      Math.abs(transport.value - priorSpendOn("transport")),
+    )} below July, mostly fewer late-night rides.`,
+  };
+}
+
+function savingsInsight(): Insight {
+  const { savingsRate } = monthTotals();
+
+  return {
     id: "ins-savings",
     kicker: "Savings rate",
     icon: "flag",
     tone: "text",
-    title: "40% kept for the seventh month running",
+    title: `${formatPercent(savingsRate)} kept for the ${ordinal(
+      savingStreakLength(),
+    )} month running`,
     body: "Two more months at this rate finishes the emergency fund ahead of the December target.",
-  },
-  {
+  };
+}
+
+function cashFlowInsight(): Insight {
+  const names = firstDaysNames();
+
+  return {
     id: "ins-cashflow",
     kicker: "Cash flow",
     icon: "calendar",
     tone: "warn",
-    title: "Rp5.111.000 leaves in the first six days of September",
-    body: "Rent and two bills land before your first invoice clears. BCA Payroll covers it with Rp36m to spare.",
-  },
-];
+    title: `${formatRupiah(firstDaysTotal())} leaves in the first six days of September`,
+    body: `${names.length} scheduled items land before your first invoice clears: ${names.join(", ")}.`,
+  };
+}
 
-/** The stacked comparison chart: housing is flat, the rest track the month. */
-const COMPARE_SHARES: readonly {
-  readonly label: string;
-  readonly step: RampStep;
-  readonly share: number | null;
-}[] = [
-  { label: "Housing", step: "c1", share: null },
-  { label: "Food & drink", step: "c2", share: 0.21 },
-  { label: "Transport", step: "c3", share: 0.11 },
-  { label: "Subscriptions", step: "c4", share: 0.09 },
-];
+export async function getInsights(): Promise<readonly Insight[]> {
+  return [
+    subscriptionInsight(),
+    transportInsight(),
+    savingsInsight(),
+    cashFlowInsight(),
+  ];
+}
 
-const HOUSING_FIXED = 4500000;
-const COMPARE_SCALE = 14000000;
+/* ── the comparison chart ──────────────────────────────────────────────── */
+
+const COMPARE_TOP_COUNT = 4;
+
+/** The four categories with the most spent across the whole six months. */
+function comparedCategories(): readonly CategorySpend[] {
+  const series = monthlySpendByCategory();
+
+  const totalOver = (key: CategoryKey): number =>
+    series.reduce((total, month) => total + month.spend[key], 0);
+
+  return [...spendByCategory()]
+    .sort((a, b) => totalOver(b.key) - totalOver(a.key))
+    .slice(0, COMPARE_TOP_COUNT);
+}
 
 export type ComparePart = {
   readonly id: string;
@@ -219,91 +380,52 @@ export type CompareColumn = {
 export async function getCategoryComparison(): Promise<
   readonly CompareColumn[]
 > {
-  return MONTHLY.map((month) => ({
+  const charted = comparedCategories();
+  const series = monthlySpendByCategory();
+
+  // Scaled against the tallest stack rather than a constant, so a month that
+  // outgrows the old ceiling cannot draw itself past the top of the panel.
+  const tallest = Math.max(
+    ...series.map((month) =>
+      charted.reduce((total, entry) => total + month.spend[entry.key], 0),
+    ),
+  );
+
+  return series.map((month) => ({
     label: month.label,
-    parts: COMPARE_SHARES.map((part) => {
-      const value = part.share === null ? HOUSING_FIXED : month.expense * part.share;
+    parts: charted.map((entry) => {
+      const value = month.spend[entry.key];
       return {
-        id: `${month.label}-${part.label}`,
-        step: part.step,
-        height: `${((value / COMPARE_SCALE) * 100).toFixed(1)}%`,
-        title: `${part.label} · ${formatRupiah(value)}`,
+        id: `${month.label}-${entry.key}`,
+        step: entry.step,
+        height: `${(shareOf(value, tallest) * FULL_PERCENT).toFixed(HEIGHT_PRECISION)}%`,
+        title: `${entry.label} · ${formatRupiah(value)}`,
       };
     }),
   }));
 }
 
-export const COMPARE_LEGEND = COMPARE_SHARES.map((part) => ({
-  id: part.label,
-  label: part.label,
-  step: part.step,
+export const COMPARE_LEGEND = comparedCategories().map((entry) => ({
+  id: entry.key,
+  label: entry.label,
+  step: entry.step,
 }));
 
-const RANKING_DELTAS = ["0%", "+6%", "−18%", "+34%", "+2%", "−9%"] as const;
-const RANKING_TONES = [
-  "muted",
-  "expense",
-  "income",
-  "expense",
-  "expense",
-  "income",
-] as const;
+/* ── the ranking ───────────────────────────────────────────────────────── */
+
+const RANKING_COUNT = 6;
+const RANK_DIGITS = 2;
 
 export async function getCategoryRanking(): Promise<readonly CategoryRank[]> {
-  return SPEND_BY_CATEGORY.slice(0, 6).map((slice, index) => ({
-    rank: String(index + 1).padStart(2, "0"),
-    label: slice.label,
-    value: formatRupiah(slice.value),
-    delta: RANKING_DELTAS[index],
-    deltaTone: RANKING_TONES[index],
-  }));
+  return [...spendByCategory()]
+    .sort((a, b) => b.value - a.value)
+    .slice(0, RANKING_COUNT)
+    .map((entry, index) => ({
+      rank: String(index + 1).padStart(RANK_DIGITS, "0"),
+      label: entry.label,
+      value: formatRupiah(entry.value),
+      delta: formatSignedPercent(entry.change),
+      deltaTone: toneForSpendChange(entry.change),
+    }));
 }
 
-/* ── dashboard summary ─────────────────────────────────────────────────── */
-
-export const SUMMARY_STATS: readonly SummaryStat[] = [
-  {
-    id: "balance",
-    label: "Total balance",
-    value: "Rp84.320.000",
-    icon: "wallet",
-    iconTone: "muted",
-    valueTone: "text",
-    delta: "+3.4%",
-    deltaTone: "income",
-    deltaNote: "vs last month",
-  },
-  {
-    id: "income",
-    label: "Income, August",
-    value: "Rp21.450.000",
-    icon: "up",
-    iconTone: "income",
-    valueTone: "income",
-    delta: "+13.5%",
-    deltaTone: "income",
-    deltaNote: "four client invoices",
-  },
-  {
-    id: "expense",
-    label: "Expense, August",
-    value: "Rp12.780.000",
-    icon: "down",
-    iconTone: "expense",
-    valueTone: "text",
-    delta: "+4.8%",
-    deltaTone: "expense",
-    deltaNote: "driven by subscriptions",
-  },
-  {
-    id: "saved",
-    label: "Net saved",
-    value: "Rp8.670.000",
-    icon: "flag",
-    iconTone: "accent",
-    valueTone: "text",
-    delta: "40.4%",
-    deltaTone: "income",
-    deltaNote: "of income kept",
-  },
-];

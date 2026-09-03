@@ -67,6 +67,60 @@ export function formatPercent(ratio: number): string {
   return `${Math.round(ratio * 100)}%`;
 }
 
+/**
+ * "+13.5%" / "−18%" / "0%" — a change, carrying the same true minus a money
+ * figure does. Rounded first, so a change that lands on zero prints unsigned
+ * rather than claiming a direction it does not have.
+ */
+export function formatSignedPercent(ratio: number, fractionDigits = 0): string {
+  const rounded = Number((ratio * 100).toFixed(fractionDigits));
+  if (rounded === 0) {
+    return "0%";
+  }
+  const sign = rounded > 0 ? "+" : MINUS_SIGN;
+  return `${sign}${Math.abs(rounded).toFixed(fractionDigits)}%`;
+}
+
+/** A rate quoted to one decimal, the way the artboard quotes a savings rate. */
+export function formatPrecisePercent(ratio: number): string {
+  return `${(ratio * 100).toFixed(1)}%`;
+}
+
+/** A percentage as a whole number, for the field someone types one into. */
+export function toWholePercent(ratio: number): number {
+  return Math.round(ratio * 100);
+}
+
+/** Below this an alert fires almost at once; above it, never usefully. */
+export const PERCENT_MIN = 1;
+export const PERCENT_MAX = 100;
+
+/** A trailing sign the field prints and a person may well type back. */
+const TRAILING_PERCENT = /%$/;
+
+/**
+ * A whole percentage typed into a field, as a ratio — the inverse of
+ * `formatPercent`. Like `parseFigure` it answers `null` rather than 0, and for
+ * the same reason: a threshold read as 0% would alert on every budget the
+ * moment it was saved, which is wrong in the noisiest possible way and gives
+ * no sign that what was typed could not be read.
+ *
+ * Anything outside 1–100 is `null` too. Past 100 the alert can only fire after
+ * the row already says "Over limit", which is the stronger word for it.
+ */
+export function parsePercent(text: string): number | null {
+  const digits = text.trim().replace(TRAILING_PERCENT, "").trim();
+  if (!DIGITS.test(digits)) {
+    return null;
+  }
+
+  const percent = Number(digits);
+  if (percent < PERCENT_MIN || percent > PERCENT_MAX) {
+    return null;
+  }
+  return percent / 100;
+}
+
 /** Clamped to 100 so an over-limit budget never overflows its track. */
 export function toTrackWidth(ratio: number): string {
   return `${Math.min(100, ratio * 100).toFixed(0)}%`;

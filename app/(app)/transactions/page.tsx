@@ -24,6 +24,7 @@ import {
   WALLET_FILTER_OPTIONS,
   getTransactions,
 } from "@/lib/data/transactions";
+import { transactionsSubtitle } from "@/lib/data/ledger";
 import { formatSignedRupiah } from "@/lib/format";
 import { PAGE_META } from "@/lib/nav";
 import { readOption, readPage, readSize, readText } from "@/lib/search-params";
@@ -52,7 +53,7 @@ export default async function TransactionsPage(
   return (
     <AppScreen
       title={PAGE_META.transactions.title}
-      subtitle={PAGE_META.transactions.subtitle}
+      subtitle={transactionsSubtitle()}
     >
       <ScreenStack>
         <Panel className="p-3.5">

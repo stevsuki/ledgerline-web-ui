@@ -11,7 +11,8 @@ import { StatRow } from "@/components/ui/stats";
 import {
   RECURRING_FREQUENCIES,
   RECURRING_PAGE_SIZES,
-  RECURRING_STATS,
+  getRecurringStats,
+  recurringSubtitle,
   RECURRING_WALLETS,
   getRecurring,
 } from "@/lib/data/recurring";
@@ -39,10 +40,10 @@ export default async function RecurringPage(props: Readonly<PageProps<"/recurrin
   return (
     <AppScreen
       title={PAGE_META.recurring.title}
-      subtitle={PAGE_META.recurring.subtitle}
+      subtitle={recurringSubtitle()}
     >
       <ScreenStack>
-        <StatRow stats={RECURRING_STATS} size="regular" />
+        <StatRow stats={getRecurringStats()} size="regular" />
 
         <SplitGrid ratio={1.5}>
           <Panel>

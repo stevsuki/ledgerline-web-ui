@@ -144,6 +144,7 @@ export function SelectField({
   onChange,
   className,
   name,
+  error,
 }: {
   readonly id: string;
   readonly label: string;
@@ -154,16 +155,19 @@ export function SelectField({
   readonly onChange?: (next: string) => void;
   readonly className?: string;
   readonly name?: string;
+  readonly error?: string;
 }) {
   return (
-    <Field id={id} label={label} className={className}>
+    <Field id={id} label={label} error={error} className={className}>
       <select
-        className="input"
+        className={cx("input", error && "input-invalid")}
         id={id}
         name={name ?? id}
         defaultValue={defaultValue}
         value={value}
         onChange={onChange ? (event) => onChange(event.target.value) : undefined}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId(id) : undefined}
       >
         {options.map((option) => (
           <option key={optionValue(option)} value={optionValue(option)}>

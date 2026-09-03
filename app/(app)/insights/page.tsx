@@ -8,9 +8,9 @@ import { Panel, PanelHeader, SectionPanel } from "@/components/ui/panel";
 import { LegendItem, LegendList } from "@/components/ui/primitives";
 import {
   COMPARE_LEGEND,
-  INSIGHTS,
   getCategoryComparison,
   getCategoryRanking,
+  getInsights,
 } from "@/lib/data/analytics";
 import { PAGE_META } from "@/lib/nav";
 import { RAMP_BG, TEXT_TONE, cx } from "@/lib/tone";
@@ -18,9 +18,10 @@ import { RAMP_BG, TEXT_TONE, cx } from "@/lib/tone";
 export const metadata: Metadata = { title: PAGE_META.insights.title };
 
 export default async function InsightsPage() {
-  const [comparison, ranking] = await Promise.all([
+  const [comparison, ranking, insights] = await Promise.all([
     getCategoryComparison(),
     getCategoryRanking(),
+    getInsights(),
   ]);
 
   return (
@@ -30,7 +31,7 @@ export default async function InsightsPage() {
     >
       <ScreenStack>
         <CardGrid>
-          {INSIGHTS.map((insight) => (
+          {insights.map((insight) => (
             <Panel key={insight.id} className="panel-pad flex flex-col gap-2">
               <p
                 className={cx(

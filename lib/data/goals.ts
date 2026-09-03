@@ -58,6 +58,11 @@ export const STREAK_MONTHS: readonly StreakMonth[] = STREAK_LABELS.map(
   }),
 );
 
+/** How many months the saving streak has run — seven, counting August. */
+export function savingStreakLength(): number {
+  return STREAK_MONTHS.filter((month) => month.isActive).length;
+}
+
 export const GOAL_FUNDING_WALLETS = [
   "BCA Payroll",
   "Jenius savings",

@@ -44,25 +44,17 @@ export type Transaction = {
   readonly amount: number;
 };
 
+/*
+ * A budget is no longer a type here: its limit lives in `lib/data/budgets.ts`
+ * and what it has spent is a question for the ledger, so nothing shared needs
+ * to name the pair. The donut slice went the same way — `CategorySpend` in
+ * `lib/data/ledger.ts` is the one shape a category total is carried in.
+ */
+
 export type TransactionGroup = {
   readonly day: string;
   readonly net: number;
   readonly items: readonly Transaction[];
-};
-
-export type Budget = {
-  readonly id: string;
-  readonly label: string;
-  readonly icon: IconName;
-  readonly spent: number;
-  readonly limit: number;
-  readonly threshold: string;
-};
-
-export type BudgetView = Budget & {
-  readonly ratio: number;
-  readonly isOver: boolean;
-  readonly isNear: boolean;
 };
 
 /** What kind of thing the wallet is. Drives its label, and the card-only fields. */
@@ -195,12 +187,6 @@ export type TrendPoint = {
 };
 
 export type TrendMode = "weekly" | "monthly";
-
-export type DonutSlice = {
-  readonly label: string;
-  readonly value: number;
-  readonly step: RampStep;
-};
 
 export type SummaryStat = {
   readonly id: string;

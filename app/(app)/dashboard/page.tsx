@@ -11,11 +11,13 @@ import { Panel, PanelHeader } from "@/components/ui/panel";
 import { LegendItem, LegendList, MeterRow } from "@/components/ui/primitives";
 import { StatGrid, SummaryStatCard } from "@/components/ui/stats";
 import {
-  SUMMARY_STATS,
   TREND_RANGE_LABEL,
+  donutCaption,
   getSpendDonut,
+  getSummaryStats,
   getTrend,
 } from "@/lib/data/analytics";
+import { dashboardSubtitle } from "@/lib/data/ledger";
 import { getBudgetsPreview } from "@/lib/data/budgets";
 import { getRecentTransactions } from "@/lib/data/transactions";
 import { PAGE_META } from "@/lib/nav";
@@ -36,22 +38,23 @@ export default async function DashboardPage(
   const rawTrend = Array.isArray(params.trend) ? params.trend[0] : params.trend;
   const mode: TrendMode = rawTrend === "monthly" ? "monthly" : "weekly";
 
-  const [bars, donut, recent, budgets] = await Promise.all([
+  const [bars, donut, recent, budgets, stats] = await Promise.all([
     getTrend(mode),
     getSpendDonut(),
     getRecentTransactions(),
     getBudgetsPreview(),
+    getSummaryStats(),
   ]);
 
   return (
     <AppScreen
       title={PAGE_META.dashboard.title}
-      subtitle={PAGE_META.dashboard.subtitle}
+      subtitle={dashboardSubtitle()}
       maxWidth={1340}
     >
       <ScreenStack gap={20}>
         <StatGrid>
-          {SUMMARY_STATS.map((stat) => (
+          {stats.map((stat) => (
             <SummaryStatCard key={stat.id} stat={stat} />
           ))}
         </StatGrid>
@@ -96,7 +99,7 @@ export default async function DashboardPage(
             <div className="border-divider border-b pb-3.5">
               <h2 className="panel-title">Spending by category</h2>
               <p className="text-meta text-muted mt-0.5">
-                August 2026 · {donut.totalValue}
+                {donutCaption()}
               </p>
             </div>
             <CategoryDonut data={donut} />
