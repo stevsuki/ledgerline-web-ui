@@ -31,6 +31,28 @@ function pad(value: number): string {
   return String(value).padStart(2, "0");
 }
 
+/**
+ * The workspace keeps Jakarta time, so "today" and the day a timestamp fell on
+ * are both read there — not in whatever zone the server happens to run in.
+ */
+const JAKARTA_DAY = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Jakarta",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/** Today in Jakarta, as an ISO day. Live screens date their figures against it. */
+export function todayInJakarta(): string {
+  return JAKARTA_DAY.format(new Date());
+}
+
+/** The Jakarta calendar day an API timestamp fell on; "" when it is unreadable. */
+export function isoDayOf(timestamp: string): string {
+  const parsed = new Date(timestamp);
+  return Number.isNaN(parsed.getTime()) ? "" : JAKARTA_DAY.format(parsed);
+}
+
 export function toIsoDate(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }

@@ -235,11 +235,32 @@ artboard has no edit affordance at all. Every card now carries a pencil, and
 both it and the dashed card at the end of the grid open the same
 `<WalletEditorProvider>` slide-over: name, kind, currency, reference, balance,
 `includeInTotal`, plus `creditLimit` + `dueDay` when the kind is `card`. It opens
-saying how stale the figure is, and closes on a toast, because the screen is
-still fixture-backed; the day a mutation exists its `onSubmit` becomes a
-`<form action={saveWalletAction}>` and nothing else about the sheet moves.
+saying how stale the figure is, and posts to `saveWalletAction` — one
+`<form action>` over `POST /wallets` or `PATCH /wallets/{id}`, closing on the
+toast the action hands back.
 
-Two things fell out of that, and both must stay:
+Every input on it is named for the backend's own json tag — `type`, not `kind`;
+`credit_limit`, not `creditLimit` — from `WALLET_FIELD` in `lib/wallet-fields.ts`.
+That is what lets a rejected save land on the field that caused it: the API keys
+its `errors` array by the tag, and `failureState` keys its map by the input's
+`name`, with no translation table in between to fall out of date.
+
+Two figures are read before the call, because the backend cannot phrase their
+failure better than the sheet can: `parseFigure` in `lib/format.ts` is the
+inverse of `formatFigure` — it drops the grouping dots and, on a currency quoted
+with cents, reads a comma as the decimal point, because that is exactly how the
+field printed the figure being typed over. It answers `null` rather than 0: a
+balance that could not be read must stop the save, never quietly zero the card.
+
+`reference` is the one field whose meaning follows the type, so the editor asks
+for it by name — account number, registered number, card number — from
+`REFERENCE_HINT` in `lib/wallet-fields.ts`. **Cash maps to `null` there, and the
+field is replaced by a line saying so**: cash has no number behind it, which is
+exactly why `walletMeta` prints `CASH_META` for it. That table lives outside
+`lib/data/` because the editor re-reads it on every change of the Type select,
+and a client component may never import `lib/data/`.
+
+Two more things fell out of that, and both must stay:
 
 1. **The artboard's inline "Add wallet" panel is gone.** It sat directly under
    the dashed card that linked to it, so the link scrolled the page a few pixels
@@ -291,7 +312,7 @@ Keep it this short. Adding one is a decision, not a detail.
 | `TrendChart` | hover tooltip over the bars |
 | `CategoryDonut` | hover highlights slice + legend row |
 | `TransactionSlideOver` | modal state, focus trap, Escape |
-| `WalletEditorProvider` | the add/edit slide-over, plus the kind select that reveals a card’s fields |
+| `WalletEditorProvider` | the add/edit slide-over over `saveWalletAction`, plus the kind select that reveals a card’s fields |
 | `UserEditorProvider` | same, plus `useActionState` over `saveUserAction` |
 | `RoleForm` | the live permission grid, posting to `saveRoleAction` |
 | `RemoveUserButton` / `RemoveRoleButton` | confirm before the delete form posts |
@@ -338,9 +359,19 @@ the param, so ordering ships no JavaScript and survives a reload.
 
 `lib/data/<domain>.ts` exports `async` query functions (`getTransactions(filters)`,
 `getUsers(filters)`, …) that pages `await`. That async boundary is what made the next
-step cheap: **users, roles, the audit log and the sidebar menus are live** — they call
-`ledgerline-backend` through `lib/api/`, and no component changed when they stopped
-being fixtures. Every other domain is still a typed fixture behind the same signature.
+step cheap: **users, roles, wallets, the audit log and the sidebar menus are live** —
+they call `ledgerline-backend` through `lib/api/`, and no component changed when they
+stopped being fixtures. Every other domain is still a typed fixture behind the same
+signature.
+
+Wallets is the one screen served by two calls that must agree: `GET /wallets` for the
+cards and `GET /wallets/overview` for the headline. `getWalletsScreen()` awaits both
+together and hands back one object, because the summary bar is a split of the very
+cards printed under it — read a moment apart, the legend could name a wallet the total
+does not count. The overview is summed in SQL, so the totals are never re-derived here;
+only the per-wallet shares are, from the same list the cards come from. Nothing syncs a
+balance, so its age is measured against `todayInJakarta()` — the real day, not a
+fixture's frozen `TODAY`.
 
 The audit log is the one that filters, sorts and pages entirely in the database:
 `/audit-logs` takes every filter the bar sets, `/audit-logs/overview` feeds the four
@@ -357,7 +388,9 @@ throw. The access token is read from the http-only cookie by `requireAccessToken
 never enters a React tree.
 
 **`code` is the contract, `message` is for people.** The backend publishes its catalogue
-in `ERROR_CODES.md` (generated from `internal/domain/error_codes.go`); `API_ERROR_CODES`
+in `ERROR_CODES.md` (generated from `internal/domain/error_codes.go`, which is the one
+to read when the two disagree — as they do today: the six `WALLET_*` codes are in the
+Go file and not yet in the document); `API_ERROR_CODES`
 in `types/api.ts` mirrors it, and `MESSAGE_BY_CODE` in `lib/auth/form-state.ts` is the
 only place a code becomes a sentence. Never branch on `message`, and never parse it. A
 code released after this client was written lands on `UNKNOWN` and keeps the message the
@@ -378,7 +411,7 @@ or an unreachable API means the backend is unwell while the cookie is still good
 there would both lie and loop, because the proxy sends a live cookie straight back to
 `/dashboard`. `app/error.tsx` catches the throw.
 
-Three gaps in the API the screens work around today, each marked where it bites:
+Gaps in the API the screens work around today, each marked where it bites:
 
 - `GET /users` has no `role` or `status` filter, so one `per_page=100` window is
   fetched and the two selects are applied on the server. Past that many accounts they
@@ -386,6 +419,13 @@ Three gaps in the API the screens work around today, each marked where it bites:
 - `GET /roles` sends an empty `permissions` array — only `GET /roles/{id}` hydrates it
   — so the list shows no grant count and the user editor shows the role's description
   in place of the artboard's inherited-module tags.
+- `PATCH /wallets/{id}` reads an absent `credit_limit` or `due_day` as "unchanged", so
+  neither can be cleared on a wallet that is still a card — blanking the field in the
+  sheet keeps the stored figure, and `CardFields` says so. Changing the kind away from
+  `card` clears both, which is the only way back today.
+- Nothing under `/wallets` is written to the audit log: `walletService` is handed an
+  `AuditLogRepository` and never calls it, so adding, editing and removing a wallet
+  leave no trail the way a user or a role does.
 - Actions are dotted codes (`auth.login`) and the backend ships no label for them,
   unlike modules and severities. `lib/audit-labels.ts` names the ones it knows and
   prettifies the rest, so a newly recorded action reads sensibly without a release.
@@ -470,6 +510,16 @@ The artboard defines the motion vocabulary — port it into `globals.css` as-is:
 rise (`m-pop`, 0.5s, `cubic-bezier(.22,1,.36,1)`, staggered 0.06s per card), bars grow
 from the bottom, progress tracks fill from the left, overlays slide in, buttons lift 1px
 on hover and settle to `scale(.975)` on press.
+
+**Every fill grows; none of them snap.** `animate-grow-x` is the one way a track fills,
+so it belongs to the primitive rather than the screen: `<ProgressTrack>` carries it, and
+`<StackedBar>` wraps its shares in a single element that carries it, so the whole ribbon
+wipes in from the left as one. Animating each share on its own does not work — a
+transform leaves the laid-out width behind, so the shares would grow in place and the
+empty rail would stripe through between them. A hand-rolled `.track` + `.track-fill`
+pair is therefore always a bug: it loses the animation and duplicates the primitive.
+Use `<ProgressTrack>` and override the height with a `h-*` utility, which wins over the
+components layer, as `/mobile` does for its 6px rails.
 
 The whole set is disabled under `@media (prefers-reduced-motion: reduce)` — that block is
 copied from the artboard and must not be dropped.

@@ -156,7 +156,16 @@ export type BarSegment = {
   readonly fillClass: string;
 };
 
-/** A single track divided into shares rather than filled to one point. */
+/**
+ * A single track divided into shares rather than filled to one point.
+ *
+ * The shares ride inside one wrapper so `animate-grow-x` wipes the whole ribbon
+ * in from the left, exactly as a `<ProgressTrack>` fills. Scaling each share on
+ * its own would not do it: a transform leaves the laid-out width behind, so the
+ * segments would grow in place and the empty rail would stripe through between
+ * them. The rail itself stays put, which is what makes the colour look poured
+ * into it.
+ */
 export function StackedBar({
   segments,
   className,
@@ -165,14 +174,16 @@ export function StackedBar({
   readonly className?: string;
 }) {
   return (
-    <div className={cx("track flex", className)}>
-      {segments.map((segment) => (
-        <span
-          key={segment.id}
-          className={segment.fillClass}
-          style={{ width: segment.width }}
-        />
-      ))}
+    <div className={cx("track", className)}>
+      <div className="animate-grow-x flex h-full">
+        {segments.map((segment) => (
+          <span
+            key={segment.id}
+            className={segment.fillClass}
+            style={{ width: segment.width }}
+          />
+        ))}
+      </div>
     </div>
   );
 }

@@ -1,10 +1,26 @@
-import { TODAY } from "@/lib/data/transactions";
-import { formatDayMonth, formatSince, nextDueDate } from "@/lib/dates";
+import {
+  fetchWalletOverview,
+  listWallets,
+  type WalletOverviewRecord,
+  type WalletRecord,
+} from "@/lib/api/wallets";
+import { requireAccessToken } from "@/lib/auth/session";
+import {
+  formatDayMonth,
+  formatSince,
+  isoDayOf,
+  nextDueDate,
+  todayInJakarta,
+} from "@/lib/dates";
 import { formatBalance, formatFigure, formatMoney } from "@/lib/format";
+import {
+  CASH_META,
+  CURRENCY_ORDER,
+  WALLET_KIND_ORDER,
+} from "@/lib/wallet-fields";
 import type {
   CurrencyCode,
   RampStep,
-  Wallet,
   WalletCard,
   WalletDraft,
   WalletKind,
@@ -14,78 +30,13 @@ import type {
 } from "@/types/ledger";
 
 /**
- * The artboard's `wallets` list (Finance App.dc.html, lines ~2146-2152), taken
- * apart into the fields it printed as sentences. Nothing connects to a bank —
- * there is no free way to reach one from Indonesia — so every balance here is
- * a figure its owner typed, and the cards say when they last did.
+ * The wallets screen, served from `ledgerline-backend`.
+ *
+ * Nothing connects to a bank — there is no free way to reach one from
+ * Indonesia — so every balance here is a figure its owner typed, and the cards
+ * say how long ago they typed it. That is why the age is measured against the
+ * real day in Jakarta rather than a fixture's frozen `TODAY`.
  */
-const WALLETS: readonly Wallet[] = [
-  {
-    id: "wal-bca-payroll",
-    name: "BCA Payroll",
-    kind: "bank",
-    icon: "bank",
-    reference: "••4192",
-    currency: "IDR",
-    balance: 41_200_000,
-    creditLimit: null,
-    dueDay: null,
-    updatedOn: "2026-08-26",
-    includeInTotal: true,
-  },
-  {
-    id: "wal-wise",
-    name: "Wise USD",
-    kind: "bank",
-    icon: "globe",
-    reference: "••8830",
-    currency: "USD",
-    balance: 1_480,
-    creditLimit: null,
-    dueDay: null,
-    updatedOn: "2026-08-22",
-    includeInTotal: true,
-  },
-  {
-    id: "wal-gopay",
-    name: "GoPay",
-    kind: "ewallet",
-    icon: "phone",
-    reference: "0812••4471",
-    currency: "IDR",
-    balance: 1_860_000,
-    creditLimit: null,
-    dueDay: null,
-    updatedOn: "2026-08-27",
-    includeInTotal: true,
-  },
-  {
-    id: "wal-bca-card",
-    name: "BCA Card",
-    kind: "card",
-    icon: "card",
-    reference: "••7702",
-    currency: "IDR",
-    balance: -3_240_000,
-    creditLimit: 25_000_000,
-    dueDay: 18,
-    updatedOn: "2026-08-25",
-    includeInTotal: true,
-  },
-  {
-    id: "wal-cash",
-    name: "Cash",
-    kind: "cash",
-    icon: "cash",
-    reference: "",
-    currency: "IDR",
-    balance: 620_000,
-    creditLimit: null,
-    dueDay: null,
-    updatedOn: "2026-08-25",
-    includeInTotal: true,
-  },
-];
 
 /* ── how a wallet prints ───────────────────────────────────────────────── */
 
@@ -96,39 +47,38 @@ const KIND_LABEL: Readonly<Record<WalletKind, string>> = {
   cash: "Cash",
 };
 
-/** Cash has no account number to print, so it says how it is kept instead. */
-const CASH_META = "Counted by hand";
-
-function walletMeta(wallet: Wallet): string {
+function walletMeta(wallet: WalletRecord): string {
   if (wallet.reference) {
     return `${KIND_LABEL[wallet.kind]} · ${wallet.reference}`;
   }
   return wallet.kind === "cash" ? CASH_META : KIND_LABEL[wallet.kind];
 }
 
+/** The day the balance was last typed, as a Jakarta calendar day. */
+function updatedOn(wallet: WalletRecord): string {
+  return isoDayOf(wallet.balanceUpdatedAt);
+}
+
 /** A card reports its headroom and its statement day; everything else, its age. */
-function walletSub(wallet: Wallet): string {
+function walletSub(wallet: WalletRecord, today: string): string {
   if (wallet.creditLimit !== null && wallet.dueDay !== null) {
     const free = wallet.creditLimit - Math.abs(wallet.balance);
-    const due = formatDayMonth(nextDueDate(wallet.dueDay, TODAY));
+    const due = formatDayMonth(nextDueDate(wallet.dueDay, today));
     return `${formatMoney(free, wallet.currency)} of limit free · due ${due}`;
   }
-  return `Updated ${formatSince(wallet.updatedOn, TODAY)}`;
+  return `Updated ${formatSince(updatedOn(wallet), today)}`;
 }
 
 /** Cards carry two fields nothing else does; blank rather than "0" on the rest. */
-function optionalFigure(
-  value: number | null,
-  currency: CurrencyCode,
-): string {
+function optionalFigure(value: number | null, currency: CurrencyCode): string {
   return value === null ? "" : formatFigure(value, currency);
 }
 
 /**
  * What the edit slide-over opens with. A balance only ever changes because
- * someone typed it here, so the draft carries how old the current figure is.
+ * someone typed it there, so the draft carries how old the current figure is.
  */
-function toDraft(wallet: Wallet): WalletDraft {
+function toDraft(wallet: WalletRecord, today: string): WalletDraft {
   return {
     id: wallet.id,
     name: wallet.name,
@@ -139,11 +89,11 @@ function toDraft(wallet: Wallet): WalletDraft {
     creditLimit: optionalFigure(wallet.creditLimit, wallet.currency),
     dueDay: wallet.dueDay === null ? "" : String(wallet.dueDay),
     includeInTotal: wallet.includeInTotal,
-    updatedSince: formatSince(wallet.updatedOn, TODAY),
+    updatedSince: formatSince(updatedOn(wallet), today),
   };
 }
 
-function toCard(wallet: Wallet): WalletCard {
+function toCard(wallet: WalletRecord, today: string): WalletCard {
   return {
     id: wallet.id,
     name: wallet.name,
@@ -151,16 +101,13 @@ function toCard(wallet: Wallet): WalletCard {
     currency: wallet.currency,
     meta: walletMeta(wallet),
     balance: formatBalance(wallet.balance, wallet.currency),
-    sub: walletSub(wallet),
+    sub: walletSub(wallet, today),
     isNegative: wallet.balance < 0,
-    draft: toDraft(wallet),
+    draft: toDraft(wallet, today),
   };
 }
 
 /* ── the summary panel ─────────────────────────────────────────────────── */
-
-/** The currency the workspace states its headline total in. */
-const BASE_CURRENCY: CurrencyCode = "IDR";
 
 /** The categorical ramp, in order. Wallets take a step by position. */
 const RAMP_STEPS: readonly RampStep[] = [
@@ -173,10 +120,6 @@ const RAMP_STEPS: readonly RampStep[] = [
   "c7",
 ];
 
-function totalOf(wallets: readonly Wallet[]): number {
-  return wallets.reduce((running, wallet) => running + wallet.balance, 0);
-}
-
 const FULL_PERCENT = 100;
 
 /**
@@ -184,7 +127,7 @@ const FULL_PERCENT = 100;
  * rounding left behind — otherwise the bar stops a pixel or two short.
  */
 function toShares(
-  assets: readonly Wallet[],
+  assets: readonly WalletRecord[],
   held: number,
 ): readonly WalletShare[] {
   if (held === 0) {
@@ -208,28 +151,28 @@ function toShares(
   });
 }
 
-/** What is owed on cards, and what is held in a currency the total cannot state. */
-function toRows(
-  counted: readonly Wallet[],
-  owed: readonly Wallet[],
-): readonly WalletSummaryRow[] {
+/**
+ * What is owed on cards, and what is held in a currency the headline cannot
+ * state. Both come off `/wallets/overview`, which sums them in the database —
+ * one grouped read cannot disagree with itself the way two sums here could.
+ */
+function toRows(overview: WalletOverviewRecord): readonly WalletSummaryRow[] {
   const rows: WalletSummaryRow[] = [];
 
-  if (owed.length > 0) {
+  if (overview.owedOnCards !== 0) {
     rows.push({
       id: "row-owed",
       label: "Owed on cards",
-      value: formatBalance(totalOf(owed), BASE_CURRENCY),
+      value: formatBalance(overview.owedOnCards, overview.baseCurrency),
       tone: "expense",
     });
   }
 
-  for (const currency of otherCurrencies(counted)) {
-    const held = counted.filter((wallet) => wallet.currency === currency);
+  for (const held of overview.heldByCurrency) {
     rows.push({
-      id: `row-held-${currency}`,
-      label: `Held in ${currency}`,
-      value: formatBalance(totalOf(held), currency),
+      id: `row-held-${held.currency}`,
+      label: `Held in ${held.currency}`,
+      value: formatBalance(held.amount, held.currency),
       tone: "text",
     });
   }
@@ -237,36 +180,51 @@ function toRows(
   return rows;
 }
 
-/** Every currency but the base one, in the order the wallets were added. */
-function otherCurrencies(
-  counted: readonly Wallet[],
-): readonly CurrencyCode[] {
-  const seen = new Set<CurrencyCode>();
-  for (const wallet of counted) {
-    if (wallet.currency !== BASE_CURRENCY) {
-      seen.add(wallet.currency);
-    }
+function accountsLine(count: number, base: CurrencyCode): string {
+  if (count === 0) {
+    return `Nothing counted towards a ${base} total yet`;
   }
-  return [...seen];
-}
-
-function accountsLine(count: number): string {
   const noun = count === 1 ? "account" : "accounts";
-  return `Across ${count} ${BASE_CURRENCY} ${noun}`;
+  return `Across ${count} ${base} ${noun}`;
 }
 
-/* ── queries ───────────────────────────────────────────────────────────── */
+/** Which wallets the bar is drawn from: what the headline total is made of. */
+function countedAssets(
+  wallets: readonly WalletRecord[],
+  base: CurrencyCode,
+): readonly WalletRecord[] {
+  return wallets.filter(
+    (wallet) =>
+      wallet.includeInTotal &&
+      wallet.currency === base &&
+      wallet.balance >= 0,
+  );
+}
+
+function toSummary(
+  wallets: readonly WalletRecord[],
+  overview: WalletOverviewRecord,
+): WalletSummary {
+  const base = overview.baseCurrency;
+
+  return {
+    total: formatMoney(overview.totalHeld, base),
+    meta: accountsLine(overview.countedWallets, base),
+    shares: toShares(countedAssets(wallets, base), overview.totalHeld),
+    rows: toRows(overview),
+  };
+}
+
+/* ── the selects ───────────────────────────────────────────────────────── */
 
 /** The type select. The value is the stored `kind`; the label is what prints. */
 export const WALLET_KIND_OPTIONS: readonly {
   readonly value: WalletKind;
   readonly label: string;
-}[] = [
-  { value: "bank", label: KIND_LABEL.bank },
-  { value: "ewallet", label: KIND_LABEL.ewallet },
-  { value: "card", label: KIND_LABEL.card },
-  { value: "cash", label: KIND_LABEL.cash },
-];
+}[] = WALLET_KIND_ORDER.map((kind) => ({
+  value: kind,
+  label: KIND_LABEL[kind],
+}));
 
 const CURRENCY_LABEL: Readonly<Record<CurrencyCode, string>> = {
   IDR: "IDR — Rupiah",
@@ -277,32 +235,61 @@ const CURRENCY_LABEL: Readonly<Record<CurrencyCode, string>> = {
 export const WALLET_CURRENCY_OPTIONS: readonly {
   readonly value: CurrencyCode;
   readonly label: string;
-}[] = [
-  { value: "IDR", label: CURRENCY_LABEL.IDR },
-  { value: "USD", label: CURRENCY_LABEL.USD },
-  { value: "SGD", label: CURRENCY_LABEL.SGD },
-];
+}[] = CURRENCY_ORDER.map((code) => ({
+  value: code,
+  label: CURRENCY_LABEL[code],
+}));
 
-export async function getWallets(): Promise<readonly WalletCard[]> {
-  return WALLETS.map(toCard);
+/* ── the query ─────────────────────────────────────────────────────────── */
+
+export type WalletsScreen = {
+  readonly wallets: readonly WalletCard[];
+  readonly summary: WalletSummary;
+  /** Why the screen is empty, when the API could not answer at all. */
+  readonly error: string;
+};
+
+/** The headline a screen shows when it has nothing to state a total from. */
+const EMPTY_OVERVIEW: WalletOverviewRecord = {
+  baseCurrency: "IDR",
+  totalHeld: 0,
+  countedWallets: 0,
+  owedOnCards: 0,
+  heldByCurrency: [],
+};
+
+function emptyScreen(error: string): WalletsScreen {
+  return {
+    wallets: [],
+    summary: toSummary([], EMPTY_OVERVIEW),
+    error,
+  };
 }
 
 /**
- * Money held, split by wallet. Card debt and any non-base currency sit under the
- * split as their own lines: with no exchange rate to hand, a single figure that
- * mixed them would be a guess.
+ * The cards and the summary in one call. The list and the overview are fetched
+ * together because the bar is a split of the very cards printed under it: they
+ * have to be read from the same moment or the legend names a wallet the total
+ * does not count.
  */
-export async function getWalletSummary(): Promise<WalletSummary> {
-  const counted = WALLETS.filter((wallet) => wallet.includeInTotal);
-  const base = counted.filter((wallet) => wallet.currency === BASE_CURRENCY);
-  const assets = base.filter((wallet) => wallet.balance >= 0);
-  const owed = base.filter((wallet) => wallet.balance < 0);
-  const held = totalOf(assets);
+export async function getWalletsScreen(): Promise<WalletsScreen> {
+  const accessToken = await requireAccessToken();
+  const [listed, overview] = await Promise.all([
+    listWallets(accessToken),
+    fetchWalletOverview(accessToken),
+  ]);
 
+  if (!listed.ok) {
+    return emptyScreen(listed.error.message);
+  }
+  if (!overview.ok) {
+    return emptyScreen(overview.error.message);
+  }
+
+  const today = todayInJakarta();
   return {
-    total: formatMoney(held, BASE_CURRENCY),
-    meta: accountsLine(assets.length),
-    shares: toShares(assets, held),
-    rows: toRows(counted, owed),
+    wallets: listed.data.map((wallet) => toCard(wallet, today)),
+    summary: toSummary(listed.data, overview.data),
+    error: "",
   };
 }

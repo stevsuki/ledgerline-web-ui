@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { AppScreen } from "@/components/shell/app-screen";
 import { CardGrid, ScreenStack, SplitGrid } from "@/components/ui/layout";
-import { Panel, SectionPanel } from "@/components/ui/panel";
+import { Panel, PanelNotice, SectionPanel } from "@/components/ui/panel";
 import {
   IconTile,
   LegendItem,
@@ -18,8 +18,7 @@ import {
 import {
   WALLET_CURRENCY_OPTIONS,
   WALLET_KIND_OPTIONS,
-  getWalletSummary,
-  getWallets,
+  getWalletsScreen,
 } from "@/lib/data/wallets";
 import { PAGE_META } from "@/lib/nav";
 import { RAMP_BG, TEXT_TONE, cx } from "@/lib/tone";
@@ -140,10 +139,7 @@ function BalanceSummaryPanel({
 }
 
 export default async function WalletsPage() {
-  const [wallets, summary] = await Promise.all([
-    getWallets(),
-    getWalletSummary(),
-  ]);
+  const { wallets, summary, error } = await getWalletsScreen();
 
   return (
     <AppScreen
@@ -155,7 +151,14 @@ export default async function WalletsPage() {
         currencies={WALLET_CURRENCY_OPTIONS}
       >
         <ScreenStack>
-          <BalanceSummaryPanel summary={summary} />
+          {/* A total of Rp0 would be a claim; when the API is silent, say so. */}
+          {error ? (
+            <Panel>
+              <PanelNotice tone="expense">{error}</PanelNotice>
+            </Panel>
+          ) : (
+            <BalanceSummaryPanel summary={summary} />
+          )}
 
           <CardGrid minWidth={262}>
             {wallets.map((wallet) => (

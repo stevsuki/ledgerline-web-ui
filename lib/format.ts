@@ -100,3 +100,56 @@ export function formatTimestamp(iso: string): string {
   // en-GB groups with slashes; the artboard writes the date with dashes.
   return TIMESTAMP.format(parsed).replace(",", "").replaceAll("/", "-");
 }
+
+/* ── reading a typed figure back ───────────────────────────────────────── */
+
+/** Anything that is not a digit once the separators have been taken out. */
+const DIGITS = /^\d+$/;
+
+/** Both minus signs: the print one the app writes, the keyboard one it accepts. */
+const LEADING_SIGN = /^[-−+]/;
+
+/**
+ * The inverse of `formatFigure`: what the person typed, as a whole number of
+ * the currency's own units. Grouping dots are dropped and — for the currencies
+ * quoted with cents — a comma is read as the decimal point, because that is
+ * exactly how the field printed the figure it is being typed over.
+ *
+ * `null` means it could not be read at all, which is a field error rather than
+ * a zero: silently saving 0 over a balance would lose money on screen.
+ */
+export function parseFigure(
+  text: string,
+  currency: CurrencyCode,
+): number | null {
+  const trimmed = text.trim();
+  if (trimmed === "") {
+    return null;
+  }
+
+  const isNegative = trimmed.startsWith("-") || trimmed.startsWith(MINUS_SIGN);
+  const body = trimmed
+    .replace(LEADING_SIGN, "")
+    .replaceAll(".", "")
+    .replaceAll(" ", "");
+
+  // Only a cents currency has a decimal separator to read; the rest is grouping.
+  const parts = CURRENCY_HAS_CENTS[currency]
+    ? body.split(",")
+    : [body.replaceAll(",", "")];
+  if (parts.length > 2) {
+    return null;
+  }
+
+  const [units, fraction = ""] = parts;
+  if (!DIGITS.test(units) || (fraction !== "" && !DIGITS.test(fraction))) {
+    return null;
+  }
+
+  const value = Math.round(Number(`${units}.${fraction || "0"}`));
+  if (!Number.isSafeInteger(value)) {
+    return null;
+  }
+
+  return isNegative && value !== 0 ? -value : value;
+}

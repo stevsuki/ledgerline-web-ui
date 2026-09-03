@@ -52,6 +52,15 @@ const MESSAGE_BY_CODE: Partial<Readonly<Record<ApiErrorCode, string>>> = {
   ROLE_INVALID_MENU: "One of the selected menus no longer exists. Reload the page.",
   ROLE_INVALID_DATA: CHECK_FIELDS,
 
+  /* the wallet editor */
+  WALLET_NAME_TAKEN: "A wallet with that name already exists.",
+  WALLET_NOT_FOUND: "That wallet no longer exists. Reload the page.",
+  WALLET_INVALID_TYPE: "Pick one of the wallet types offered.",
+  WALLET_INVALID_CURRENCY: "Pick one of the currencies offered.",
+  WALLET_INVALID_CARD:
+    "A credit limit and a statement day belong to a credit card only.",
+  WALLET_INVALID_DATA: CHECK_FIELDS,
+
   /* generic */
   VALIDATION_ERROR: CHECK_FIELDS,
   INVALID_INPUT: CHECK_FIELDS,

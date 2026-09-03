@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icon";
 import type { IconName } from "@/components/ui/icon-sprite";
+import { ProgressTrack } from "@/components/ui/primitives";
 import { CATEGORIES } from "@/lib/data/categories";
 import { getBudgetsPreview } from "@/lib/data/budgets";
 import { getRecentTransactions, getTransactions } from "@/lib/data/transactions";
@@ -91,12 +92,13 @@ export default async function MobilePage() {
                     <span className="flex-1">{budget.label}</span>
                     <span className="text-muted">{budget.width}</span>
                   </p>
-                  <div className="track mt-1 h-1.5">
-                    <div
-                      className={cx("track-fill", BG_TONE[budget.tone])}
-                      style={{ width: budget.width }}
-                    />
-                  </div>
+                  {/* The utility layer wins over `.track`, so the phone keeps
+                      its thinner rail without a second track class. */}
+                  <ProgressTrack
+                    className="mt-1 h-1.5"
+                    width={budget.width}
+                    fillClass={BG_TONE[budget.tone]}
+                  />
                 </div>
               ))}
             </div>

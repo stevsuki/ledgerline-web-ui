@@ -74,25 +74,11 @@ export type WalletKind = "bank" | "ewallet" | "card" | "cash";
  */
 export type CurrencyCode = "IDR" | "USD" | "SGD";
 
-/** A wallet as it is stored: figures are numbers, never formatted strings. */
-export type Wallet = {
-  readonly id: string;
-  readonly name: string;
-  readonly kind: WalletKind;
-  readonly icon: IconName;
-  /** The tail printed after the kind — "••4192", "0812••4471". Blank for cash. */
-  readonly reference: string;
-  readonly currency: CurrencyCode;
-  /** In the wallet's own currency. Negative on a card is money owed. */
-  readonly balance: number;
-  /** Cards only: the ceiling the balance is drawn against. */
-  readonly creditLimit: number | null;
-  /** Cards only: day of the month the statement falls due. */
-  readonly dueDay: number | null;
-  /** ISO day the owner last touched the balance. Nothing syncs it for them. */
-  readonly updatedOn: string;
-  readonly includeInTotal: boolean;
-};
+/*
+ * A wallet as it is stored has no type here any more: it is `WalletRecord` in
+ * `lib/api/wallets.ts`, narrowed straight off the API. What stays below is what
+ * the screen renders — figures already formatted for print.
+ */
 
 /** One choice in a select: a stored code, and the words shown for it. */
 export type SelectChoice = {
