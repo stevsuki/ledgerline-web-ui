@@ -83,6 +83,7 @@ function toDraft(wallet: WalletRecord, today: string): WalletDraft {
     id: wallet.id,
     name: wallet.name,
     kind: wallet.kind,
+    icon: wallet.icon,
     currency: wallet.currency,
     reference: wallet.reference,
     balance: formatFigure(wallet.balance, wallet.currency),

@@ -13,6 +13,7 @@ import {
   type RolePermissionInput,
 } from "@/lib/api/access";
 import { ACCESS_FIELD, GRANT_SEPARATOR } from "@/lib/access/fields";
+import { iconNameOrBlank } from "@/lib/icon-choice";
 import {
   failureState,
   noticeState,
@@ -122,9 +123,15 @@ export async function saveRoleAction(
   const id = text(formData, ACCESS_FIELD.id);
   const name = text(formData, ACCESS_FIELD.name);
   const description = text(formData, ACCESS_FIELD.description);
+  // The column takes any string, so only a name the sprite carries is sent.
+  // Anything else is stored as "no icon of its own", which is what the column
+  // already means — the read path then draws the built-in / custom default,
+  // and it knows which of the two this role is. Guessing that here would not.
+  const icon = iconNameOrBlank(text(formData, ACCESS_FIELD.icon));
   const values = {
     [ACCESS_FIELD.name]: name,
     [ACCESS_FIELD.description]: description,
+    [ACCESS_FIELD.icon]: icon,
   };
 
   const accessToken = await requireAccessToken();
@@ -135,9 +142,10 @@ export async function saveRoleAction(
     ? await updateRole(accessToken, id, {
         name: name || undefined,
         description,
+        icon,
         permissions,
       })
-    : await createRole(accessToken, { name, description, permissions });
+    : await createRole(accessToken, { name, description, icon, permissions });
 
   if (!result.ok) {
     return failureState(result.error, values);

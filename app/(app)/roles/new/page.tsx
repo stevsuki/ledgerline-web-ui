@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { RoleForm } from "@/components/roles/role-form";
 import { AppScreen } from "@/components/shell/app-screen";
+import { defaultRoleIcon } from "@/lib/access/fields";
 import { getPermissionModules } from "@/lib/data/access";
 import { PAGE_META } from "@/lib/nav";
 
@@ -21,6 +22,7 @@ export default async function NewRolePage() {
         modules={modules}
         initialName=""
         initialDescription=""
+        initialIcon={defaultRoleIcon(false)}
         initialGrants={{}}
         memberCount={0}
         isSystem={false}

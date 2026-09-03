@@ -87,11 +87,6 @@ function toUserRow(record: UserRecord): UserRow {
   };
 }
 
-/** Built-in roles carry the shield; a role somebody made carries the group. */
-function roleIcon(record: RoleRecord): IconName {
-  return record.isSystem ? "shield" : "users";
-}
-
 function toRoleRow(record: RoleRecord): RoleRow {
   return {
     id: record.id,
@@ -100,7 +95,7 @@ function toRoleRow(record: RoleRecord): RoleRow {
     members: record.userCount,
     updated: formatTimestamp(record.updatedAt),
     isSystem: record.isSystem,
-    icon: roleIcon(record),
+    icon: record.icon,
   };
 }
 

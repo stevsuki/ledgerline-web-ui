@@ -117,6 +117,8 @@ export type RoleRecord = {
   readonly id: string;
   readonly name: string;
   readonly description: string;
+  /** The badge beside the name. Falls back to the built-in / custom default. */
+  readonly icon: IconName;
   /** Built-in roles cannot be renamed or deleted; the UI hides those actions. */
   readonly isSystem: boolean;
   readonly userCount: number;

@@ -313,6 +313,53 @@ html[data-theme="light"] {
     height: 32px;
   }
 
+  /*
+   * An IconTile that is a radio — the role editor's picker. It borrows the
+   * seg's mechanics rather than JavaScript: the input is visually hidden inside
+   * the label, so `:has(input:checked)` paints the choice and the arrow keys
+   * still walk the group. Checked reads accent-tinted, which is exactly how the
+   * roles list renders the tile it is choosing.
+   */
+  .icon-choice {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    flex: none;
+    border: 1px solid var(--color-divider);
+    border-radius: var(--radius-tile);
+    color: var(--color-muted);
+    cursor: pointer;
+    transition:
+      background-color 0.18s ease,
+      border-color 0.18s ease,
+      color 0.18s ease;
+  }
+
+  .icon-choice input {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .icon-choice:not(:has(input:checked)):hover {
+    background: color-mix(in srgb, var(--color-text) 7%, transparent);
+    color: var(--color-text);
+  }
+
+  .icon-choice:has(input:checked) {
+    border-color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+    color: var(--color-accent);
+  }
+
+  .icon-choice:has(input:focus-visible) {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
   .track {
     height: 10px;
     border-radius: var(--radius-pill);
@@ -421,7 +468,9 @@ html[data-theme="light"] {
     justify-content: center;
   }
 
-  .field > label {
+  /* A legend labels a group of controls exactly as a label does one. */
+  .field > label,
+  .field > legend {
     display: block;
     margin-bottom: 5px;
     font-size: 12px;

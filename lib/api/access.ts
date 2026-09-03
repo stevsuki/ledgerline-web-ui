@@ -1,6 +1,7 @@
 import { apiRequest, withParsed, withoutData, withQuery } from "@/lib/api/client";
 import { isRecord, readBoolean, readNumber, readString } from "@/lib/api/parse";
 import { ICON_NAMES, type IconName } from "@/components/ui/icon-sprite";
+import { defaultRoleIcon } from "@/lib/access/fields";
 import type { ApiResult } from "@/types/api";
 import {
   ACCOUNT_STATUS_BY_CODE,
@@ -58,9 +59,9 @@ export function toAccessPayload(
 /** A group carries no access row of its own, so every flag reads false. */
 const NO_ACCESS: MenuAccess = readAccess({});
 
-function readIcon(raw: Record<string, unknown>): IconName {
+function readIcon(raw: Record<string, unknown>, fallback: IconName): IconName {
   const name = readString(raw, "icon");
-  return ICON_NAMES.find((icon) => icon === name) ?? "grid";
+  return ICON_NAMES.find((icon) => icon === name) ?? fallback;
 }
 
 function readStatus(raw: Record<string, unknown>): AccountStatus {
@@ -104,7 +105,7 @@ function parseMenu(raw: unknown): MenuNode | null {
     id,
     code,
     name: readString(raw, "name") ?? code,
-    icon: readIcon(raw),
+    icon: readIcon(raw, "grid"),
     access,
     children,
   };
@@ -136,11 +137,16 @@ function parseRole(raw: unknown): RoleRecord | null {
     return null;
   }
 
+  // The column is nullable and takes any string, so a role that has never been
+  // given one — every seeded role included — falls back to what it always drew.
+  const isSystem = readBoolean(raw, "is_system");
+
   return {
     id,
     name,
     description: readString(raw, "description") ?? "",
-    isSystem: readBoolean(raw, "is_system"),
+    icon: readIcon(raw, defaultRoleIcon(isSystem)),
+    isSystem,
     userCount: readNumber(raw, "user_count") ?? 0,
     createdAt: readString(raw, "created_at") ?? "",
     updatedAt: readString(raw, "updated_at") ?? "",
@@ -220,6 +226,7 @@ export type RolePermissionInput = {
 export type SaveRoleInput = {
   readonly name: string;
   readonly description: string;
+  readonly icon: string;
   readonly permissions: readonly RolePermissionInput[];
 };
 
@@ -248,6 +255,7 @@ export async function createRole(
     body: {
       name: input.name,
       description: input.description,
+      icon: input.icon,
       permissions: permissionsPayload(input.permissions),
     },
   });
@@ -262,6 +270,7 @@ export async function updateRole(
 ): Promise<ApiResult<RoleRecord>> {
   const body: Record<string, unknown> = {
     description: input.description,
+    icon: input.icon,
     permissions: permissionsPayload(input.permissions),
   };
 

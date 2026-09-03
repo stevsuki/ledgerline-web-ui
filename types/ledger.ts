@@ -95,6 +95,7 @@ export type WalletDraft = {
   readonly id: string;
   readonly name: string;
   readonly kind: WalletKind;
+  readonly icon: IconName;
   readonly currency: CurrencyCode;
   readonly reference: string;
   /** Grouped the Indonesian way, with a plain hyphen so it can be typed over. */

@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useActionState, useId, useState } from "react";
 
 import { FormBanner } from "@/components/auth/form-feedback";
+import { IconChoiceField } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icon";
+import type { IconName } from "@/components/ui/icon-sprite";
 import { TableScroll } from "@/components/ui/layout";
 import { Panel } from "@/components/ui/panel";
 import { saveRoleAction } from "@/lib/access/actions";
@@ -14,8 +16,10 @@ import {
   ROLE_NAME_MAX_LENGTH,
   ROLE_NAME_MIN_LENGTH,
   grantValue,
+  roleIconChoices,
 } from "@/lib/access/fields";
 import type { PermissionModule } from "@/lib/access/menus";
+import { iconNameOrBlank } from "@/lib/icon-choice";
 import { IDLE_AUTH_STATE } from "@/lib/auth/form-state";
 import type { GrantMap } from "@/lib/data/access";
 import { cx } from "@/lib/tone";
@@ -54,6 +58,7 @@ export function RoleForm({
   modules,
   initialName,
   initialDescription,
+  initialIcon,
   initialGrants,
   memberCount,
   isSystem,
@@ -63,6 +68,7 @@ export function RoleForm({
   readonly modules: readonly PermissionModule[];
   readonly initialName: string;
   readonly initialDescription: string;
+  readonly initialIcon: IconName;
   readonly initialGrants: GrantMap;
   readonly memberCount: number;
   /** A built-in role: the backend refuses to rename it. */
@@ -76,6 +82,9 @@ export function RoleForm({
   const formId = useId();
 
   const isEdit = roleId !== null;
+  // On a rejected save the icon comes back with the rest of the values.
+  const pickedIcon =
+    iconNameOrBlank(state.values[ACCESS_FIELD.icon] ?? "") || initialIcon;
 
   /** Read underpins every other action, so the two move together. */
   function toggleCell(menuId: string, action: PermissionAction) {
@@ -195,6 +204,16 @@ export function RoleForm({
             </p>
           ) : null}
         </div>
+
+        {/* On a rejected save the pick is restored like every other field. */}
+        <IconChoiceField
+          id="role-icon"
+          name={ACCESS_FIELD.icon}
+          label="Icon"
+          note="Shown beside the role name in the list."
+          choices={roleIconChoices(pickedIcon)}
+          defaultValue={pickedIcon}
+        />
 
         <div className="field">
           <label htmlFor="role-description">Description</label>

@@ -16,6 +16,7 @@ import {
 } from "@/lib/auth/form-state";
 import { requireAccessToken } from "@/lib/auth/session";
 import { parseFigure } from "@/lib/format";
+import { iconNameOrBlank } from "@/lib/icon-choice";
 import {
   CARD_KIND,
   DUE_DAY_MAX,
@@ -145,6 +146,8 @@ function readInput(formData: FormData): ReadResult {
     input: {
       name: text(formData, WALLET_FIELD.name),
       kind,
+      // "" keeps the wallet on its kind's tile, which is the column's own default.
+      icon: iconNameOrBlank(text(formData, WALLET_FIELD.icon)),
       currency,
       reference: text(formData, WALLET_FIELD.reference),
       balance,

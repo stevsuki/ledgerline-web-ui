@@ -97,6 +97,7 @@ Reuse the primitive in `components/ui/` — do not re-derive the numbers inline.
 | Panel | 1px divider · radius 16 · `shadow-md` · `bg-surface` | `<Panel>` |
 | InsetBlock | 1px divider · radius 12 · `bg-panel`, inside a Panel | `<InsetBlock>` |
 | IconTile | 34×34 (32 in dense rows) · 1px divider · radius 10 | `<IconTile>` |
+| IconChoice | the same tile as a radio · accent when checked | `<IconChoiceField>` |
 | Control | height 38 · radius 12 · `bg-panel` — `.btn`, `.input`, `.seg` share it | `.btn` / `.input` / `.seg` |
 | Checkbox | 22×22 · radius 6 · 1.5px border | `<PermissionCheckbox>` |
 | Tag | pill (radius 99) · padding 4/11 | `.tag` |
@@ -233,7 +234,7 @@ A wallet is stored as data, not as the sentences the artboard printed: `kind` +
 Because nothing refreshes a balance, editing one has to be reachable — and the
 artboard has no edit affordance at all. Every card now carries a pencil, and
 both it and the dashed card at the end of the grid open the same
-`<WalletEditorProvider>` slide-over: name, kind, currency, reference, balance,
+`<WalletEditorProvider>` slide-over: name, kind, icon, currency, reference, balance,
 `includeInTotal`, plus `creditLimit` + `dueDay` when the kind is `card`. It opens
 saying how stale the figure is, and posts to `saveWalletAction` — one
 `<form action>` over `POST /wallets` or `PATCH /wallets/{id}`, closing on the
@@ -372,6 +373,29 @@ does not count. The overview is summed in SQL, so the totals are never re-derive
 only the per-wallet shares are, from the same list the cards come from. Nothing syncs a
 balance, so its age is measured against `todayInJakarta()` — the real day, not a
 fixture's frozen `TODAY`.
+
+**An icon key is a contract, not a picture.** `roles.icon` (migration 000019),
+`wallets.icon` and `menus.icon` are each a `VARCHAR(50)` holding a *name from this app's
+sprite* — never a path, never markup. The column takes any string, so both halves of the
+contract live in `lib/icon-choice.ts`: `iconNameOrBlank` refuses to send anything
+`ICON_NAMES` does not carry, and each domain's reader refuses to draw it.
+
+`""` is the column's own way of saying "no icon of its own", which is why an action
+stores that rather than guessing a default. Only the read path knows enough to resolve
+it, and it resolves it differently per domain: `defaultRoleIcon` gives the shield /
+group pair the roles list drew before the column existed, `ICON_BY_KIND` gives a wallet
+its kind's tile. Every seeded role is still `NULL` there and renders exactly as it
+always did.
+
+`<IconChoiceField>` is the one picker both screens use. It is a radio group rather than
+a select — the whole point of the field is seeing the icon, and native radios mean the
+arrow keys work and the choice posts without a line of state. It takes `value` +
+`onChange` or a bare `defaultValue`, exactly as `<SelectField>` does, because roles want
+a plain form while the wallet editor drives it: a new wallet's icon follows the Type
+select until someone picks a tile, and then it stops. Each domain names its own
+shortlist (`ROLE_ICON_CHOICES`, `WALLET_ICON_CHOICES`) and `withCurrent` appends
+whatever the record is already wearing, so a value set through the API stays selectable
+rather than silently swapping on the next save.
 
 The audit log is the one that filters, sorts and pages entirely in the database:
 `/audit-logs` takes every filter the bar sets, `/audit-logs/overview` feeds the four

@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
 
+import { Icon } from "@/components/ui/icon";
+import type { IconName } from "@/components/ui/icon-sprite";
+
 import { cx } from "@/lib/tone";
 
 /** Native form controls on the design system's classes. */
@@ -169,6 +172,60 @@ export function SelectField({
         ))}
       </select>
     </Field>
+  );
+}
+
+/**
+ * The icon a record wears, as a row of tiles. A radio group rather than a
+ * select, because the whole point of the field is seeing the icon — and native
+ * radios mean the arrow keys work and the choice posts with no state at all.
+ *
+ * Pass `value` + `onChange` to drive it from state, exactly as `SelectField`
+ * does; omit both for a plain form.
+ */
+export function IconChoiceField({
+  id,
+  label,
+  choices,
+  defaultValue,
+  value,
+  onChange,
+  name,
+  note,
+}: {
+  readonly id: string;
+  readonly label: string;
+  readonly choices: readonly IconName[];
+  readonly defaultValue?: IconName;
+  readonly value?: IconName;
+  readonly onChange?: (next: IconName) => void;
+  readonly name?: string;
+  /** The line under the row, saying where the icon shows up. */
+  readonly note?: string;
+}) {
+  const isControlled = value !== undefined;
+
+  return (
+    <fieldset className="field" id={id}>
+      <legend>{label}</legend>
+      <div className="flex flex-wrap gap-2">
+        {choices.map((choice) => (
+          <label key={choice} className="icon-choice" title={choice}>
+            <input
+              type="radio"
+              name={name ?? id}
+              value={choice}
+              aria-label={choice}
+              {...(isControlled
+                ? { checked: value === choice, onChange: () => onChange?.(choice) }
+                : { defaultChecked: defaultValue === choice })}
+            />
+            <Icon name={choice} size={16} />
+          </label>
+        ))}
+      </div>
+      {note ? <p className="text-meta text-muted mt-1.5">{note}</p> : null}
+    </fieldset>
   );
 }
 

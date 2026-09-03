@@ -42,6 +42,7 @@ export default async function EditRolePage(
         modules={modules}
         initialName={role.name}
         initialDescription={role.description}
+        initialIcon={role.icon}
         initialGrants={toGrantMap(role)}
         memberCount={role.userCount}
         isSystem={role.isSystem}

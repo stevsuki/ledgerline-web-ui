@@ -1,4 +1,5 @@
 import type { IconName } from "@/components/ui/icon-sprite";
+import { withCurrent } from "@/lib/icon-choice";
 import type { CurrencyCode, WalletKind } from "@/types/ledger";
 
 /**
@@ -49,8 +50,10 @@ export const WALLET_KIND_ORDER: readonly WalletKind[] = [
 export const CURRENCY_ORDER: readonly CurrencyCode[] = ["IDR", "USD", "SGD"];
 
 /**
- * The editor has no icon picker, so a wallet's tile follows its kind. A row
- * saved with something else keeps it — `parseWalletIcon` only falls back here.
+ * What a wallet of each kind is drawn with when it has none of its own. The
+ * picker starts here and follows the Type select until someone chooses
+ * otherwise — most wallets want their kind's tile, and the ones that do not are
+ * exactly the ones worth a deliberate pick.
  */
 export const ICON_BY_KIND: Readonly<Record<WalletKind, IconName>> = {
   bank: "bank",
@@ -58,6 +61,27 @@ export const ICON_BY_KIND: Readonly<Record<WalletKind, IconName>> = {
   card: "card",
   cash: "cash",
 };
+
+/**
+ * The tiles the wallet picker offers. Every kind's default is here, plus the
+ * few that say something the kind cannot: a globe for money held abroad, a lock
+ * for a deposit left alone, a gift card that is not a credit card.
+ */
+export const WALLET_ICON_CHOICES: readonly IconName[] = [
+  "bank",
+  "phone",
+  "card",
+  "cash",
+  "wallet",
+  "globe",
+  "lock",
+  "gift",
+];
+
+/** The shortlist, plus whatever this wallet is already wearing. */
+export function walletIconChoices(current: IconName): readonly IconName[] {
+  return withCurrent(WALLET_ICON_CHOICES, current);
+}
 
 /* ── the form's names ──────────────────────────────────────────────────── */
 
@@ -70,6 +94,7 @@ export const WALLET_FIELD = {
   id: "id",
   name: "name",
   kind: "type",
+  icon: "icon",
   currency: "currency",
   reference: "reference",
   balance: "balance",

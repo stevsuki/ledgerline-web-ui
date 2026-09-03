@@ -14,8 +14,14 @@ import {
 
 import { FormBanner } from "@/components/auth/form-feedback";
 import { useAppChrome } from "@/components/shell/app-chrome";
-import { SelectField, TextField, ToggleRow } from "@/components/ui/form";
+import {
+  IconChoiceField,
+  SelectField,
+  TextField,
+  ToggleRow,
+} from "@/components/ui/form";
 import { Icon } from "@/components/ui/icon";
+import type { IconName } from "@/components/ui/icon-sprite";
 import { FieldGrid } from "@/components/ui/layout";
 import { SlideOver } from "@/components/ui/slide-over";
 import { IDLE_AUTH_STATE, type AuthFormState } from "@/lib/auth/form-state";
@@ -23,6 +29,7 @@ import { deleteWalletAction, saveWalletAction } from "@/lib/wallets/actions";
 import {
   CARD_KIND,
   CASH_META,
+  ICON_BY_KIND,
   REFERENCE_HINT,
   REFERENCE_MAX_LENGTH,
   REFERENCE_NOTE,
@@ -30,6 +37,7 @@ import {
   WALLET_NAME_MAX_LENGTH,
   WALLET_NAME_MIN_LENGTH,
   parseWalletKind,
+  walletIconChoices,
 } from "@/lib/wallet-fields";
 import type {
   SelectChoice,
@@ -69,6 +77,7 @@ const BLANK_DRAFT: WalletDraft = {
   id: "new",
   name: "",
   kind: "bank",
+  icon: ICON_BY_KIND.bank,
   currency: "IDR",
   reference: "",
   // Prefilled rather than blank: the field is required, and a new wallet that
@@ -259,6 +268,23 @@ function WalletFields({
   readonly currencies: readonly SelectChoice[];
 }) {
   const [kind, setKind] = useState<WalletKind>(draft.kind);
+  const [icon, setIcon] = useState<IconName>(draft.icon);
+  // An existing wallet already wears a decision; a new one is still following
+  // the Type select, and stops the moment someone picks a tile themselves.
+  const [iconPicked, setIconPicked] = useState(isEdit);
+
+  function changeKind(next: string) {
+    const parsed = parseWalletKind(next);
+    setKind(parsed);
+    if (!iconPicked) {
+      setIcon(ICON_BY_KIND[parsed]);
+    }
+  }
+
+  function chooseIcon(next: IconName) {
+    setIcon(next);
+    setIconPicked(true);
+  }
 
   return (
     <form id={formId} action={formAction} className="flex flex-col gap-4">
@@ -289,7 +315,7 @@ function WalletFields({
           label="Type"
           options={kinds}
           value={kind}
-          onChange={(next) => setKind(parseWalletKind(next))}
+          onChange={changeKind}
         />
         <SelectField
           id="wallet-currency"
@@ -299,6 +325,16 @@ function WalletFields({
           defaultValue={draft.currency}
         />
       </FieldGrid>
+
+      <IconChoiceField
+        id="wallet-icon"
+        name={WALLET_FIELD.icon}
+        label="Icon"
+        note="Drawn on the wallet card, and beside it in the transaction list."
+        choices={walletIconChoices(icon)}
+        value={icon}
+        onChange={chooseIcon}
+      />
 
       <ReferenceField
         kind={kind}

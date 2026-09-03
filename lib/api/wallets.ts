@@ -64,7 +64,7 @@ export type WalletOverviewRecord = {
 
 /* ── parsing ───────────────────────────────────────────────────────────── */
 
-/** The editor has no icon picker, so an unknown or blank icon follows the kind. */
+/** A wallet with no icon of its own — or one this sprite cannot draw — follows its kind. */
 function readWalletIcon(
   raw: Record<string, unknown>,
   kind: WalletKind,
@@ -193,6 +193,8 @@ export async function fetchWalletOverview(
 export type WalletInput = {
   readonly name: string;
   readonly kind: WalletKind;
+  /** An icon key from this app's sprite; "" leaves the wallet on its kind's. */
+  readonly icon: string;
   readonly currency: CurrencyCode;
   readonly reference: string;
   readonly balance: number;
@@ -228,7 +230,7 @@ function walletBody(input: WalletInput): Record<string, unknown> {
     type: input.kind,
     currency: input.currency,
     reference: input.reference,
-    icon: ICON_BY_KIND[input.kind],
+    icon: input.icon,
     balance: input.balance,
     include_in_total: input.includeInTotal,
     ...cardFields(input),
