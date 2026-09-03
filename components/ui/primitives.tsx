@@ -60,19 +60,38 @@ export function ProgressTrack({
   width,
   fillClass,
   small = false,
+  marker,
   className,
 }: {
   readonly width: string;
   readonly fillClass: string;
   readonly small?: boolean;
+  /**
+   * Where to score the track, as a percentage — a budget's alert threshold.
+   * Decorative: the row states it in words as well.
+   */
+  readonly marker?: string;
   readonly className?: string;
 }) {
-  return (
+  const track = (
     <div className={cx("track", small && "track-sm", className)}>
       <div
         className={cx("track-fill animate-grow-x", fillClass)}
         style={{ width }}
       />
+    </div>
+  );
+
+  // Unmarked tracks keep their exact markup: `className` stays on the track
+  // itself, so a height override still lands where it always did.
+  if (marker === undefined) {
+    return track;
+  }
+
+  return (
+    <div className="relative">
+      {track}
+      <span aria-hidden className="track-marker" style={{ left: marker }} />
     </div>
   );
 }

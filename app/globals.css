@@ -376,6 +376,22 @@ html[data-theme="light"] {
     border-radius: var(--radius-pill);
   }
 
+  /*
+   * Where a budget starts warning, drawn on the bar that measures it. It
+   * stands 4px proud of the track at both ends so it stays readable whatever
+   * colour the fill is: a tick tinted to read on the rail would vanish on a
+   * pale fill, and one tinted for the fill would vanish on the rail.
+   */
+  .track-marker {
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    width: 2px;
+    margin-left: -1px;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--color-text) 55%, transparent);
+  }
+
   .overlay-surface {
     border: 1px solid var(--color-divider);
     border-radius: var(--radius-overlay);

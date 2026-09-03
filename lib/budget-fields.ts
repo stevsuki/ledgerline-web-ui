@@ -23,6 +23,7 @@ export const BUDGET_FIELD = {
    */
   thresholdCustom: "alert_threshold_custom",
   rollover: "rollover",
+  isFixed: "is_fixed",
 } as const;
 
 /** What the Custom segment posts as `alert_threshold`. */

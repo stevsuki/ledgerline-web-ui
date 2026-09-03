@@ -213,7 +213,7 @@ export function BudgetEditButton({ budget }: { readonly budget: BudgetRow }) {
       aria-label={`Edit ${budget.label} budget`}
       onClick={() => open(budget)}
     >
-      <Icon name="gear" size={15} />
+      <Icon name="pencil" size={14} />
     </button>
   );
 }
@@ -277,6 +277,7 @@ function BudgetFields({
   const [limit, setLimit] = useState(draft.limit);
   const [icon, setIcon] = useState<IconName>(draft.icon);
   const [isIconChosen, setIconChosen] = useState(false);
+  const [isFixed, setFixed] = useState(draft.isFixed);
 
   /** Until a tile is picked, a new budget's icon follows the category select. */
   function chooseCategory(next: string): void {
@@ -323,15 +324,32 @@ function BudgetFields({
         error={fieldErrors[BUDGET_FIELD.limit]}
       />
 
-      <ThresholdField
-        defaultThreshold={draft.threshold}
-        defaultIsCustom={draft.isCustomThreshold}
-        limitText={limit}
-        error={
-          fieldErrors[BUDGET_FIELD.thresholdCustom] ??
-          fieldErrors[BUDGET_FIELD.threshold]
-        }
+      <ToggleRow
+        id={`${formId}-fixed`}
+        name={BUDGET_FIELD.isFixed}
+        label="One fixed payment each month"
+        defaultChecked={draft.isFixed}
+        onChange={setFixed}
       />
+
+      {/* A fixed payment lands on its whole limit at once, so there is no
+          approach to warn about and nothing to set. */}
+      {isFixed ? (
+        <p className="text-meta text-muted">
+          Reported only if it goes over — which on a fixed payment means the
+          amount itself changed.
+        </p>
+      ) : (
+        <ThresholdField
+          defaultThreshold={draft.threshold}
+          defaultIsCustom={draft.isCustomThreshold}
+          limitText={limit}
+          error={
+            fieldErrors[BUDGET_FIELD.thresholdCustom] ??
+            fieldErrors[BUDGET_FIELD.threshold]
+          }
+        />
+      )}
 
       <IconChoiceField
         id={`${formId}-icon`}

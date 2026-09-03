@@ -34,16 +34,24 @@ export type BudgetLimit = {
   readonly icon: IconName | "";
   /** Whether what is unspent carries into next cycle. */
   readonly rollover: boolean;
+  /**
+   * A single fixed payment rather than a running spend — rent, an insurance
+   * premium. It goes from nothing to its whole limit in one transaction, so it
+   * has no approach to warn about: a threshold on it would fire every month,
+   * for ever, with nothing to do about it. Only going *over* means anything,
+   * and on a fixed commitment that means the amount itself changed.
+   */
+  readonly isFixed: boolean;
 };
 
 /** The artboard's `B` fixture, with its `spent` column dropped as derivable. */
 const SEED: readonly BudgetLimit[] = [
-  { category: "housing", limit: 4_500_000, threshold: 0.9, icon: "", rollover: false },
-  { category: "food", limit: 3_000_000, threshold: 0.8, icon: "", rollover: false },
-  { category: "transport", limit: 1_800_000, threshold: 0.8, icon: "", rollover: false },
-  { category: "subs", limit: 1_000_000, threshold: 0.8, icon: "", rollover: false },
-  { category: "utilities", limit: 1_200_000, threshold: 0.75, icon: "", rollover: true },
-  { category: "health", limit: 1_200_000, threshold: 0.8, icon: "", rollover: false },
+  { category: "housing", limit: 4_500_000, threshold: 1, icon: "", rollover: false, isFixed: true },
+  { category: "food", limit: 3_000_000, threshold: 0.8, icon: "", rollover: false, isFixed: false },
+  { category: "transport", limit: 1_800_000, threshold: 0.8, icon: "", rollover: false, isFixed: false },
+  { category: "subs", limit: 1_000_000, threshold: 0.8, icon: "", rollover: false, isFixed: false },
+  { category: "utilities", limit: 1_200_000, threshold: 0.75, icon: "", rollover: true, isFixed: false },
+  { category: "health", limit: 1_200_000, threshold: 0.8, icon: "", rollover: false, isFixed: false },
 ];
 
 /**

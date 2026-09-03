@@ -43,6 +43,9 @@ const CATEGORY_ERROR = "Pick a category a transaction can be filed under.";
 const TAKEN_ERROR = "That category already has a budget. Edit that one instead.";
 const CHECK_FIELDS = "Check the highlighted fields and try again.";
 
+/** A fixed commitment only ever reports when it goes past its whole limit. */
+const FIXED_THRESHOLD = 1;
+
 function text(formData: FormData, key: string): string {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
@@ -99,6 +102,7 @@ type ReadResult =
       readonly threshold: number;
       readonly icon: string;
       readonly rollover: boolean;
+      readonly isFixed: boolean;
     }
   | { readonly ok: false; readonly fieldErrors: Readonly<Record<string, string>> };
 
@@ -119,7 +123,10 @@ function readInput(formData: FormData, isEdit: boolean): ReadResult {
     fieldErrors[BUDGET_FIELD.limit] = LIMIT_ERROR;
   }
 
-  const threshold = readThreshold(formData);
+  // A fixed commitment hides the threshold control, so there is nothing to
+  // read and nothing to reject: only going over its limit means anything.
+  const isFixed = checked(formData, BUDGET_FIELD.isFixed);
+  const threshold = isFixed ? FIXED_THRESHOLD : readThreshold(formData);
   if (threshold === null) {
     fieldErrors[thresholdField(formData)] = THRESHOLD_ERROR;
   }
@@ -135,6 +142,7 @@ function readInput(formData: FormData, isEdit: boolean): ReadResult {
     threshold,
     icon: text(formData, BUDGET_FIELD.icon),
     rollover: checked(formData, BUDGET_FIELD.rollover),
+    isFixed,
   };
 }
 
@@ -171,6 +179,7 @@ export async function saveBudgetAction(
     // "" keeps the budget on its category's tile, which is the column's default.
     icon: iconNameOrBlank(read.icon),
     rollover: read.rollover,
+    isFixed: read.isFixed,
   });
 
   revalidateBudgets();

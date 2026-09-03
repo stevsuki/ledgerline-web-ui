@@ -8,7 +8,7 @@ import {
 import { AppScreen } from "@/components/shell/app-screen";
 import { Icon } from "@/components/ui/icon";
 import { ScreenStack, SplitGrid } from "@/components/ui/layout";
-import { Panel, SectionPanel } from "@/components/ui/panel";
+import { InsetBlock, Panel, SectionPanel } from "@/components/ui/panel";
 import {
   IconTile,
   ProgressTrack,
@@ -23,6 +23,7 @@ import {
   getBudgetAllocation,
   getBudgetAttention,
   getBudgets,
+  type Allocation,
   type BudgetRow,
 } from "@/lib/data/budgets";
 import { PAGE_META } from "@/lib/nav";
@@ -64,10 +65,8 @@ export default async function BudgetsPage() {
                   fillClass: RAMP_BG[share.step],
                 }))}
               />
-              <p className="text-meta text-muted mt-2.5 flex flex-wrap justify-between gap-x-3">
-                <span>{allocation.spentNote}</span>
-                <span>{allocation.cycleNote}</span>
-              </p>
+
+              <SpentBlock allocation={allocation} />
             </section>
 
             <section className="bg-surface panel-pad">
@@ -131,6 +130,44 @@ export default async function BudgetsPage() {
   );
 }
 
+/**
+ * What has actually been spent, given its own block.
+ *
+ * It used to be an 11.5px muted footnote under the bar — the smallest text on
+ * the panel, for the figure people open the screen to read. An `InsetBlock`
+ * makes it a fact of its own rather than a caption on the one above it, and
+ * the pace line is what turns "90%" into something to act on: 90% of the
+ * allocation with 87% of the cycle gone is early, and says so.
+ *
+ * The figure itself stays `text-text`. Tinting spend green when it is on plan
+ * would collide with `--income`, which in this app means money coming in.
+ */
+function SpentBlock({ allocation }: { readonly allocation: Allocation }) {
+  return (
+    <InsetBlock className="mt-4 p-3.5">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+        <h3 className="panel-kicker">Spent so far</h3>
+        <Tag variant={allocation.isOver ? "accent" : "neutral"}>
+          {allocation.percentLabel}
+        </Tag>
+      </div>
+
+      <p className="mt-1.5 text-[22px] font-semibold tracking-[-0.03em] tabular-nums sm:text-[24.5px]">
+        {allocation.spent}
+      </p>
+
+      <p className="text-meta mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+        <span className="text-muted">
+          {allocation.remainingNote} · {allocation.cycleNote}
+        </span>
+        <span className={cx("font-semibold", TEXT_TONE[allocation.paceTone])}>
+          {allocation.paceNote}
+        </span>
+      </p>
+    </InsetBlock>
+  );
+}
+
 function BudgetCard({ budget }: { readonly budget: BudgetRow }) {
   return (
     <Panel
@@ -146,10 +183,12 @@ function BudgetCard({ budget }: { readonly budget: BudgetRow }) {
         <BudgetEditButton budget={budget} />
       </div>
 
+      {/* The row states its threshold in words; the tick is where that lands. */}
       <ProgressTrack
         className="mt-3.5"
         width={budget.width}
         fillClass={BG_TONE[budget.tone]}
+        marker={budget.thresholdWidth || undefined}
       />
 
       <p className="mt-2 flex justify-between text-note tabular-nums">

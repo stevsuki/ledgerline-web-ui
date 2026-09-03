@@ -5,7 +5,12 @@ import {
   type BudgetLimit,
 } from "@/lib/data/budget-store";
 import { CATEGORIES, RAMP_BY_CATEGORY_LABEL } from "@/lib/data/categories";
-import { categorySpend, daysLeftInCycle, shareOf } from "@/lib/data/ledger";
+import {
+  categorySpend,
+  cycleElapsed,
+  daysLeftInCycle,
+  shareOf,
+} from "@/lib/data/ledger";
 import {
   formatPercent,
   formatFigure,
@@ -40,6 +45,7 @@ export type BudgetDraft = {
   /** Whether the threshold needs the Custom field to be reachable at all. */
   readonly isCustomThreshold: boolean;
   readonly rollover: boolean;
+  readonly isFixed: boolean;
   /** Blank for a budget that does not exist yet. */
   readonly id: string;
 };
@@ -54,6 +60,8 @@ export type BudgetRow = {
   readonly isOver: boolean;
   readonly ratio: number;
   readonly width: string;
+  /** Where the alert threshold sits on the track; "" when there is none. */
+  readonly thresholdWidth: string;
   readonly spent: string;
   readonly limit: string;
   readonly remaining: string;
@@ -66,15 +74,35 @@ export type BudgetRow = {
  * every row — a budget that says "alerts at 75%" and stays grey at 82% is
  * telling you two different things at once.
  */
-function toneFor(ratio: number, threshold: number): Tone {
+function toneFor(budget: BudgetLimit, ratio: number): Tone {
   if (ratio > 1) {
     return "expense";
   }
-  return ratio >= threshold ? "warn" : "text";
+  // A fixed commitment has no approach to warn about — it lands on its whole
+  // limit in one payment, so amber here would fire every month and mean nothing.
+  // Once it has landed it is settled rather than merely unremarkable, and greys
+  // out: the eye should pass over what is done and stop on what is not.
+  if (budget.isFixed) {
+    return ratio >= 1 ? "muted" : "text";
+  }
+  return ratio >= budget.threshold ? "warn" : "text";
+}
+
+/** A fixed payment is paid or it is not; a percentage of one says nothing. */
+function statusOf(budget: BudgetLimit, ratio: number, isOver: boolean): string {
+  if (isOver) {
+    return "Over limit";
+  }
+  if (budget.isFixed && ratio >= 1) {
+    return "Paid";
+  }
+  return formatPercent(ratio);
 }
 
 function metaOf(budget: BudgetLimit): string {
-  const alerts = `Alerts at ${formatPercent(budget.threshold)} of limit`;
+  const alerts = budget.isFixed
+    ? "Fixed commitment · alerts only if it changes"
+    : `Alerts at ${formatPercent(budget.threshold)} of limit`;
   return budget.rollover ? `${alerts} · rolls over` : alerts;
 }
 
@@ -88,6 +116,7 @@ function toDraft(budget: BudgetLimit): BudgetDraft {
     threshold: String(toWholePercent(budget.threshold)),
     isCustomThreshold: !isPreset(budget.threshold),
     rollover: budget.rollover,
+    isFixed: budget.isFixed,
   };
 }
 
@@ -102,16 +131,17 @@ function toRow(budget: BudgetLimit): BudgetRow {
     label: labelOf(budget),
     icon: iconOf(budget),
     meta: metaOf(budget),
-    tone: toneFor(ratio, budget.threshold),
+    tone: toneFor(budget, ratio),
     isOver,
     ratio,
     width: toTrackWidth(ratio),
+    thresholdWidth: budget.isFixed ? "" : toTrackWidth(budget.threshold),
     spent: formatRupiah(spent),
     limit: formatRupiah(budget.limit),
     remaining: isOver
       ? `${formatRupiah(difference)} over`
       : `${formatRupiah(-difference)} left`,
-    status: isOver ? "Over limit" : formatPercent(ratio),
+    status: statusOf(budget, ratio, isOver),
     draft: toDraft(budget),
   };
 }
@@ -170,6 +200,7 @@ export function blankDraft(): BudgetDraft | null {
     threshold: "80",
     isCustomThreshold: false,
     rollover: false,
+    isFixed: false,
   };
 }
 
@@ -189,20 +220,60 @@ function totalSpent(): number {
 export type Allocation = {
   readonly total: string;
   readonly categoryCount: string;
-  readonly spentNote: string;
+  /** The figure the panel is really consulted for. */
+  readonly spent: string;
+  readonly percentLabel: string;
+  readonly remainingNote: string;
   readonly cycleNote: string;
+  /** Whether that spend is early or late for the day of the month. */
+  readonly paceNote: string;
+  readonly paceTone: Tone;
+  readonly isOver: boolean;
 };
+
+const PACE_OVER = "Over the allocation";
+const PACE_AHEAD = "Ahead of the cycle's pace";
+const PACE_WITHIN = "Within the cycle's pace";
+
+type Pace = { readonly note: string; readonly tone: Tone };
+
+/**
+ * A share of the allocation only means something next to how much of the cycle
+ * has gone: 90% spent is alarming on the 12th and unremarkable on the 30th.
+ *
+ * Nothing here is ever `income` green — that colour means money coming in, and
+ * spending on plan is not income.
+ */
+function paceOf(ratio: number, elapsed: number): Pace {
+  if (ratio > 1) {
+    return { note: PACE_OVER, tone: "expense" };
+  }
+  if (ratio > elapsed) {
+    return { note: PACE_AHEAD, tone: "warn" };
+  }
+  return { note: PACE_WITHIN, tone: "muted" };
+}
 
 export function getBudgetAllocation(): Allocation {
   const allocated = totalAllocated();
   const spent = totalSpent();
-  const count = listBudgetLimits().length;
+  const ratio = shareOf(spent, allocated);
+  const difference = spent - allocated;
+  const isOver = difference > 0;
+  const pace = paceOf(ratio, cycleElapsed());
 
   return {
     total: formatRupiah(allocated),
-    categoryCount: `across ${count} categories`,
-    spentNote: `${formatRupiah(spent)} spent · ${formatPercent(shareOf(spent, allocated))} of allocation`,
+    categoryCount: `across ${listBudgetLimits().length} categories`,
+    spent: formatRupiah(spent),
+    percentLabel: `${formatPercent(ratio)} of allocation`,
+    remainingNote: isOver
+      ? `${formatRupiah(difference)} over`
+      : `${formatRupiah(-difference)} unspent`,
     cycleNote: `${daysLeftInCycle()} days left in cycle`,
+    paceNote: pace.note,
+    paceTone: pace.tone,
+    isOver,
   };
 }
 
@@ -283,7 +354,7 @@ export function getBudgetAttention(): readonly AttentionItem[] {
   const days = daysLeftInCycle();
 
   return budgetRows()
-    .filter((row) => row.tone !== "text")
+    .filter((row) => row.tone === "warn" || row.tone === "expense")
     .sort((a, b) => b.ratio - a.ratio)
     .map((row) => ({
       id: `attn-${row.id}`,
@@ -295,6 +366,10 @@ export function getBudgetAttention(): readonly AttentionItem[] {
 /** "6 category budgets · alerts from 75% of limit" — the screen's subtitle. */
 export function budgetsSubtitle(): string {
   const all = listBudgetLimits();
-  const lowest = Math.min(...all.map((budget) => budget.threshold));
+  const alerting = all.filter((budget) => !budget.isFixed);
+  if (alerting.length === 0) {
+    return `${all.length} category budgets · no alert thresholds set`;
+  }
+  const lowest = Math.min(...alerting.map((budget) => budget.threshold));
   return `${all.length} category budgets · alerts from ${formatPercent(lowest)} of limit`;
 }

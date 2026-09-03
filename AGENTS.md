@@ -517,6 +517,43 @@ cannot be changed, because the pairing of a category with a limit is what the bu
 anything a transaction cannot carry would read Rp0 for ever — the artboard's own
 select offered Education, Travel and Gifts & donations, none of which qualify.
 
+**The track shows where the threshold is.** A row states "Alerts at 80% of limit" in
+words and then draws a bar that said nothing about where 80% fell — the one number
+deciding when the row turns amber was invisible on the thing measuring it, which
+started to matter the moment the threshold became free text. `<ProgressTrack marker>`
+scores it. The tick stands 4px proud of the track at both ends on purpose: tinted to
+read against the rail it would vanish on a pale fill, and tinted for the fill it would
+vanish on the rail, so it is drawn where neither can hide it. Shading the rail past the
+threshold instead was tried and rejected — quieter, but it reads as a smudge rather
+than a mark, and it disappears exactly when the fill is deep enough to matter.
+
+**A settled fixed payment greys out.** Taking rent out of amber was right; leaving it
+the same colour as a budget at 62% was not — "paid in full" is a state, not the absence
+of one. A fixed commitment that has landed takes the `muted` tone and its tag reads
+**Paid** rather than "100%", because a percentage of a single payment says nothing: it
+is paid or it is not. The eye should pass over what is done and stop on what is not,
+which is also why the attention list names the two tones it wants rather than excluding
+the one it does not.
+
+**A fixed payment has no approach to warn about.** Rent goes from nothing to its whole
+limit in one transaction, so a threshold on it fires every month, for ever, with
+nothing to be done — an alarm that always sounds is the same as none. `isFixed` takes
+such a budget out of amber entirely: it reports only when it goes *over*, which on a
+fixed commitment means the amount itself changed, and that is the thing worth being
+told. The editor hides the threshold control for one, and `budgetsSubtitle` quotes the
+lowest threshold among the budgets that still have one. Raising the threshold to 100%
+instead does not work — `toneFor` warns at `>=`, and rent lands on exactly 100%.
+
+**What has been spent is a fact, not a caption.** The artboard set it as an 11.5px
+muted line under the allocation bar — the smallest text on the panel, for the figure
+the screen is opened to read. It is an `InsetBlock` now, with the amount at stat
+weight and the share as a `Tag`, so it reads as its own statement rather than a
+footnote on the total above it. Under it sits the pace: a share of the allocation
+means nothing alone, and 90% spent with 87% of the cycle gone is the sentence someone
+can act on, so `cycleElapsed()` supplies the comparison. The amount itself stays
+`text-text` — tinting spend green when it is on plan would collide with `--income`,
+which in this app means money coming *in*.
+
 `budgets.icon` holds the same `""`-means-default contract as `roles.icon` and
 `wallets.icon`; for a budget the read path resolves it to the category's own tile,
 and `ICON_BY_CATEGORY` sits in `lib/budget-fields.ts` rather than `lib/data/` because

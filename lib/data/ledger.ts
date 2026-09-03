@@ -27,6 +27,17 @@ export function daysLeftInCycle(): number {
 }
 
 /**
+ * How much of the cycle has run, as a ratio — 27/31 on the 27th.
+ *
+ * What a spend is measured against to say whether it is early or late. A budget
+ * 90% spent means nothing on its own; 90% spent with 87% of the month gone is
+ * the sentence someone can act on.
+ */
+export function cycleElapsed(): number {
+  return Number(TODAY.slice(8, 10)) / CYCLE_LAST_DAY;
+}
+
+/**
  * What was held on 31 July, across every wallet counted towards the total.
  *
  * This is the one figure a ledger cannot derive: a month of movements tells you

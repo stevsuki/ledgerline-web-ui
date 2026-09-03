@@ -241,11 +241,14 @@ export function ToggleRow({
   defaultChecked = false,
   labelFirst = true,
   required = false,
+  onChange,
 }: {
   readonly id: string;
   readonly label: string;
   readonly name?: string;
   readonly defaultChecked?: boolean;
+  /** Set when something on the form appears or disappears with the toggle. */
+  readonly onChange?: (next: boolean) => void;
   readonly labelFirst?: boolean;
   readonly required?: boolean;
 }) {
@@ -257,6 +260,9 @@ export function ToggleRow({
         type="checkbox"
         defaultChecked={defaultChecked}
         required={required}
+        onChange={
+          onChange ? (event) => onChange(event.target.checked) : undefined
+        }
       />
       <span className="dot" />
     </>
