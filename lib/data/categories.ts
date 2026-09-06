@@ -12,9 +12,12 @@ export const CATEGORIES: Readonly<Record<CategoryKey, Category>> = {
   income: { key: "income", label: "Client income", icon: "bank" },
 };
 
-export const CATEGORY_LABELS: readonly string[] = Object.values(CATEGORIES).map(
-  (category) => category.label,
-);
+/*
+ * The names a transaction can be filed under are no longer listed here: they
+ * are whatever the master list holds, which is editable. `categoryLabels()` in
+ * `lib/data/category-list.ts` answers for it — this file stays the artboard's
+ * fixture, the thing the ledger and the store are both seeded from.
+ */
 
 /** Spending categories map onto the ramp positionally, in the donut's own order. */
 export const RAMP_BY_CATEGORY_LABEL: Readonly<Record<string, RampStep>> = {

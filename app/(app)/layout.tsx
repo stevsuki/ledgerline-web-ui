@@ -5,7 +5,7 @@ import { AppChromeProvider } from "@/components/shell/app-chrome";
 import { NavRail } from "@/components/shell/nav-rail";
 import { TransactionSlideOver } from "@/components/shell/transaction-slide-over";
 import { getBudgets } from "@/lib/data/budgets";
-import { CATEGORY_LABELS } from "@/lib/data/categories";
+import { getCategoryPicker } from "@/lib/data/category-list";
 import { WALLET_NAMES } from "@/lib/data/transactions";
 import { SHELL_ID, WORKSPACE } from "@/lib/nav";
 import { requireProfile } from "@/lib/auth/session";
@@ -21,6 +21,10 @@ export default async function AppLayout({
 
   const store = await cookies();
   const isRailOpen = parseRailOpen(store.get(RAIL_COOKIE)?.value);
+
+  // The names the add-transaction sheet offers, read from the live list so a
+  // category added on /categories is selectable on the very next transaction.
+  const picker = await getCategoryPicker();
 
   // The slide-over's impact line needs to know how full each budget is.
   const budgets = await getBudgets();
@@ -44,7 +48,8 @@ export default async function AppLayout({
       </div>
 
       <TransactionSlideOver
-        categories={CATEGORY_LABELS}
+        categories={picker.labels}
+        fallbackCategory={picker.fallback}
         wallets={WALLET_NAMES}
         budgetWidths={budgetWidths}
         today={WORKSPACE.today}

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import {
   BudgetEditButton,
@@ -30,6 +31,9 @@ import { PAGE_META } from "@/lib/nav";
 import { BG_TONE, RAMP_BG, TEXT_TONE, cx } from "@/lib/tone";
 
 export const metadata: Metadata = { title: PAGE_META.budgets.title };
+
+/** The list a budget's category comes from — its own screen, one click away. */
+const CATEGORIES_PATH = "/categories";
 
 export default async function BudgetsPage() {
   const [budgets, shares] = await Promise.all([
@@ -108,6 +112,14 @@ export default async function BudgetsPage() {
               className="lg:sticky lg:top-[calc(var(--header-h)+24px)]"
               title="New budget"
               description="Applies from next cycle, 1 September."
+              // A budget is a limit on a category, so the list it draws from
+              // has to be one click away — including when the reason there is
+              // nothing to add is that every category already has one.
+              action={
+                <Link href={CATEGORIES_PATH} className="btn btn-ghost text-note">
+                  Categories
+                </Link>
+              }
             >
               {draft ? (
                 /* Keyed so a create resets the panel onto the next free category. */
@@ -119,7 +131,11 @@ export default async function BudgetsPage() {
               ) : (
                 <p className="text-muted text-note">
                   Every category a transaction can be filed under already has a
-                  budget. Edit one of them, or remove it first.
+                  budget. Edit one of them, remove one first, or{" "}
+                  <Link href={CATEGORIES_PATH} className="text-text underline">
+                    add a category
+                  </Link>{" "}
+                  to budget against.
                 </p>
               )}
             </SectionPanel>

@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { useAppChrome } from "@/components/shell/app-chrome";
 import { SlideOver } from "@/components/ui/slide-over";
+import { CATEGORY_NAME_MAX_LENGTH } from "@/lib/category-fields";
 import { cx } from "@/lib/tone";
 
 const QUICK_AMOUNTS = ["25.000", "62.000", "150.000", "425.000"] as const;
@@ -13,13 +14,66 @@ type TransactionKind = "expense" | "income";
 const INCOME_IMPACT =
   "Adds to August income and lifts your savings rate above 41%.";
 
+/**
+ * How full the budget for this category is, or "" when none is measured against
+ * it.
+ *
+ * The categories come from the API and the budgets are still a fixture, so the
+ * two lists agree on spelling more often than not — "Food & Drink" against the
+ * artboard's "Food & drink" — and a case-insensitive match is what carries the
+ * ones that do. Anything left over genuinely has no budget, and the line says
+ * so rather than printing a dash.
+ */
+function budgetWidthFor(
+  budgetWidths: Readonly<Record<string, string>>,
+  category: string,
+): string {
+  const exact = budgetWidths[category];
+  if (exact) {
+    return exact;
+  }
+
+  const wanted = category.toLowerCase();
+  const found = Object.entries(budgetWidths).find(
+    ([label]) => label.toLowerCase() === wanted,
+  );
+  return found?.[1] ?? "";
+}
+
+/**
+ * What the impact line says, unwound rather than nested: income, spending that
+ * is naming a category of its own, and spending filed under an existing one.
+ */
+function impactOf(
+  kind: TransactionKind,
+  category: string,
+  newCategory: string,
+  budgetWidths: Readonly<Record<string, string>>,
+): string {
+  if (kind === "income") {
+    return INCOME_IMPACT;
+  }
+  if (newCategory !== "") {
+    return `Files under ${newCategory}, which this transaction creates — nothing is budgeted against it yet.`;
+  }
+
+  const width = budgetWidthFor(budgetWidths, category);
+  if (width === "") {
+    return `Counts against ${category}. No budget is measured against it yet.`;
+  }
+  return `Counts against ${category} — that budget sits at ${width} of its limit.`;
+}
+
 export function TransactionSlideOver({
   categories,
+  fallbackCategory,
   wallets,
   budgetWidths,
   today,
 }: {
   readonly categories: readonly string[];
+  /** The bucket that offers to be named instead — "Other". */
+  readonly fallbackCategory: string;
   readonly wallets: readonly string[];
   /** Category label → how full that budget is, for the impact line. */
   readonly budgetWidths: Readonly<Record<string, string>>;
@@ -29,7 +83,11 @@ export function TransactionSlideOver({
 
   const [kind, setKind] = useState<TransactionKind>("expense");
   const [amount, setAmount] = useState("62.000");
-  const [category, setCategory] = useState("Food & drink");
+  // The first of whatever the list holds, rather than a name typed in here: the
+  // categories are the account's own now, and a hard-coded default would leave
+  // the select showing one thing and this state holding another.
+  const [category, setCategory] = useState(categories[0] ?? "");
+  const [customName, setCustomName] = useState("");
   const [wallet, setWallet] = useState("GoPay");
   const [isRecurring, setRecurring] = useState(false);
 
@@ -38,10 +96,11 @@ export function TransactionSlideOver({
     showToast(`Transaction saved to ${wallet}`);
   }
 
-  const impact =
-    kind === "income"
-      ? INCOME_IMPACT
-      : `Counts against ${category} — that budget sits at ${budgetWidths[category] ?? "—"} of its limit.`;
+  // Only the fallback offers to be named, and only a name that was actually
+  // typed counts — an empty box means this one really is just Other.
+  const isNaming = category === fallbackCategory;
+  const newCategory = isNaming ? customName.trim() : "";
+  const impact = impactOf(kind, category, newCategory, budgetWidths);
 
   return (
     <SlideOver
@@ -120,6 +179,31 @@ export function TransactionSlideOver({
           ))}
         </select>
       </div>
+
+      {/*
+        Other is the one category that can be told what it really is. Naming it
+        here is the same act as adding one on the categories screen — it joins
+        the master list, so the next transaction can pick it by name.
+      */}
+      {isNaming ? (
+        <div>
+          <div className="field">
+            <label htmlFor="tx-category-name">Name this category</label>
+            <input
+              id="tx-category-name"
+              className="input"
+              value={customName}
+              maxLength={CATEGORY_NAME_MAX_LENGTH}
+              placeholder="Course fees"
+              onChange={(event) => setCustomName(event.target.value)}
+            />
+          </div>
+          <p className="text-meta text-muted mt-1.5">
+            Kept in Categories from here on. Leave it blank to file this one
+            under {fallbackCategory}.
+          </p>
+        </div>
+      ) : null}
 
       <div className="field">
         <label htmlFor="tx-wallet">Wallet</label>

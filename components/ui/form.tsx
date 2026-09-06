@@ -3,7 +3,8 @@ import type { ReactNode } from "react";
 import { Icon } from "@/components/ui/icon";
 import type { IconName } from "@/components/ui/icon-sprite";
 
-import { cx } from "@/lib/tone";
+import { RAMP_BG, cx } from "@/lib/tone";
+import type { RampStep } from "@/types/ledger";
 
 /** Native form controls on the design system's classes. */
 
@@ -180,14 +181,16 @@ export function SelectField({
 }
 
 /**
- * The icon a record wears, as a row of tiles. A radio group rather than a
- * select, because the whole point of the field is seeing the icon — and native
- * radios mean the arrow keys work and the choice posts with no state at all.
+ * A row of tiles, one of which is picked. A radio group rather than a select,
+ * because the whole point of the field is seeing the choices — and native
+ * radios mean the arrow keys work and the answer posts with no state at all.
  *
  * Pass `value` + `onChange` to drive it from state, exactly as `SelectField`
- * does; omit both for a plain form.
+ * does; omit both for a plain form. The icon picker and the colour picker are
+ * the same control with a different thing drawn inside the tile, so they are
+ * one component rather than two that drift.
  */
-export function IconChoiceField({
+function ChoiceGroup<T extends string>({
   id,
   label,
   choices,
@@ -196,16 +199,21 @@ export function IconChoiceField({
   onChange,
   name,
   note,
+  optionLabel,
+  render,
 }: {
   readonly id: string;
   readonly label: string;
-  readonly choices: readonly IconName[];
-  readonly defaultValue?: IconName;
-  readonly value?: IconName;
-  readonly onChange?: (next: IconName) => void;
+  readonly choices: readonly T[];
+  readonly defaultValue?: T;
+  readonly value?: T;
+  readonly onChange?: (next: T) => void;
   readonly name?: string;
-  /** The line under the row, saying where the icon shows up. */
+  /** The line under the row, saying where the choice shows up. */
   readonly note?: string;
+  /** What the tile is called, for the radio nobody can see the shape of. */
+  readonly optionLabel: (choice: T) => string;
+  readonly render: (choice: T) => ReactNode;
 }) {
   const isControlled = value !== undefined;
 
@@ -214,22 +222,81 @@ export function IconChoiceField({
       <legend>{label}</legend>
       <div className="flex flex-wrap gap-2">
         {choices.map((choice) => (
-          <label key={choice} className="icon-choice" title={choice}>
+          <label
+            key={choice}
+            className="icon-choice"
+            title={optionLabel(choice)}
+          >
             <input
               type="radio"
               name={name ?? id}
               value={choice}
-              aria-label={choice}
+              aria-label={optionLabel(choice)}
               {...(isControlled
                 ? { checked: value === choice, onChange: () => onChange?.(choice) }
                 : { defaultChecked: defaultValue === choice })}
             />
-            <Icon name={choice} size={16} />
+            {render(choice)}
           </label>
         ))}
       </div>
       {note ? <p className="text-meta text-muted mt-1.5">{note}</p> : null}
     </fieldset>
+  );
+}
+
+/** The icon a record wears — a name from this app's sprite, never a picture. */
+export function IconChoiceField(
+  props: Readonly<{
+    id: string;
+    label: string;
+    choices: readonly IconName[];
+    defaultValue?: IconName;
+    value?: IconName;
+    onChange?: (next: IconName) => void;
+    name?: string;
+    note?: string;
+  }>,
+) {
+  return (
+    <ChoiceGroup
+      {...props}
+      optionLabel={(choice) => choice}
+      render={(choice) => <Icon name={choice} size={16} />}
+    />
+  );
+}
+
+/**
+ * The step of the seven-colour ramp a record is drawn with.
+ *
+ * The swatch is the whole label — a step has no name a person would recognise,
+ * and naming it by hue would lie in one of the two themes — so the radio
+ * carries its position instead, which is the one thing true in both.
+ */
+export function ColorChoiceField(
+  props: Readonly<{
+    id: string;
+    label: string;
+    choices: readonly RampStep[];
+    defaultValue?: RampStep;
+    value?: RampStep;
+    onChange?: (next: RampStep) => void;
+    name?: string;
+    note?: string;
+    optionLabel: (choice: RampStep) => string;
+  }>,
+) {
+  return (
+    <ChoiceGroup
+      {...props}
+      render={(choice) => (
+        <span
+          aria-hidden="true"
+          className={cx("size-4 rounded-[5px]", RAMP_BG[choice])}
+        />
+      )}
+    />
   );
 }
 

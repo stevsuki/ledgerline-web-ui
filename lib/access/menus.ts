@@ -10,6 +10,7 @@ const PATH_BY_CODE: Readonly<Record<string, string>> = {
   transactions: "/transactions",
   budgets: "/budgets",
   wallets: "/wallets",
+  categories: "/categories",
   goals: "/goals",
   recurring: "/recurring",
   insights: "/insights",
@@ -92,6 +93,15 @@ const MENU_CATALOGUE: readonly PermissionModule[] = [
   { id: "b0000000-0000-0000-0000-000000000012", code: "audit", label: "Audit log", icon: "search" },
   { id: "b0000000-0000-0000-0000-000000000013", code: "settings", label: "Settings", icon: "gear" },
   { id: "b0000000-0000-0000-0000-000000000014", code: "mobile", label: "Mobile", icon: "phone" },
+  // A menu of its own rather than a panel inside Budgets: `/categories` is a
+  // real backend resource (full CRUD, user-scoped, its own error codes) while
+  // budgets has no table and no endpoint at all — only
+  // `GET /categories/options?slug=budget`, which is the budget form *reading*
+  // this list. It belongs beside Budgets in the rail, not inside it: the seed's
+  // `money` parent (a0000000-…-0002) already draws that heading.
+  // Until the migration adds the row, `/auth/me` returns no such menu and the
+  // rail cannot show it.
+  { id: "b0000000-0000-0000-0000-000000000015", code: "categories", label: "Categories", icon: "tag" },
 ];
 
 /** Every page of the tree, groups unwrapped, in display order. */

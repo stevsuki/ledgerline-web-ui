@@ -35,6 +35,10 @@ export const PAGE_META = {
     title: "Wallets",
     subtitle: "Accounts and balances you keep by hand",
   },
+  categories: {
+    title: "Categories",
+    subtitle: "The master list every transaction is filed under",
+  },
   goals: { title: "Goals", subtitle: "3 active goals · Rp206.400.000 saved" },
   recurring: {
     title: "Recurring",

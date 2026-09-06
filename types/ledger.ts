@@ -22,6 +22,13 @@ export type Category = {
   readonly icon: IconName;
 };
 
+/**
+ * Which way a category runs. It is not cosmetic: only a spending category can
+ * be budgeted, and only a spending category takes a step of the seven-colour
+ * ramp — income is where money comes from, not somewhere it goes.
+ */
+export type CategoryKind = "expense" | "income";
+
 export type WalletName =
   | "BCA Payroll"
   | "BCA Card"

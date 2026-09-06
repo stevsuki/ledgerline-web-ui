@@ -280,6 +280,87 @@ The replacement for syncing, when it comes, is **CSV import** of an m-BCA or Liv
 e-statement — free, and nobody's permission is needed. It belongs to transactions, not
 here.
 
+### The sixth departure: a category is a record, not a hard-coded key
+
+The artboard's `CATS` map is eight fixed keys, and the whole app leans on the count:
+`CategoryKey` is a union, the seven-step ramp is handed out by position, and
+`ICON_BY_CATEGORY` is exhaustive over it. The backend keeps categories in two tables
+now, so the list is something people change — and the moment it is, "the seventh
+category is `c7`" stops being true.
+
+**What the backend actually holds** (migrations 000020–000024), because the two words
+do not mean what they look like: `master_categories` is a global list of **names
+only** — id and name, seven rows, Housing through Others — and `categories` is
+**per user**, with `master_category_id` (nullable, `ON DELETE SET NULL`), `name`,
+`type` (`income` | `expense`), soft delete, and one name per user enforced by a
+partial unique index on `(user_id, LOWER(name))`. `SeedDefaults` copies the seven
+master rows into a new account at registration, **all as `expense`**, so a fresh user
+has no income category at all until they add one. The routes are the full set —
+`GET|POST /categories`, `GET|PATCH|DELETE /categories/{id}`, and
+`GET /categories/options?slug=filter|budget`, where `budget` narrows to expense.
+
+`/categories` is that list, and it is **a menu of its own, sitting beside Budgets
+rather than inside it**. Three reasons, in the order they matter:
+
+- Categories is a real backend resource with its own CRUD and its own error codes;
+  **budgets has no table and no endpoint at all**. The only trace of it back there is
+  `slug=budget` on the categories options call — which is the budget form *reading*
+  this list. Folding the live resource into the fixture screen would tie the one that
+  can go live today to the one that cannot.
+- A menu is the only unit this app grants a permission on. Renaming or removing a
+  category reaches every transaction filed under it, so who may do that has to stay
+  separable from who may set a limit. (Nothing enforces it yet — `/categories` is
+  behind `Authenticate` only, as `/users` and `/roles` still are.)
+- Adjacency was never the argument for merging: the menus table already has parent
+  groups, and `budgets` sits under **money** (`a0000000-…-0002`). A `categories` row
+  in that same parent puts the two under one rail heading with no code at all.
+
+Migration id `b0000000-0000-0000-0000-000000000015` is reserved for it in
+`MENU_CATALOGUE`; until that row exists, `/auth/me` returns no such menu and the rail
+cannot draw it. The two screens link to each other instead of sharing a page: the
+"New budget" panel carries a **Categories** link (and says so in its empty state), and
+the category list carries a **Budgets** one.
+
+Four things the screen states rather than assumes:
+
+1. **It states no money figure at all.** What was spent per category is the dashboard's
+   donut and the insights ranking; what is left of a limit is the budgets screen. A
+   second copy of either would be a number with two owners, and the two would disagree
+   the first time one changed. This screen answers only what nothing else does: which
+   categories exist, which way each runs, what it is drawn with, and where it came
+   from. The stat strip counts rows, not rupiah. **Keep it that way** — the pull to
+   add "spent this month" here is exactly the duplication the split was meant to avoid.
+2. **The colour is stored, not counted.** `<ColorChoiceField>` asks for a ramp step and
+   the editor posts it as `color`, so adding a category above another one does not
+   repaint the donut under it. Migration **000026** adds `categories.icon` and
+   `categories.color` for it — `VARCHAR(50)` / `VARCHAR(10)`, both `NOT NULL DEFAULT
+   ''`, holding the same `""`-means-default contract as `roles.icon` and
+   `wallets.icon`, and not nullable only because rows written before them would come
+   back NULL into a non-pointer string. `stepOf` resolves `""` from
+   `MASTER_DEFAULTS` — the seven master ids are pinned by migrations 000020 and
+   000023 — and then, for a category with no master row, `index % 7`. That last step
+   is the weak one: past seven, two categories share a step, and two slices of one
+   colour cannot be told apart.
+3. **The fallback stays.** `Others` (master `…-0007`) is where spending nobody named
+   lands and what the add-transaction sheet hangs "name this category" on, so it is
+   the one row the sheet will not remove and the one whose type it will not change —
+   an income bucket would swallow unnamed spending silently. Nothing else is guarded,
+   because nothing else can be: there is no transactions table and no budgets table
+   back there to point at a category yet.
+4. **Naming Other on a transaction is the same act as adding one here.** The
+   add-transaction sheet reveals "Name this category" when the fallback is picked, and
+   what it creates joins the same list — one way a category comes into being, not
+   two. `getCategoryPicker()` reads the API for exactly that reason: a category added
+   on this screen is selectable on the very next transaction.
+
+The reader is `lib/data/category-list.ts` rather than `categories.ts` because that
+name is the artboard fixture the ledger still reads. That fixture is also the picker's
+fallback when the API cannot be reached: the sheet it feeds saves nothing yet and
+every other screen is summed from those same rows, so falling back keeps the mock
+whole instead of leaving an empty select. `budgets.ts` and `ledger.ts` are still on
+the fixture — making `CategoryKey` dynamic is the next step, not this one, and it is
+what will let a budget be measured against a category the API returned.
+
 ---
 
 ## 4. Architecture — SSR first, CSR only where it must be
@@ -314,6 +395,7 @@ Keep it this short. Adding one is a decision, not a detail.
 | `CategoryDonut` | hover highlights slice + legend row |
 | `TransactionSlideOver` | modal state, focus trap, Escape |
 | `WalletEditorProvider` | the add/edit slide-over over `saveWalletAction`, plus the kind select that reveals a card’s fields |
+| `CategoryEditorProvider` | the add/edit sheet over `saveCategoryAction`, plus the type select the icon follows |
 | `BudgetEditorProvider` / `NewBudgetForm` | the shared budget form over `saveBudgetAction`, and the sheet every row's pencil opens |
 | `ThresholdField` | the Notify-me-at segments, the Custom field they reveal, and the line pricing the choice |
 | `UserEditorProvider` | same, plus `useActionState` over `saveUserAction` |
@@ -362,7 +444,8 @@ the param, so ordering ships no JavaScript and survives a reload.
 
 `lib/data/<domain>.ts` exports `async` query functions (`getTransactions(filters)`,
 `getUsers(filters)`, …) that pages `await`. That async boundary is what made the next
-step cheap: **users, roles, wallets, the audit log and the sidebar menus are live** —
+step cheap: **users, roles, wallets, categories, the audit log and the sidebar menus
+are live** —
 they call `ledgerline-backend` through `lib/api/`, and no component changed when they
 stopped being fixtures. Every other domain is still a typed fixture behind the same
 signature.
@@ -455,6 +538,19 @@ Gaps in the API the screens work around today, each marked where it bites:
 - Actions are dotted codes (`auth.login`) and the backend ships no label for them,
   unlike modules and severities. `lib/audit-labels.ts` names the ones it knows and
   prettifies the rest, so a newly recorded action reads sensibly without a release.
+- `GET /categories` returns the list whole and does not page. Fine for a household's
+  handful; past that it needs the same `page` / `per_page` the other lists take.
+- `DELETE /categories/{id}` is a soft delete with no reference check — nothing points
+  at a category yet, because neither transactions nor budgets exist back there. The
+  day they do, the rules the sheet states (a transaction filed under it, a budget
+  measured against it, the Others bucket itself) have to be enforced in SQL rather
+  than only in the client.
+- A new account is seeded with the seven master rows **all as `expense`**, so it has
+  no income category until someone adds one. Nothing in the API says which row is the
+  fallback either — the client reads that off `master_category_id` being `…-0007`.
+- Nothing under `/categories` is written to the audit log, the same gap `/wallets`
+  has — and it bites harder here, since a rename reaches every transaction filed
+  under the category.
 - There is no `GET /menus`. `/auth/me` returns only the menus the signed-in role may
   *read*, which is the right list for the rail and the wrong one for the role editor,
   so `MENU_CATALOGUE` in `lib/access/menus.ts` carries the ids migration 000008 pins.
@@ -584,7 +680,7 @@ is the only content of a control needs an accessible name on the control.
 (auth)/  sign-in · register · reset-password        no app shell
 (app)/   layout = nav rail + AppHeader
          /                    Dashboard
-         /transactions  /budgets  /wallets  /goals  /recurring
+         /transactions  /budgets  /wallets  /categories  /goals  /recurring
          /insights  /shared  /reminders
          /users  /roles  /roles/new  /roles/[roleId]  /audit
          /settings  /mobile

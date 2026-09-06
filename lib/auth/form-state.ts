@@ -52,6 +52,14 @@ const MESSAGE_BY_CODE: Partial<Readonly<Record<ApiErrorCode, string>>> = {
   ROLE_INVALID_MENU: "One of the selected menus no longer exists. Reload the page.",
   ROLE_INVALID_DATA: CHECK_FIELDS,
 
+  /* the category editor */
+  CATEGORY_NAME_TAKEN: "A category already goes by that name.",
+  CATEGORY_NOT_FOUND: "That category no longer exists. Reload the page.",
+  CATEGORY_INVALID_TYPE: "A category is either income or expense.",
+  CATEGORY_INVALID_MASTER:
+    "That master category no longer exists. Reload the page.",
+  CATEGORY_INVALID_DATA: CHECK_FIELDS,
+
   /* the wallet editor */
   WALLET_NAME_TAKEN: "A wallet with that name already exists.",
   WALLET_NOT_FOUND: "That wallet no longer exists. Reload the page.",

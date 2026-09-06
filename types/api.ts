@@ -46,6 +46,10 @@ export const API_ERROR_CODES = [
   "CATEGORY_NAME_TAKEN",
   "CATEGORY_INVALID_TYPE",
   "CATEGORY_INVALID_DATA",
+  // In `internal/domain/error_codes.go` and not yet in `ERROR_CODES.md`, the
+  // same drift the six `WALLET_*` codes are in.
+  "CATEGORY_INVALID_MASTER",
+  "CATEGORY_INVALID_SLUG",
 
   /* wallet */
   "WALLET_NOT_FOUND",
