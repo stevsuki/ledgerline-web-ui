@@ -69,6 +69,19 @@ const MESSAGE_BY_CODE: Partial<Readonly<Record<ApiErrorCode, string>>> = {
     "A credit limit and a statement day belong to a credit card only.",
   WALLET_INVALID_DATA: CHECK_FIELDS,
 
+  /* the budget editor */
+  BUDGET_NOT_FOUND: "That budget no longer exists. Reload the page.",
+  BUDGET_CATEGORY_TAKEN:
+    "That category already has a budget. Edit that one instead.",
+  BUDGET_INVALID_CATEGORY:
+    "A budget can only limit one of your own spending categories.",
+  BUDGET_INVALID_CURRENCY: "Pick one of the currencies offered.",
+  BUDGET_INVALID_LIMIT: "Enter the monthly limit as a number above zero.",
+  BUDGET_INVALID_THRESHOLD:
+    "Enter a whole percentage between 1 and 100.",
+  BUDGET_INVALID_FIXED:
+    "A fixed payment is reported only when it goes over its whole limit.",
+
   /* generic */
   VALIDATION_ERROR: CHECK_FIELDS,
   INVALID_INPUT: CHECK_FIELDS,

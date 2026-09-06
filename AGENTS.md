@@ -302,11 +302,11 @@ has no income category at all until they add one. The routes are the full set �
 `/categories` is that list, and it is **a menu of its own, sitting beside Budgets
 rather than inside it**. Three reasons, in the order they matter:
 
-- Categories is a real backend resource with its own CRUD and its own error codes;
-  **budgets has no table and no endpoint at all**. The only trace of it back there is
-  `slug=budget` on the categories options call — which is the budget form *reading*
-  this list. Folding the live resource into the fixture screen would tie the one that
-  can go live today to the one that cannot.
+- Each is a backend resource with its own table, CRUD and error codes, and the one
+  place they touch is `GET /categories/options?slug=budget` — the budget form
+  *reading* this list, never owning it. `ON DELETE RESTRICT` on
+  `budgets.category_id` is that boundary in SQL: a category with a budget against
+  it cannot be removed from the screen that owns categories.
 - A menu is the only unit this app grants a permission on. Renaming or removing a
   category reaches every transaction filed under it, so who may do that has to stay
   separable from who may set a limit. (Nothing enforces it yet — `/categories` is
@@ -444,8 +444,8 @@ the param, so ordering ships no JavaScript and survives a reload.
 
 `lib/data/<domain>.ts` exports `async` query functions (`getTransactions(filters)`,
 `getUsers(filters)`, …) that pages `await`. That async boundary is what made the next
-step cheap: **users, roles, wallets, categories, the audit log and the sidebar menus
-are live** —
+step cheap: **users, roles, wallets, categories, budgets, the audit log and the
+sidebar menus are live** —
 they call `ledgerline-backend` through `lib/api/`, and no component changed when they
 stopped being fixtures. Every other domain is still a typed fixture behind the same
 signature.
@@ -551,6 +551,22 @@ Gaps in the API the screens work around today, each marked where it bites:
 - Nothing under `/categories` is written to the audit log, the same gap `/wallets`
   has — and it bites harder here, since a rename reaches every transaction filed
   under the category.
+- **`spent` is hard-coded to zero on every budget.** `spentThisCycle` in
+  `budget_repository.go` is the literal `0::bigint AS spent`, because there is no
+  transactions table to sum yet. So the cards read Rp0, "Spent so far" reads Rp0,
+  and Needs attention is permanently empty — the screen is wired end to end and
+  waiting on one query. Nothing on this side changes when that literal becomes a
+  `SUM`.
+- `GET /budgets` and `/budgets/overview` take no `?period=`; the service reads
+  `time.Now()` in the server's own zone, so the cycle is the server's month rather
+  than Jakarta's. It only shows near a month boundary, and only until the endpoint
+  takes a period.
+- `GET /budgets` returns the list whole and does not page, as `/categories` does.
+- Nothing under `/budgets` is written to the audit log, the same gap `/wallets` and
+  `/categories` have.
+- `GET /categories/options` answers `{id, name}` only, so it cannot say which
+  categories already have a budget. `toChoices` subtracts the budget list on this
+  side; past a household's handful that belongs in the query.
 - There is no `GET /menus`. `/auth/me` returns only the menus the signed-in role may
   *read*, which is the right list for the rail and the wrong one for the role editor,
   so `MENU_CATALOGUE` in `lib/access/menus.ts` carries the ids migration 000008 pins.
@@ -588,11 +604,28 @@ ISO date — every one the artboard printed was a day out.
 
 ### A budget is a limit somebody chose, and nothing else
 
-Its `limit`, `threshold`, `icon` and `rollover` are input; what it has spent is
-`categorySpend` and is never stored. `lib/data/budget-store.ts` is the one mutable
-thing in `lib/data/` and says so — there is no `/budgets` endpoint yet, so an edit
-lives as long as the server process. `saveBudgetAction` is already shaped like the
-call that will replace it, so swapping two lines is the whole change.
+Its `monthly_limit`, `alert_threshold_percent`, `is_fixed` and `rollover` are input;
+what it has spent is summed per cycle by the backend and never stored. `budgets`
+(migration 000027) holds one row per category, enforced by
+`budgets_user_category_unique_idx`, with the fixed rule in SQL as well as in the
+form: `budgets_fixed_threshold_check` refuses any threshold but 100 on a fixed row.
+
+**Two calls serve the screen, and `getBudgetsScreen()` awaits them together** —
+`GET /budgets` for the cards, `GET /budgets/overview` for the panel above them —
+for the reason `getWalletsScreen()` does: the header states the sum of the very
+cards printed under it, and read a moment apart the two could disagree in front of
+somebody who can add six figures themselves. A failure on either empties the whole
+screen; only `GET /categories/options?slug=budget` degrades on its own, because it
+feeds nothing but the "New budget" panel, which then says why it is offering
+nothing.
+
+**Every percentage is the backend's whole number, used as it arrives.** `toneFor`
+here and `budgetAttention` in the service compare the same two integers —
+`used_percent` against `alert_threshold_percent` — so a card cannot be amber while
+the attention list above it stays silent. Re-deriving a ratio on this side is how
+that pair would come apart, which is also why the overview's `shares` are taken as
+apportioned rather than recomputed: the backend already gave the rounding leftovers
+to the last share so the ribbon closes.
 
 **Notify me at is a threshold, not a menu of three.** The artboard offered 70/80/90
 — 70% was used by nothing, and the 75% Utilities was already set to could not be
@@ -646,15 +679,18 @@ the screen is opened to read. It is an `InsetBlock` now, with the amount at stat
 weight and the share as a `Tag`, so it reads as its own statement rather than a
 footnote on the total above it. Under it sits the pace: a share of the allocation
 means nothing alone, and 90% spent with 87% of the cycle gone is the sentence someone
-can act on, so `cycleElapsed()` supplies the comparison. The amount itself stays
+can act on, so the overview's `cycle_elapsed_percent` supplies it. The amount stays
 `text-text` — tinting spend green when it is on plan would collide with `--income`,
 which in this app means money coming *in*.
 
-`budgets.icon` holds the same `""`-means-default contract as `roles.icon` and
-`wallets.icon`; for a budget the read path resolves it to the category's own tile,
-and `ICON_BY_CATEGORY` sits in `lib/budget-fields.ts` rather than `lib/data/` because
-the picker re-reads it on every change of the Category select — the same trade
-`ICON_BY_KIND` makes for wallets.
+**A budget has no icon of its own, and the form does not ask for one.** The tile
+and the ramp step both ride in on the category — `BudgetResponseDTO` carries the
+category's `icon` and `color`, and a category with neither falls back to
+`ICON_BY_CATEGORY_KIND.expense` and to its position in the ramp. Asking twice is
+what would let one category read two ways depending on which screen you were on,
+so the choice lives on `/categories` and nowhere else. That is also why the ramp
+step is *stored* rather than counted: adding a budget above another one must not
+repaint the bar under it.
 
 `lib/format.ts` owns money formatting. The artboard's `F()` is
 `'Rp' + Math.abs(n).toLocaleString('de-DE')` — Indonesian dot grouping, with the sign

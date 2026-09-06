@@ -9,7 +9,12 @@ import {
 import { AppScreen } from "@/components/shell/app-screen";
 import { Icon } from "@/components/ui/icon";
 import { ScreenStack, SplitGrid } from "@/components/ui/layout";
-import { InsetBlock, Panel, SectionPanel } from "@/components/ui/panel";
+import {
+  InsetBlock,
+  Panel,
+  PanelNotice,
+  SectionPanel,
+} from "@/components/ui/panel";
 import {
   IconTile,
   ProgressTrack,
@@ -17,14 +22,9 @@ import {
   Tag,
 } from "@/components/ui/primitives";
 import {
-  blankDraft,
-  budgetableCategories,
-  budgetsSubtitle,
-  getAllocationShares,
-  getBudgetAllocation,
-  getBudgetAttention,
-  getBudgets,
+  getBudgetsScreen,
   type Allocation,
+  type AttentionItem,
   type BudgetRow,
 } from "@/lib/data/budgets";
 import { PAGE_META } from "@/lib/nav";
@@ -36,73 +36,54 @@ export const metadata: Metadata = { title: PAGE_META.budgets.title };
 const CATEGORIES_PATH = "/categories";
 
 export default async function BudgetsPage() {
-  const [budgets, shares] = await Promise.all([
-    getBudgets(),
-    getAllocationShares(),
-  ]);
-  const allocation = getBudgetAllocation();
-  const attention = getBudgetAttention();
-  const categories = budgetableCategories();
-  const draft = blankDraft();
+  const screen = await getBudgetsScreen();
 
   return (
-    <AppScreen title={PAGE_META.budgets.title} subtitle={budgetsSubtitle()}>
+    <AppScreen title={PAGE_META.budgets.title} subtitle={screen.subtitle}>
       <BudgetEditorProvider>
         <ScreenStack>
+          {screen.error ? <PanelNotice>{screen.error}</PanelNotice> : null}
+
           {/* Two sections in one panel shell. */}
           <div className="border-divider bg-divider grid gap-px overflow-hidden rounded-[var(--radius-panel)] border shadow-md [grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1.6fr))]">
             <section className="bg-surface panel-pad min-w-0">
-              <h2 className="panel-kicker">August allocated</h2>
+              <h2 className="panel-kicker">Allocated this cycle</h2>
               <p className="mt-2.5 flex flex-wrap items-baseline gap-x-3">
                 <span className="text-[26px] font-semibold tracking-[-0.03em] sm:text-[30px]">
-                  {allocation.total}
+                  {screen.allocation.total}
                 </span>
                 <span className="text-muted text-note">
-                  {allocation.categoryCount}
+                  {screen.allocation.categoryCount}
                 </span>
               </p>
               <StackedBar
                 className="mt-4"
-                segments={shares.map((share) => ({
+                segments={screen.shares.map((share) => ({
                   id: share.id,
                   width: share.width,
                   fillClass: RAMP_BG[share.step],
                 }))}
               />
 
-              <SpentBlock allocation={allocation} />
+              <SpentBlock allocation={screen.allocation} />
+
+              {/* What the totals above cannot honestly absorb, stated. */}
+              {screen.allocation.uncountedNote ? (
+                <p className="text-meta text-muted mt-2.5">
+                  {screen.allocation.uncountedNote}
+                </p>
+              ) : null}
             </section>
 
             <section className="bg-surface panel-pad">
               <h2 className="panel-kicker">Needs attention</h2>
-              <ul className="mt-3 flex flex-col gap-[11px]">
-                {attention.map((item) => (
-                  <li key={item.id} className="flex items-start gap-[9px]">
-                    <Icon
-                      name="warn"
-                      size={15}
-                      className={cx("mt-0.5", TEXT_TONE[item.tone])}
-                    />
-                    <p className="text-note leading-snug">
-                      {item.parts.map((part) =>
-                        part.strong ? (
-                          <strong key={part.text} className="font-semibold">
-                            {part.text}
-                          </strong>
-                        ) : (
-                          <span key={part.text}>{part.text}</span>
-                        ),
-                      )}
-                    </p>
-                  </li>
-                ))}
-              </ul>
+              <AttentionList items={screen.attention} />
             </section>
           </div>
 
           <SplitGrid ratio={1.5}>
             <div className="flex flex-col gap-3.5">
-              {budgets.map((budget) => (
+              {screen.rows.map((budget) => (
                 <BudgetCard key={budget.id} budget={budget} />
               ))}
             </div>
@@ -111,7 +92,7 @@ export default async function BudgetsPage() {
             <SectionPanel
               className="lg:sticky lg:top-[calc(var(--header-h)+24px)]"
               title="New budget"
-              description="Applies from next cycle, 1 September."
+              description="Measured against this cycle, and every one after it."
               // A budget is a limit on a category, so the list it draws from
               // has to be one click away — including when the reason there is
               // nothing to add is that every category already has one.
@@ -121,21 +102,20 @@ export default async function BudgetsPage() {
                 </Link>
               }
             >
-              {draft ? (
+              {screen.draft ? (
                 /* Keyed so a create resets the panel onto the next free category. */
                 <NewBudgetForm
-                  key={draft.category}
-                  draft={draft}
-                  categories={categories}
+                  key={screen.draft.categoryId}
+                  draft={screen.draft}
+                  categories={screen.categories}
                 />
               ) : (
                 <p className="text-muted text-note">
-                  Every category a transaction can be filed under already has a
-                  budget. Edit one of them, remove one first, or{" "}
+                  {screen.emptyNote}{" "}
                   <Link href={CATEGORIES_PATH} className="text-text underline">
-                    add a category
+                    Add a category
                   </Link>{" "}
-                  to budget against.
+                  to budget against, or edit one of the budgets you have.
                 </p>
               )}
             </SectionPanel>
@@ -143,6 +123,49 @@ export default async function BudgetsPage() {
         </ScreenStack>
       </BudgetEditorProvider>
     </AppScreen>
+  );
+}
+
+/**
+ * Nothing over its threshold is a result, not a blank panel — and it is the
+ * answer this panel exists to give, so it says it rather than showing nothing.
+ */
+function AttentionList({
+  items,
+}: {
+  readonly items: readonly AttentionItem[];
+}) {
+  if (items.length === 0) {
+    return (
+      <p className="text-muted text-note mt-3 leading-snug">
+        Every budget is inside its own alert threshold.
+      </p>
+    );
+  }
+
+  return (
+    <ul className="mt-3 flex flex-col gap-[11px]">
+      {items.map((item) => (
+        <li key={item.id} className="flex items-start gap-[9px]">
+          <Icon
+            name="warn"
+            size={15}
+            className={cx("mt-0.5", TEXT_TONE[item.tone])}
+          />
+          <p className="text-note leading-snug">
+            {item.parts.map((part) =>
+              part.strong ? (
+                <strong key={part.text} className="font-semibold">
+                  {part.text}
+                </strong>
+              ) : (
+                <span key={part.text}>{part.text}</span>
+              ),
+            )}
+          </p>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -174,11 +197,14 @@ function SpentBlock({ allocation }: { readonly allocation: Allocation }) {
 
       <p className="text-meta mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
         <span className="text-muted">
-          {allocation.remainingNote} · {allocation.cycleNote}
+          {allocation.remainingNote}
+          {allocation.cycleNote ? ` · ${allocation.cycleNote}` : ""}
         </span>
-        <span className={cx("font-semibold", TEXT_TONE[allocation.paceTone])}>
-          {allocation.paceNote}
-        </span>
+        {allocation.paceNote ? (
+          <span className={cx("font-semibold", TEXT_TONE[allocation.paceTone])}>
+            {allocation.paceNote}
+          </span>
+        ) : null}
       </p>
     </InsetBlock>
   );

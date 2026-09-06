@@ -14,17 +14,11 @@ import {
 
 import { ThresholdField } from "@/components/budgets/threshold-field";
 import { useAppChrome } from "@/components/shell/app-chrome";
-import { IconChoiceField, SelectField, ToggleRow } from "@/components/ui/form";
+import { SelectField, ToggleRow } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icon";
-import type { IconName } from "@/components/ui/icon-sprite";
 import { SlideOver } from "@/components/ui/slide-over";
 import { IDLE_AUTH_STATE, type AuthFormState } from "@/lib/auth/form-state";
-import {
-  BUDGET_FIELD,
-  ICON_BY_CATEGORY,
-  budgetIconChoices,
-  isSpendCategory,
-} from "@/lib/budget-fields";
+import { BUDGET_FIELD } from "@/lib/budget-fields";
 import { deleteBudgetAction, saveBudgetAction } from "@/lib/budgets/actions";
 import type {
   BudgetCategoryChoice,
@@ -32,7 +26,6 @@ import type {
   BudgetRow,
 } from "@/lib/data/budgets";
 import { cx } from "@/lib/tone";
-import type { CategoryKey } from "@/types/ledger";
 
 /**
  * The budget editor: one field set behind both the "New budget" panel and every
@@ -40,9 +33,13 @@ import type { CategoryKey } from "@/types/ledger";
  *
  * Add and edit share `<BudgetFields>` on purpose — the lesson the wallets sheet
  * already records. It matters twice over here, because until now a threshold
- * could only be *chosen at creation*: the six budgets that already existed had
- * no edit affordance at all, so the 75% on Utilities could not be reached from
- * the UI that was supposed to set it.
+ * could only be *chosen at creation*: the budgets that already existed had no
+ * edit affordance at all, so a 75% one could not be reached from the UI that
+ * was supposed to set it.
+ *
+ * There is no icon picker. A budget wears the tile of the category it limits,
+ * and that tile is chosen on `/categories` — offering it twice would let the
+ * same category read two ways depending on which screen you were looking at.
  */
 
 const NO_ERRORS: Readonly<Record<string, string>> = {};
@@ -151,7 +148,7 @@ function EditSheet({
     }
 
     startRemoving(async () => {
-      const error = await deleteBudgetAction(draft.category);
+      const error = await deleteBudgetAction(draft.id);
       if (error) {
         setRemoveError(error);
         return;
@@ -273,33 +270,18 @@ function BudgetFields({
 }) {
   const isEdit = draft.id !== "";
 
-  const [category, setCategory] = useState<CategoryKey>(draft.category);
+  const [categoryId, setCategoryId] = useState(draft.categoryId);
   const [limit, setLimit] = useState(draft.limit);
-  const [icon, setIcon] = useState<IconName>(draft.icon);
-  const [isIconChosen, setIconChosen] = useState(false);
   const [isFixed, setFixed] = useState(draft.isFixed);
 
-  /** Until a tile is picked, a new budget's icon follows the category select. */
-  function chooseCategory(next: string): void {
-    if (!isSpendCategory(next)) {
-      return;
-    }
-    setCategory(next);
-    if (!isIconChosen) {
-      setIcon(ICON_BY_CATEGORY[next]);
-    }
-  }
+  /** The label the fixed note names, following the select on a new budget. */
+  const label =
+    categories.find((choice) => choice.value === categoryId)?.label ??
+    draft.label;
 
   return (
     <form id={formId} action={formAction} className="flex flex-col gap-3">
       <input type="hidden" name={BUDGET_FIELD.id} value={draft.id} readOnly />
-      {/* Untouched posts "" — the column's own way of saying "no icon of its own". */}
-      <input
-        type="hidden"
-        name={BUDGET_FIELD.icon}
-        value={isIconChosen ? icon : ""}
-        readOnly
-      />
 
       {bannerError ? (
         <p className="text-expense text-note" role="alert">
@@ -312,8 +294,8 @@ function BudgetFields({
         draft={draft}
         categories={categories}
         isEdit={isEdit}
-        value={category}
-        onChange={chooseCategory}
+        value={categoryId}
+        onChange={setCategoryId}
         error={fieldErrors[BUDGET_FIELD.category]}
       />
 
@@ -336,8 +318,8 @@ function BudgetFields({
           approach to warn about and nothing to set. */}
       {isFixed ? (
         <p className="text-meta text-muted">
-          Reported only if it goes over — which on a fixed payment means the
-          amount itself changed.
+          {label} is reported only if it goes over — which on a fixed payment
+          means the amount itself changed.
         </p>
       ) : (
         <ThresholdField
@@ -350,19 +332,6 @@ function BudgetFields({
           }
         />
       )}
-
-      <IconChoiceField
-        id={`${formId}-icon`}
-        label="Icon"
-        name={`${formId}-icon-choice`}
-        choices={budgetIconChoices(icon)}
-        value={icon}
-        onChange={(next) => {
-          setIcon(next);
-          setIconChosen(true);
-        }}
-        note="Shown on the budget row and beside its alert."
-      />
 
       <ToggleRow
         id={`${formId}-rollover`}
@@ -388,7 +357,7 @@ function CategoryField({
   readonly draft: BudgetDraft;
   readonly categories: readonly BudgetCategoryChoice[];
   readonly isEdit: boolean;
-  readonly value: CategoryKey;
+  readonly value: string;
   readonly onChange: (next: string) => void;
   readonly error?: string;
 }) {
@@ -398,11 +367,12 @@ function CategoryField({
         <input
           type="hidden"
           name={BUDGET_FIELD.category}
-          value={draft.category}
+          value={draft.categoryId}
           readOnly
         />
         <p className="text-meta text-muted">
-          Measured against every {draft.label} transaction this cycle.
+          Measured against every {draft.label} transaction this cycle. Its tile
+          and colour come from the category itself.
         </p>
       </>
     );

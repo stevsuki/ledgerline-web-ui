@@ -1,5 +1,10 @@
 import { ICON_NAMES, type IconName } from "@/components/ui/icon-sprite";
-import { apiRequest, withParsed, withoutData } from "@/lib/api/client";
+import {
+  apiRequest,
+  withParsed,
+  withQuery,
+  withoutData,
+} from "@/lib/api/client";
 import { isRecord, readEnum, readString } from "@/lib/api/parse";
 import {
   CATEGORY_KIND_ORDER,
@@ -108,6 +113,65 @@ export async function listCategories(
     accessToken,
   });
   return result.ok ? { ...result, data: parseCategories(result.data) } : result;
+}
+
+/* ── options ───────────────────────────────────────────────────────────── */
+
+/** A category as a select offers it: the id it posts and the name it shows. */
+export type CategoryOption = {
+  readonly id: string;
+  readonly name: string;
+};
+
+/**
+ * The screens that ask for a shortlist rather than the whole list. `filter`
+ * takes every type; `budget` narrows to expense, because a budget can only
+ * limit money going out.
+ */
+export type CategoryOptionSlug = "filter" | "budget";
+
+function parseOption(raw: unknown): CategoryOption | null {
+  if (!isRecord(raw)) {
+    return null;
+  }
+
+  const id = readString(raw, "id");
+  const name = readString(raw, "name");
+  return id && name ? { id, name } : null;
+}
+
+function parseOptions(raw: unknown): readonly CategoryOption[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  const options: CategoryOption[] = [];
+  for (const entry of raw) {
+    const option = parseOption(entry);
+    if (option) {
+      options.push(option);
+    }
+  }
+  return options;
+}
+
+/**
+ * GET /categories/options?slug=… — the categories one screen may offer.
+ *
+ * The narrowing is the backend's to make, not this client's: `slug=budget`
+ * already excludes income, so a budget form that read the full list and
+ * filtered it here would be a second copy of that rule waiting to drift.
+ */
+export async function fetchCategoryOptions(
+  accessToken: string,
+  slug: CategoryOptionSlug,
+): Promise<ApiResult<readonly CategoryOption[]>> {
+  const result = await apiRequest({
+    path: withQuery(`${CATEGORIES}/options`, { slug }),
+    method: "GET",
+    accessToken,
+  });
+  return result.ok ? { ...result, data: parseOptions(result.data) } : result;
 }
 
 /* ── writes ────────────────────────────────────────────────────────────── */

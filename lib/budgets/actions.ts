@@ -3,34 +3,40 @@
 import { revalidatePath } from "next/cache";
 
 import {
-  BUDGET_FIELD,
-  CUSTOM_THRESHOLD,
-  isSpendCategory,
-} from "@/lib/budget-fields";
+  createBudget,
+  deleteBudget,
+  updateBudget,
+  type BudgetInput,
+} from "@/lib/api/budgets";
 import {
+  failureState,
   localFailureState,
   noticeState,
   type AuthFormState,
 } from "@/lib/auth/form-state";
-import { requireProfile } from "@/lib/auth/session";
+import { requireAccessToken } from "@/lib/auth/session";
 import {
-  deleteBudgetLimit,
-  findBudgetLimit,
-  saveBudgetLimit,
-} from "@/lib/data/budget-store";
-import { CATEGORIES } from "@/lib/data/categories";
-import { iconNameOrBlank } from "@/lib/icon-choice";
-import { PERCENT_MAX, PERCENT_MIN, parseFigure, parsePercent } from "@/lib/format";
-import type { CategoryKey } from "@/types/ledger";
+  BUDGET_FIELD,
+  CUSTOM_THRESHOLD,
+  FIXED_THRESHOLD_PERCENT,
+} from "@/lib/budget-fields";
+import {
+  PERCENT_MAX,
+  PERCENT_MIN,
+  parseFigure,
+  parsePercent,
+  toWholePercent,
+} from "@/lib/format";
 
 /**
- * The budgets screen's mutations.
+ * The budgets screen's mutations, over the live `/budgets` endpoints.
  *
- * There is no `/budgets` endpoint yet, so these write to the in-memory store in
- * `lib/data/budget-store.ts` rather than to the API. The shape is the shape the
- * call will take — read the form, validate what the backend could not phrase
- * better, hand back a `AuthFormState` keyed by the input's own `name` — so
- * swapping the two `saveBudgetLimit` lines for a fetch is the whole change.
+ * Only two figures are read before the call, because the backend cannot phrase
+ * their failure better than the sheet can: a limit and a threshold both arrive
+ * as text someone typed, and `parseFigure` / `parsePercent` answer `null`
+ * rather than 0 so an unreadable one stops the save instead of quietly saving a
+ * budget of nothing. Everything else is the API's answer, keyed by the field it
+ * names — which is why the form posts the backend's own json tags.
  */
 
 /** The two screens a budget is read on. */
@@ -40,11 +46,7 @@ const DASHBOARD_PATH = "/dashboard";
 const LIMIT_ERROR = "Enter the monthly limit as a number above zero.";
 const THRESHOLD_ERROR = `Enter a whole percentage between ${PERCENT_MIN} and ${PERCENT_MAX}.`;
 const CATEGORY_ERROR = "Pick a category a transaction can be filed under.";
-const TAKEN_ERROR = "That category already has a budget. Edit that one instead.";
 const CHECK_FIELDS = "Check the highlighted fields and try again.";
-
-/** A fixed commitment only ever reports when it goes past its whole limit. */
-const FIXED_THRESHOLD = 1;
 
 function text(formData: FormData, key: string): string {
   const value = formData.get(key);
@@ -63,6 +65,8 @@ function checked(formData: FormData, key: string): boolean {
  */
 function submittedValues(formData: FormData): Readonly<Record<string, string>> {
   return {
+    // The id rides along so the sheet can tell whether an error it is holding
+    // belongs to the budget now on screen, or to the one opened before it.
     [BUDGET_FIELD.id]: text(formData, BUDGET_FIELD.id),
     [BUDGET_FIELD.category]: text(formData, BUDGET_FIELD.category),
     [BUDGET_FIELD.limit]: text(formData, BUDGET_FIELD.limit),
@@ -84,7 +88,8 @@ function readThreshold(formData: FormData): number | null {
       ? text(formData, BUDGET_FIELD.thresholdCustom)
       : posted;
 
-  return parsePercent(raw);
+  const ratio = parsePercent(raw);
+  return ratio === null ? null : toWholePercent(ratio);
 }
 
 /** Which field an unreadable threshold belongs to, so the error lands on it. */
@@ -95,38 +100,36 @@ function thresholdField(formData: FormData): string {
 }
 
 type ReadResult =
+  | { readonly ok: true; readonly input: BudgetInput }
   | {
-      readonly ok: true;
-      readonly category: CategoryKey;
-      readonly limit: number;
-      readonly threshold: number;
-      readonly icon: string;
-      readonly rollover: boolean;
-      readonly isFixed: boolean;
-    }
-  | { readonly ok: false; readonly fieldErrors: Readonly<Record<string, string>> };
+      readonly ok: false;
+      readonly fieldErrors: Readonly<Record<string, string>>;
+    };
 
-function readInput(formData: FormData, isEdit: boolean): ReadResult {
+function readInput(formData: FormData): ReadResult {
+  const categoryId = text(formData, BUDGET_FIELD.category);
+  // On an edit the field is a hidden echo of the budget's own category, so an
+  // empty one means the form was tampered with rather than mis-filled.
+  if (!categoryId) {
+    return {
+      ok: false,
+      fieldErrors: { [BUDGET_FIELD.category]: CATEGORY_ERROR },
+    };
+  }
+
   const fieldErrors: Record<string, string> = {};
 
-  const category = text(formData, BUDGET_FIELD.category);
-  if (!isSpendCategory(category)) {
-    return { ok: false, fieldErrors: { [BUDGET_FIELD.category]: CATEGORY_ERROR } };
-  }
-  if (!isEdit && findBudgetLimit(category)) {
-    return { ok: false, fieldErrors: { [BUDGET_FIELD.category]: TAKEN_ERROR } };
-  }
-
-  // A limit of 0 is not a budget, it is a ban — and it would divide by zero.
+  // A limit of 0 is not a budget, it is a ban — and every percentage on the
+  // screen would be dividing by it.
   const limit = parseFigure(text(formData, BUDGET_FIELD.limit), "IDR");
   if (limit === null || limit <= 0) {
     fieldErrors[BUDGET_FIELD.limit] = LIMIT_ERROR;
   }
 
-  // A fixed commitment hides the threshold control, so there is nothing to
-  // read and nothing to reject: only going over its limit means anything.
+  // A fixed commitment hides the threshold control, and the table refuses any
+  // value but 100 on one, so the editor states that rather than posting none.
   const isFixed = checked(formData, BUDGET_FIELD.isFixed);
-  const threshold = isFixed ? FIXED_THRESHOLD : readThreshold(formData);
+  const threshold = isFixed ? FIXED_THRESHOLD_PERCENT : readThreshold(formData);
   if (threshold === null) {
     fieldErrors[thresholdField(formData)] = THRESHOLD_ERROR;
   }
@@ -137,19 +140,22 @@ function readInput(formData: FormData, isEdit: boolean): ReadResult {
 
   return {
     ok: true,
-    category,
-    limit,
-    threshold,
-    icon: text(formData, BUDGET_FIELD.icon),
-    rollover: checked(formData, BUDGET_FIELD.rollover),
-    isFixed,
+    input: {
+      categoryId,
+      monthlyLimit: limit,
+      alertThresholdPercent: threshold,
+      isFixed,
+      rollover: checked(formData, BUDGET_FIELD.rollover),
+    },
   };
 }
 
 function revalidateBudgets(): void {
   revalidatePath(BUDGETS_PATH);
-  // The dashboard prints the first five of the same rows.
+  // The dashboard prints the first five of the same rows, and the app shell
+  // reads them for the add-transaction sheet's impact line.
   revalidatePath(DASHBOARD_PATH);
+  revalidatePath("/", "layout");
 }
 
 /**
@@ -162,29 +168,27 @@ export async function saveBudgetAction(
   _previousState: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
-  await requireProfile();
-
-  const isEdit = text(formData, BUDGET_FIELD.id) !== "";
+  const id = text(formData, BUDGET_FIELD.id);
   const values = submittedValues(formData);
 
-  const read = readInput(formData, isEdit);
+  const read = readInput(formData);
   if (!read.ok) {
     return localFailureState(CHECK_FIELDS, read.fieldErrors, values);
   }
 
-  saveBudgetLimit({
-    category: read.category,
-    limit: read.limit,
-    threshold: read.threshold,
-    // "" keeps the budget on its category's tile, which is the column's default.
-    icon: iconNameOrBlank(read.icon),
-    rollover: read.rollover,
-    isFixed: read.isFixed,
-  });
+  const accessToken = await requireAccessToken();
+  const result = id
+    ? await updateBudget(accessToken, id, read.input)
+    : await createBudget(accessToken, read.input);
+
+  if (!result.ok) {
+    return failureState(result.error, values);
+  }
 
   revalidateBudgets();
-  const label = CATEGORIES[read.category].label;
-  return noticeState(`${label} budget ${isEdit ? "updated" : "created"}.`);
+  return noticeState(
+    `${result.data.categoryName} budget ${id ? "updated" : "created"}.`,
+  );
 }
 
 /**
@@ -192,14 +196,17 @@ export async function saveBudgetAction(
  * slide-over that JavaScript opened, so there is no no-script path to protect.
  * "" means it went through.
  */
-export async function deleteBudgetAction(category: string): Promise<string> {
-  await requireProfile();
-
-  if (!isSpendCategory(category)) {
-    return CATEGORY_ERROR;
+export async function deleteBudgetAction(id: string): Promise<string> {
+  if (!id) {
+    return "";
   }
 
-  deleteBudgetLimit(category);
+  const accessToken = await requireAccessToken();
+  const result = await deleteBudget(accessToken, id);
+  if (!result.ok) {
+    return failureState(result.error).error;
+  }
+
   revalidateBudgets();
   return "";
 }
