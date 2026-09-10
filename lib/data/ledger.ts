@@ -1,5 +1,6 @@
 import { CATEGORIES, RAMP_BY_CATEGORY_LABEL } from "@/lib/data/categories";
 import { TODAY, TRANSACTIONS } from "@/lib/data/transactions";
+import { BASE_CURRENCY } from "@/lib/format";
 import type { CategoryKey, RampStep, TrendPoint } from "@/types/ledger";
 
 /**
@@ -108,8 +109,25 @@ const MONTH_HISTORY: readonly MonthRollup[] = [MARCH, APRIL, MAY, JUNE, JULY];
 
 /* ── the month, totalled ───────────────────────────────────────────────── */
 
-const rowsThisMonth = TRANSACTIONS.filter((row) =>
+/** Every row the month carries, whatever it is quoted in. Counted, not summed. */
+const allRowsThisMonth = TRANSACTIONS.filter((row) =>
   row.date.startsWith(REPORTING_MONTH),
+);
+
+/**
+ * The same month in the base currency alone, and what every sum below reads.
+ *
+ * Nothing in this app fetches an exchange rate, so a row quoted in something
+ * else cannot honestly join a total here — it would land in the dashboard's
+ * four stats, the donut, what a budget has spent and the insights ranking, all
+ * of them printed with an "Rp" in front. The transactions screen is where such
+ * a row is reported instead, on a line of its own, because that screen states
+ * rows rather than one figure covering them.
+ *
+ * The day a rate does exist, this filter is what it replaces.
+ */
+const rowsThisMonth = allRowsThisMonth.filter(
+  (row) => row.currency === BASE_CURRENCY,
 );
 
 type Signed = { readonly amount: number };
@@ -142,6 +160,12 @@ export type MonthTotals = {
   readonly openingBalance: number;
   /** Opening balance plus what the month kept. */
   readonly closingBalance: number;
+  /**
+   * These two count rows and wallets rather than adding money up, so they span
+   * every currency — the figures above cannot. Keeping them narrow would put a
+   * count on the transactions subtitle that disagrees with the "Shown" card
+   * directly beneath it, over rows the reader can see on the same screen.
+   */
   readonly entryCount: number;
   readonly walletCount: number;
 };
@@ -158,8 +182,8 @@ export function monthTotals(): MonthTotals {
     savingsRate: shareOf(net, income),
     openingBalance: OPENING_BALANCE,
     closingBalance: OPENING_BALANCE + net,
-    entryCount: rowsThisMonth.length,
-    walletCount: new Set(rowsThisMonth.map((row) => row.wallet)).size,
+    entryCount: allRowsThisMonth.length,
+    walletCount: new Set(allRowsThisMonth.map((row) => row.wallet)).size,
   };
 }
 

@@ -32,10 +32,16 @@ import type {
 /**
  * The wallets screen, served from `ledgerline-backend`.
  *
- * Nothing connects to a bank — there is no free way to reach one from
- * Indonesia — so every balance here is a figure its owner typed, and the cards
- * say how long ago they typed it. That is why the age is measured against the
- * real day in Jakarta rather than a fixture's frozen `TODAY`.
+ * Nothing connects to a bank — there is no free way to reach one from Indonesia —
+ * so a balance starts as a figure its owner typed. It does not stay one: the
+ * backend adds every transaction filed since that figure was stated, and
+ * `currentBalance` is what the cards print. The typed figure is the point the
+ * counting starts from, and restating it is what a reconciliation *is*.
+ *
+ * So `balance` and `currentBalance` are two different claims and never
+ * interchangeable. The age is still measured against the real day in Jakarta
+ * rather than a fixture's frozen `TODAY`, and it now reads as how long ago the
+ * wallet was last reconciled.
  */
 
 /* ── how a wallet prints ───────────────────────────────────────────────── */
@@ -54,19 +60,32 @@ function walletMeta(wallet: WalletRecord): string {
   return wallet.kind === "cash" ? CASH_META : KIND_LABEL[wallet.kind];
 }
 
-/** The day the balance was last typed, as a Jakarta calendar day. */
+/** The day the balance was last stated, as a Jakarta calendar day. */
 function updatedOn(wallet: WalletRecord): string {
   return isoDayOf(wallet.balanceUpdatedAt);
 }
 
-/** A card reports its headroom and its statement day; everything else, its age. */
+/**
+ * A card reports its headroom and its statement day; everything else says where
+ * its figure came from.
+ *
+ * Once transactions have moved a wallet, the headline no longer matches anything
+ * anybody typed, so the line names the figure it started from — "from Rp100.000
+ * stated 7 days ago" — rather than calling the result an update. A wallet nothing
+ * has touched since says only its age, because there is no second figure to name.
+ */
 function walletSub(wallet: WalletRecord, today: string): string {
   if (wallet.creditLimit !== null && wallet.dueDay !== null) {
-    const free = wallet.creditLimit - Math.abs(wallet.balance);
+    const free = wallet.creditLimit - Math.abs(wallet.currentBalance);
     const due = formatDayMonth(nextDueDate(wallet.dueDay, today));
     return `${formatMoney(free, wallet.currency)} of limit free · due ${due}`;
   }
-  return `Updated ${formatSince(updatedOn(wallet), today)}`;
+
+  const since = formatSince(updatedOn(wallet), today);
+  if (wallet.currentBalance === wallet.balance) {
+    return `Updated ${since}`;
+  }
+  return `From ${formatMoney(wallet.balance, wallet.currency)} stated ${since}`;
 }
 
 /** Cards carry two fields nothing else does; blank rather than "0" on the rest. */
@@ -75,8 +94,12 @@ function optionalFigure(value: number | null, currency: CurrencyCode): string {
 }
 
 /**
- * What the edit slide-over opens with. A balance only ever changes because
- * someone typed it there, so the draft carries how old the current figure is.
+ * What the edit slide-over opens with.
+ *
+ * The balance field holds the *stated* figure, never the running one. Filling it
+ * with the running balance would turn merely opening the sheet and saving into a
+ * reconciliation: the figure would be restated as of now, and every transaction
+ * behind it would stop counting even though it is already baked into the number.
  */
 function toDraft(wallet: WalletRecord, today: string): WalletDraft {
   return {
@@ -101,9 +124,9 @@ function toCard(wallet: WalletRecord, today: string): WalletCard {
     icon: wallet.icon,
     currency: wallet.currency,
     meta: walletMeta(wallet),
-    balance: formatBalance(wallet.balance, wallet.currency),
+    balance: formatBalance(wallet.currentBalance, wallet.currency),
     sub: walletSub(wallet, today),
-    isNegative: wallet.balance < 0,
+    isNegative: wallet.currentBalance < 0,
     draft: toDraft(wallet, today),
   };
 }
@@ -140,7 +163,7 @@ function toShares(
     const isLast = index === assets.length - 1;
     const percent = isLast
       ? FULL_PERCENT - claimed
-      : Math.round((wallet.balance / held) * FULL_PERCENT);
+      : Math.round((wallet.currentBalance / held) * FULL_PERCENT);
     claimed += percent;
 
     return {
@@ -169,6 +192,18 @@ function toRows(overview: WalletOverviewRecord): readonly WalletSummaryRow[] {
     });
   }
 
+  // Its own line, not folded into the one above: spending past what a bank account
+  // holds is a different thing from owing on a card, and it is the kind of thing
+  // somebody wants to see the moment it happens.
+  if (overview.overdrawn !== 0) {
+    rows.push({
+      id: "row-overdrawn",
+      label: overdrawnLabel(overview.overdrawnWallets),
+      value: formatBalance(overview.overdrawn, overview.baseCurrency),
+      tone: "expense",
+    });
+  }
+
   for (const held of overview.heldByCurrency) {
     rows.push({
       id: `row-held-${held.currency}`,
@@ -179,6 +214,11 @@ function toRows(overview: WalletOverviewRecord): readonly WalletSummaryRow[] {
   }
 
   return rows;
+}
+
+/** "Overdrawn" / "Overdrawn on 2 wallets" — the count only earns its words past one. */
+function overdrawnLabel(count: number): string {
+  return count > 1 ? `Overdrawn on ${count} wallets` : "Overdrawn";
 }
 
 function accountsLine(count: number, base: CurrencyCode): string {
@@ -198,7 +238,7 @@ function countedAssets(
     (wallet) =>
       wallet.includeInTotal &&
       wallet.currency === base &&
-      wallet.balance >= 0,
+      wallet.currentBalance >= 0,
   );
 }
 
@@ -256,6 +296,8 @@ const EMPTY_OVERVIEW: WalletOverviewRecord = {
   totalHeld: 0,
   countedWallets: 0,
   owedOnCards: 0,
+  overdrawn: 0,
+  overdrawnWallets: 0,
   heldByCurrency: [],
 };
 

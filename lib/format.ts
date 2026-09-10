@@ -1,4 +1,4 @@
-import type { CurrencyCode } from "@/types/ledger";
+import type { CurrencyCode, MoneySum } from "@/types/ledger";
 
 /** Money formatting, ported from the artboard's `F()` helper. */
 
@@ -11,11 +11,9 @@ export function formatRupiah(value: number): string {
   return `Rp${GROUPED.format(Math.abs(value))}`;
 }
 
-/** "+ Rp6.800.000" / "− Rp62.000" — the ledger row format. */
-export function formatSignedRupiah(value: number): string {
-  const sign = value >= 0 ? "+" : MINUS_SIGN;
-  return `${sign} ${formatRupiah(value)}`;
-}
+/* `formatSignedMoney` is the ledger-row format; it lives below `formatMoney`,
+   which it needs. There is no rupiah-only signed helper: a row that assumed its
+   own currency is exactly how dollars came to be printed with an "Rp". */
 
 /* ── other currencies ──────────────────────────────────────────────────── */
 
@@ -24,6 +22,13 @@ const GROUPED_CENTS = new Intl.NumberFormat("de-DE", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
+
+/**
+ * The one currency this app states a total in. Everything else is reported
+ * beside it, never folded into it — the wallets summary already works this way,
+ * and a ledger total has the same problem: no rate is fetched anywhere.
+ */
+export const BASE_CURRENCY: CurrencyCode = "IDR";
 
 const CURRENCY_PREFIX: Readonly<Record<CurrencyCode, string>> = {
   IDR: "Rp",
@@ -41,6 +46,42 @@ const CURRENCY_HAS_CENTS: Readonly<Record<CurrencyCode, boolean>> = {
 export function formatMoney(value: number, currency: CurrencyCode): string {
   const grouped = CURRENCY_HAS_CENTS[currency] ? GROUPED_CENTS : GROUPED;
   return `${CURRENCY_PREFIX[currency]}${grouped.format(Math.abs(value))}`;
+}
+
+/** "+ Rp6.800.000" / "− $20,00" — the ledger row format, in any currency. */
+export function formatSignedMoney(
+  value: number,
+  currency: CurrencyCode,
+): string {
+  const sign = value >= 0 ? "+" : MINUS_SIGN;
+  return `${sign} ${formatMoney(value, currency)}`;
+}
+
+/** What separates two figures that cannot be added to each other. */
+const SUM_SEPARATOR = " · ";
+
+/**
+ * A set of per-currency totals, printed side by side rather than added up —
+ * "+ Rp1.240.000 · + $180,00". An empty set is a dash, because a day with no
+ * net at all is not the same statement as one that netted zero.
+ */
+export function formatSignedSums(sums: readonly MoneySum[]): string {
+  if (sums.length === 0) {
+    return "—";
+  }
+  return sums
+    .map((sum) => formatSignedMoney(sum.amount, sum.currency))
+    .join(SUM_SEPARATOR);
+}
+
+/** The same set unsigned, for a label that already says which way it runs. */
+export function formatSums(sums: readonly MoneySum[]): string {
+  if (sums.length === 0) {
+    return formatMoney(0, BASE_CURRENCY);
+  }
+  return sums
+    .map((sum) => formatMoney(sum.amount, sum.currency))
+    .join(SUM_SEPARATOR);
 }
 
 /**

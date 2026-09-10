@@ -25,6 +25,7 @@ import type {
   BudgetDraft,
   BudgetRow,
 } from "@/lib/data/budgets";
+import { formatRupiah } from "@/lib/format";
 import { cx } from "@/lib/tone";
 
 /**
@@ -125,6 +126,21 @@ export function BudgetEditorProvider({
   );
 }
 
+/**
+ * "Food & Drink · Rp30.000 of Rp3.500.000 · Rp1.500.000 rolled over".
+ *
+ * The figure the spend is stated against is the limit plus the carry, which is
+ * what the row above states too — so the sheet names the carry rather than
+ * leaving the Monthly limit field below it looking like it disagrees.
+ */
+function editSubtitle(budget: BudgetRow): string {
+  const line = `${budget.label} · ${budget.spent} of ${budget.limit}`;
+  const { carriedOver } = budget.draft;
+  return carriedOver > 0
+    ? `${line} · ${formatRupiah(carriedOver)} rolled over`
+    : line;
+}
+
 function EditSheet({
   budget,
   onClose,
@@ -163,7 +179,7 @@ function EditSheet({
       open
       onClose={onClose}
       title="Edit budget"
-      subtitle={`${budget.label} · ${budget.spent} of ${budget.limit}`}
+      subtitle={editSubtitle(budget)}
       footer={
         <>
           <button
@@ -326,6 +342,7 @@ function BudgetFields({
           defaultThreshold={draft.threshold}
           defaultIsCustom={draft.isCustomThreshold}
           limitText={limit}
+          carriedOver={draft.carriedOver}
           error={
             fieldErrors[BUDGET_FIELD.thresholdCustom] ??
             fieldErrors[BUDGET_FIELD.threshold]

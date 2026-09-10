@@ -1,9 +1,9 @@
 import { Icon } from "@/components/ui/icon";
 import { IconTile, Tag } from "@/components/ui/primitives";
 import { CATEGORIES } from "@/lib/data/categories";
-import { formatSignedRupiah } from "@/lib/format";
+import { formatSignedMoney } from "@/lib/format";
 import { TEXT_TONE, cx } from "@/lib/tone";
-import type { Transaction } from "@/types/ledger";
+import type { LedgerItem, Transaction } from "@/types/ledger";
 
 /** A ledger row in its two shapes. */
 
@@ -37,7 +37,7 @@ export function RecentTransactionRow({
       </div>
       <div className="text-right">
         <p className={cx(AMOUNT_CLASS, tone.amount)}>
-          {formatSignedRupiah(transaction.amount)}
+          {formatSignedMoney(transaction.amount, transaction.currency)}
         </p>
         <p className="text-muted mt-px text-[11px]">{dayLabel}</p>
       </div>
@@ -45,36 +45,33 @@ export function RecentTransactionRow({
   );
 }
 
-/** The five-column ledger row. */
-export function LedgerRow({
-  transaction,
-}: {
-  readonly transaction: Transaction;
-}) {
-  const category = CATEGORIES[transaction.category];
-  const tone = toneFor(transaction.amount);
+/**
+ * The five-column ledger row. Unlike the dashboard's recent row, this one is fed
+ * from the live API, so its category and wallet are the names the account holds
+ * with their icons already resolved — not a fixture key looked up here.
+ */
+export function LedgerRow({ item }: { readonly item: LedgerItem }) {
+  const tone = toneFor(item.amount);
 
   return (
     <li className="panel-row grid grid-cols-[34px_minmax(0,1fr)_auto] items-center gap-3 md:grid-cols-[34px_1fr_140px_132px_110px] md:gap-3.5">
-      <IconTile name={category.icon} tone={tone.icon} />
+      <IconTile name={item.categoryIcon} tone={tone.icon} />
       <div className="min-w-0">
-        <p className="text-row truncate">{transaction.name}</p>
-        <p className="text-meta text-muted mt-px truncate">
-          {transaction.note}
-        </p>
+        <p className="text-row truncate">{item.name}</p>
+        <p className="text-meta text-muted mt-px truncate">{item.note}</p>
         <p className="text-meta text-muted mt-px truncate md:hidden">
-          {category.label} · {transaction.wallet}
+          {item.categoryName} · {item.walletName}
         </p>
       </div>
       <Tag className="hidden justify-self-start md:inline-flex">
-        {category.label}
+        {item.categoryName}
       </Tag>
       <span className="text-muted hidden items-center gap-[7px] text-note md:flex">
-        <Icon name={transaction.walletIcon} size={14} />
-        {transaction.wallet}
+        <Icon name={item.walletIcon} size={14} />
+        {item.walletName}
       </span>
       <span className={cx(AMOUNT_CLASS, tone.amount, "text-right")}>
-        {formatSignedRupiah(transaction.amount)}
+        {formatSignedMoney(item.amount, item.currency)}
       </span>
     </li>
   );

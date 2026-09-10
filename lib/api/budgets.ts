@@ -38,7 +38,13 @@ export type BudgetRecord = {
   readonly currency: CurrencyCode;
   readonly monthlyLimit: number;
   readonly spent: number;
-  /** Negative once the limit is passed. */
+  /**
+   * What a `rollover` budget did not spend last cycle, which this cycle may
+   * spend on top of its limit. It is 0 without rollover, and 0 in the cycle the
+   * budget was created in — there was no cycle before it to carry from.
+   */
+  readonly carriedOver: number;
+  /** Negative once the limit *plus the carry* is passed. */
   readonly remaining: number;
   /** A whole percentage, rounded by the backend. */
   readonly usedPercent: number;
@@ -68,6 +74,7 @@ export type BudgetAttentionRecord = {
   readonly color: RampStep | "";
   readonly monthlyLimit: number;
   readonly spent: number;
+  readonly carriedOver: number;
   readonly remaining: number;
   readonly usedPercent: number;
   readonly alertThresholdPercent: number;
@@ -78,6 +85,8 @@ export type BudgetAttentionRecord = {
 export type BudgetOverviewRecord = {
   readonly currency: CurrencyCode;
   readonly totalAllocated: number;
+  /** What rollover budgets carried in; `totalAllocated` is the plan alone. */
+  readonly totalCarriedOver: number;
   readonly totalSpent: number;
   /** Negative once the allocation is passed. */
   readonly totalLeft: number;
@@ -134,6 +143,7 @@ function parseBudget(raw: unknown): BudgetRecord | null {
     currency: readCurrency(raw),
     monthlyLimit: readCount(raw, "monthly_limit"),
     spent: readCount(raw, "spent"),
+    carriedOver: readCount(raw, "carried_over"),
     remaining: readCount(raw, "remaining"),
     usedPercent: readCount(raw, "used_percent"),
     isOver: readBoolean(raw, "is_over"),
@@ -209,6 +219,7 @@ function parseAttention(raw: unknown): BudgetAttentionRecord | null {
     color: readColor(raw),
     monthlyLimit: readCount(raw, "monthly_limit"),
     spent: readCount(raw, "spent"),
+    carriedOver: readCount(raw, "carried_over"),
     remaining: readCount(raw, "remaining"),
     usedPercent: readCount(raw, "used_percent"),
     alertThresholdPercent: readCount(raw, "alert_threshold_percent"),
@@ -240,6 +251,7 @@ function parseOverview(raw: unknown): BudgetOverviewRecord | null {
   return {
     currency: readCurrency(raw),
     totalAllocated: readCount(raw, "total_budget_allocated"),
+    totalCarriedOver: readCount(raw, "total_budget_carried_over"),
     totalSpent: readCount(raw, "total_budget_spent"),
     totalLeft: readCount(raw, "total_budget_left"),
     categoryCount: readCount(raw, "across_category"),

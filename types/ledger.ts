@@ -49,6 +49,24 @@ export type Transaction = {
   readonly walletIcon: IconName;
   /** Negative is money out. */
   readonly amount: number;
+  /**
+   * What `amount` is denominated in. A row carries this rather than inheriting
+   * it from its wallet because a wallet can hold more than one — Wise is built
+   * that way — and because nothing here fetches a rate, so an amount that does
+   * not say what it is cannot be added to anything.
+   */
+  readonly currency: CurrencyCode;
+};
+
+/**
+ * A total in one currency. Anywhere several rows are summed, the answer is a
+ * list of these rather than a single number: with no exchange rate to hand,
+ * adding across currencies is a guess, which is the same reason the wallets
+ * summary states its headline in one currency and lists the rest beneath.
+ */
+export type MoneySum = {
+  readonly currency: CurrencyCode;
+  readonly amount: number;
 };
 
 /*
@@ -60,8 +78,38 @@ export type Transaction = {
 
 export type TransactionGroup = {
   readonly day: string;
-  readonly net: number;
+  /** One net per currency the day carries — usually just the one. */
+  readonly net: readonly MoneySum[];
   readonly items: readonly Transaction[];
+};
+
+/**
+ * A ledger row as the transactions screen renders it, resolved from the API.
+ *
+ * Unlike `Transaction`, the category and wallet are the free-form names the
+ * account actually holds, not the fixture's fixed keys — the transactions
+ * screen reads them live, while the dashboard and the aggregates still read the
+ * fixture through `Transaction`. Each carries its own resolved icon so the row
+ * never has to reach back into a fixed lookup that a live name may not be in.
+ */
+export type LedgerItem = {
+  readonly id: string;
+  readonly name: string;
+  readonly note: string;
+  readonly categoryName: string;
+  readonly categoryIcon: IconName;
+  readonly walletName: string;
+  readonly walletIcon: IconName;
+  /** Negative is money out. */
+  readonly amount: number;
+  readonly currency: CurrencyCode;
+};
+
+/** One day of the live ledger: the API's group, resolved for print. */
+export type LedgerDay = {
+  readonly day: string;
+  readonly net: readonly MoneySum[];
+  readonly items: readonly LedgerItem[];
 };
 
 /** What kind of thing the wallet is. Drives its label, and the card-only fields. */

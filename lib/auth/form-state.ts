@@ -82,6 +82,19 @@ const MESSAGE_BY_CODE: Partial<Readonly<Record<ApiErrorCode, string>>> = {
   BUDGET_INVALID_FIXED:
     "A fixed payment is reported only when it goes over its whole limit.",
 
+  /* the add-transaction sheet */
+  TRANSACTION_NOT_FOUND: "That transaction no longer exists. Reload the page.",
+  TRANSACTION_INVALID_DATA: CHECK_FIELDS,
+  TRANSACTION_INVALID_TYPE: "Pick either money in or money out.",
+  TRANSACTION_INVALID_AMOUNT: "Enter the amount as a number above zero.",
+  TRANSACTION_INVALID_WALLET: "Pick one of your own wallets.",
+  TRANSACTION_INVALID_CATEGORY: "Pick one of your own categories.",
+  TRANSACTION_INVALID_CURRENCY: "Pick one of the currencies offered.",
+  TRANSACTION_CURRENCY_MISMATCH:
+    "That wallet is kept in another currency, so it cannot hold this entry.",
+  TRANSACTION_CATEGORY_MISMATCH:
+    "Money in needs an income category, and money out a spending one.",
+
   /* generic */
   VALIDATION_ERROR: CHECK_FIELDS,
   INVALID_INPUT: CHECK_FIELDS,

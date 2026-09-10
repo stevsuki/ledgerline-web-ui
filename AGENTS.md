@@ -229,6 +229,26 @@ A wallet is stored as data, not as the sentences the artboard printed: `kind` +
 `balance` is a number in the wallet's own currency (negative on a card is money owed).
 `formatMoney` / `formatBalance` in `lib/format.ts` handle the non-rupiah currencies.
 
+**Manual entry is where a balance starts, not where it stays.** A typed balance that
+never moves is a second set of books: you record spending the app can see and the
+wallet card keeps quoting a figure that ignores it. So the backend answers with two
+numbers — `balance`, the figure its owner stated, and `current_balance`, that figure
+plus every transaction filed against the wallet since. The cards, the shares, the
+headline and a card's free limit all print the running one; the balance *field* in the
+editor keeps the stated one, because filling it with the running figure would make
+opening the sheet and saving a silent reconciliation. `wallets.balance_updated_at` is
+what separates them: only rows dated after it count, since the figure given for that
+moment already contains everything before it. Restating the balance moves that line
+forward, which is the whole of what reconciling means here.
+
+Two consequences on this screen. A wallet nothing has touched since it was stated still
+reads `Updated {formatSince(...)}`; one that has moved reads `From Rp100.000 stated 7
+days ago`, because the headline is then a figure nobody typed and the line has to say
+where it came from. And any wallet can now go negative, not just a card — so the
+summary keeps **Owed on cards** for cards alone and gives an overdrawn bank account or
+e-wallet its own **Overdrawn** line. Folding the two together would call being short on
+a bank account a credit-card debt.
+
 ### The fifth departure: one wallet form, and the screen reordered around it
 
 Because nothing refreshes a balance, editing one has to be reachable — and the
@@ -455,9 +475,12 @@ cards and `GET /wallets/overview` for the headline. `getWalletsScreen()` awaits 
 together and hands back one object, because the summary bar is a split of the very
 cards printed under it — read a moment apart, the legend could name a wallet the total
 does not count. The overview is summed in SQL, so the totals are never re-derived here;
-only the per-wallet shares are, from the same list the cards come from. Nothing syncs a
-balance, so its age is measured against `todayInJakarta()` — the real day, not a
-fixture's frozen `TODAY`.
+only the per-wallet shares are, from the same list the cards come from. Both read the
+running balance — the same per-wallet expression, reached through a derived table in
+`wallet_repository.go`, so a headline summing one figure while the cards print another
+is not a state the two can reach. Nothing syncs a balance, so the age of the figure it
+started from is measured against `todayInJakarta()` — the real day, not a fixture's
+frozen `TODAY`.
 
 **An icon key is a contract, not a picture.** `roles.icon` (migration 000019),
 `wallets.icon` and `menus.icon` are each a `VARCHAR(50)` holding a *name from this app's
@@ -532,6 +555,18 @@ Gaps in the API the screens work around today, each marked where it bites:
   neither can be cleared on a wallet that is still a card — blanking the field in the
   sheet keeps the stored figure, and `CardFields` says so. Changing the kind away from
   `card` clears both, which is the only way back today.
+- A transaction has to be kept in the currency of the wallet it names, and its type
+  has to match its category's — `TRANSACTION_CURRENCY_MISMATCH` and
+  `TRANSACTION_CATEGORY_MISMATCH`, both enforced on create and on patch. The
+  add-transaction sheet posts `IDR` whatever wallet is picked, so the USD Paypal wallet
+  is now refused rather than filed where no balance would ever count it. The fix is for
+  the sheet to offer base-currency wallets only, or to post the chosen wallet's own
+  currency; `GET /wallets/options` answers `{id, name}` and cannot say which is which,
+  so that narrowing needs the field added there.
+- Spending past what a wallet holds is allowed on purpose. A stated balance is a claim
+  about a date, so refusing a real entry against a possibly stale figure would only
+  punish recording late — it reads as a negative balance and an **Overdrawn** line
+  instead of an error.
 - Nothing under `/wallets` is written to the audit log: `walletService` is handed an
   `AuditLogRepository` and never calls it, so adding, editing and removing a wallet
   leave no trail the way a user or a role does.
@@ -540,27 +575,38 @@ Gaps in the API the screens work around today, each marked where it bites:
   prettifies the rest, so a newly recorded action reads sensibly without a release.
 - `GET /categories` returns the list whole and does not page. Fine for a household's
   handful; past that it needs the same `page` / `per_page` the other lists take.
-- `DELETE /categories/{id}` is a soft delete with no reference check — nothing points
-  at a category yet, because neither transactions nor budgets exist back there. The
-  day they do, the rules the sheet states (a transaction filed under it, a budget
-  measured against it, the Others bucket itself) have to be enforced in SQL rather
-  than only in the client.
+- `DELETE /categories/{id}` checks budgets and nothing else. `CategoryService.Delete`
+  refuses with `CATEGORY_IN_USE` while a budget limits the category, but a category
+  with transactions filed under it soft-deletes cleanly — and every budget read joins
+  `categories` on `deleted_at IS NULL`, so what was filed under it stops being counted
+  anywhere. The rest of what the sheet states (the Others bucket itself) still lives
+  only in the client.
 - A new account is seeded with the seven master rows **all as `expense`**, so it has
   no income category until someone adds one. Nothing in the API says which row is the
   fallback either — the client reads that off `master_category_id` being `…-0007`.
 - Nothing under `/categories` is written to the audit log, the same gap `/wallets`
   has — and it bites harder here, since a rename reaches every transaction filed
   under the category.
-- **`spent` is hard-coded to zero on every budget.** `spentThisCycle` in
-  `budget_repository.go` is the literal `0::bigint AS spent`, because there is no
-  transactions table to sum yet. So the cards read Rp0, "Spent so far" reads Rp0,
-  and Needs attention is permanently empty — the screen is wired end to end and
-  waiting on one query. Nothing on this side changes when that literal becomes a
-  `SUM`.
+- **`spent` is summed from transactions now.** `spentThisCycle` in
+  `budget_repository.go` sums the expense rows of the budget's own category *and*
+  currency inside the calendar month, negated because the table stores an expense
+  negative. It replaced the literal `0::bigint AS spent`; nothing on this side
+  changed but the numbers, which is what the wiring was for.
+- **`rollover` is computed too, with three limits worth knowing.** `carried_over`
+  is last cycle's unspent amount and nothing older, because `budgets` keeps no
+  history of `monthly_limit` — last cycle is measured with *today's* limit, so
+  raising a limit enlarges the carry it hands this cycle. It is clamped at 0, so
+  last cycle's overspend is not carried as a debt. And it is 0 in the cycle a
+  budget was created in, which is the only reason a brand-new rollover budget does
+  not start on a doubled limit. `remaining`, `used_percent` and `is_over` all
+  answer against `monthly_limit + carried_over`, while `total_budget_allocated`
+  and the overview's `shares` stay the plan alone.
 - `GET /budgets` and `/budgets/overview` take no `?period=`; the service reads
   `time.Now()` in the server's own zone, so the cycle is the server's month rather
   than Jakarta's. It only shows near a month boundary, and only until the endpoint
-  takes a period.
+  takes a period. The two halves do not even read the same clock: `spent` and
+  `carried_over` are windowed by Postgres's `date_trunc('month', NOW())`, while
+  `days_left` and `cycle_elapsed_percent` come from Go's `time.Now()`.
 - `GET /budgets` returns the list whole and does not page, as `/categories` does.
 - Nothing under `/budgets` is written to the audit log, the same gap `/wallets` and
   `/categories` have.
@@ -579,7 +625,8 @@ fourteen transactions add up to Rp6.958.000 against a headline of Rp12.780.000,
 its recurring rows to Rp5.705.000 a month against a stated Rp5.891.000, and its
 balance card claimed +3.4% on a month that kept Rp8.670.000 — a figure no
 opening balance can make true. So the totals were deleted, and August 2026 was
-written out in full instead: 54 rows in `lib/data/transactions.ts`.
+written out in full instead: 54 rupiah rows in `lib/data/transactions.ts`, plus
+two in USD on the Wise account that is kept in it.
 
 `lib/data/ledger.ts` is the one reducer over those rows, and **nothing
 downstream of it states a money figure of its own**. The dashboard's four stats,
@@ -602,6 +649,31 @@ donut it was drawing, and a budget turns amber at its own stated threshold
 rather than at one flat 85% for every row. Weekdays are derived from the row's
 ISO date — every one the artboard printed was a day out.
 
+**A row states what it is quoted in, and a total never crosses that.** Every
+`Transaction` carries a `currency`, and it is stored on the row rather than
+inherited from the wallet, because a Wise account holds several at once. The
+`WalletName` union already had `Wise USD` in it while the ledger printed every
+figure through a rupiah-only helper, so dollars were being added to rupiah and
+the answer shown with an "Rp" in front — the same guess the wallets summary
+refuses to make. So `formatSignedRupiah` is gone: `formatSignedMoney(amount,
+currency)` is the one way a row prints, and there is no rupiah-only signed
+helper left to reach for by accident.
+
+Anywhere rows are summed the answer is a `MoneySum[]`, one total per currency,
+never a number. The transactions overview reports the base currency at stat
+weight and puts the rest in the card's `note` — "Plus $1.180,00, unconverted" —
+and a day heading prints its nets side by side rather than adding them. The
+rupiah bounds on the Amount filter exclude a non-base row rather than pretend to
+measure it, since "Under Rp100.000" cannot be true or false of twenty dollars.
+
+`ledger.ts` reduces `rowsThisMonth`, which is the base currency alone, so the
+dashboard, the donut, what a budget has spent and the insights ranking are the
+rupiah rows and nothing else — that filter is what an exchange rate would one
+day replace. `entryCount` and `walletCount` are the exception and read
+`allRowsThisMonth`: they count rather than add, and a subtitle saying "54
+entries" over a "Shown: 56 entries" card is two numbers disagreeing about rows
+the reader can see.
+
 ### A budget is a limit somebody chose, and nothing else
 
 Its `monthly_limit`, `alert_threshold_percent`, `is_fixed` and `rollover` are input;
@@ -609,6 +681,22 @@ what it has spent is summed per cycle by the backend and never stored. `budgets`
 (migration 000027) holds one row per category, enforced by
 `budgets_user_category_unique_idx`, with the fixed rule in SQL as well as in the
 form: `budgets_fixed_threshold_check` refuses any threshold but 100 on a fixed row.
+
+**A carry moves the denominator, so every line that uses it says so.** `rollover`
+was a stored flag with no consequence until the backend started summing
+transactions; now a budget that underspent last cycle arrives with `carried_over`
+beside its `spent`, and `remaining`, `used_percent` and `is_over` are all measured
+against `monthly_limit + carried_over`. So that sum is what a card states the
+spend against — `spendableOf` in `lib/data/budgets.ts`, the mirror of
+`Budget.EffectiveLimit()` in the service — because "Rp30.000 of Rp2.000.000"
+beside "Rp3.470.000 left" is two answers to one question. Naming the rest is the
+other half of that: the meta line reads "Rp1.500.000 rolled over" in place of
+"rolls over", the allocation panel prints "plus Rp800.000 rolled over" under a
+total that is still the plan alone and tags the share "of allocation + rollover"
+rather than quoting a denominator it did not divide by, and `alertNote` prices the
+threshold against the carry too, since that is the figure the alert will fire on.
+A budget with rollover on and nothing carried in still says "rolls over" — that
+is the setting, and it holds for the cycles after this one.
 
 **Two calls serve the screen, and `getBudgetsScreen()` awaits them together** —
 `GET /budgets` for the cards, `GET /budgets/overview` for the panel above them —

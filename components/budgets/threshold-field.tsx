@@ -28,6 +28,7 @@ export function ThresholdField({
   defaultThreshold,
   defaultIsCustom,
   limitText,
+  carriedOver,
   error,
 }: {
   /** A whole percentage, e.g. "80". */
@@ -35,6 +36,8 @@ export function ThresholdField({
   readonly defaultIsCustom: boolean;
   /** What the limit field currently holds, so the note can price the alert. */
   readonly limitText: string;
+  /** What a rollover budget carried into this cycle; 0 when it carried nothing. */
+  readonly carriedOver: number;
   readonly error?: string;
 }) {
   const groupId = useId();
@@ -113,7 +116,7 @@ export function ThresholdField({
         id={noteId}
         className={cx("text-meta mt-1.5", error ? "text-expense" : "text-muted")}
       >
-        {error ?? alertNote(threshold, limitText)}
+        {error ?? alertNote(threshold, limitText, carriedOver)}
       </p>
     </fieldset>
   );
@@ -123,8 +126,17 @@ export function ThresholdField({
  * What the chosen percentage actually costs, in the currency the limit is in.
  * Nobody thinks "85%" — they think about when they will be told, and the limit
  * is already on screen to say it with.
+ *
+ * A carry is part of that price. The backend measures the threshold against the
+ * limit *plus* what rolled over, so a note quoting the limit alone would name a
+ * figure the alert will not fire on — and it would be wrong only in the cycles
+ * where rollover is doing something, which is the worst time to be wrong.
  */
-function alertNote(threshold: string, limitText: string): string {
+function alertNote(
+  threshold: string,
+  limitText: string,
+  carriedOver: number,
+): string {
   const ratio = parsePercent(threshold);
   const limit = parseFigure(limitText, "IDR");
 
@@ -134,5 +146,10 @@ function alertNote(threshold: string, limitText: string): string {
   if (limit === null || limit <= 0) {
     return `Alerts once ${formatPercent(ratio)} of the limit is spent.`;
   }
-  return `Alerts at ${formatRupiah(Math.round(limit * ratio))} of ${formatRupiah(limit)}.`;
+
+  const spendable = limit + carriedOver;
+  const note = `Alerts at ${formatRupiah(Math.round(spendable * ratio))} of ${formatRupiah(spendable)}.`;
+  return carriedOver > 0
+    ? `${note} ${formatRupiah(carriedOver)} rolled over into this cycle.`
+    : note;
 }

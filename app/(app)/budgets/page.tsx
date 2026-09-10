@@ -55,6 +55,13 @@ export default async function BudgetsPage() {
                 <span className="text-muted text-note">
                   {screen.allocation.categoryCount}
                 </span>
+                {/* The carry is named here because the share and the unspent
+                    figure below both answer against the plan plus it. */}
+                {screen.allocation.carriedNote ? (
+                  <span className="text-muted text-note">
+                    {screen.allocation.carriedNote}
+                  </span>
+                ) : null}
               </p>
               <StackedBar
                 className="mt-4"

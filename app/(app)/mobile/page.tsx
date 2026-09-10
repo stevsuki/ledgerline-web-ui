@@ -14,7 +14,7 @@ import { ProgressTrack } from "@/components/ui/primitives";
 import { CATEGORIES } from "@/lib/data/categories";
 import { getBudgetsPreview } from "@/lib/data/budgets";
 import { getRecentTransactions, getTransactions } from "@/lib/data/transactions";
-import { formatSignedRupiah } from "@/lib/format";
+import { formatSignedMoney, formatSignedSums } from "@/lib/format";
 import { PAGE_META, WORKSPACE } from "@/lib/nav";
 import { BG_TONE, TEXT_TONE, cx } from "@/lib/tone";
 
@@ -37,10 +37,10 @@ export default async function MobilePage() {
     getBudgetsPreview(),
     getTransactions({
       query: "",
-      category: "All categories",
-      wallet: "All wallets",
+      category: "",
+      wallet: "",
+      type: "",
       range: "This month",
-      amount: "Any amount",
       page: 1,
       size: 10,
     }),
@@ -129,7 +129,7 @@ export default async function MobilePage() {
                     transaction.amount > 0 ? TEXT_TONE.income : TEXT_TONE.text,
                   )}
                 >
-                  {formatSignedRupiah(transaction.amount)}
+                  {formatSignedMoney(transaction.amount, transaction.currency)}
                 </span>
               </div>
             ))}
@@ -157,38 +157,32 @@ export default async function MobilePage() {
                 <p className="bg-panel text-muted border-divider text-kicker flex border-b px-3.5 py-2">
                   <span className="flex-1">{group.day}</span>
                   <span className="tabular-nums">
-                    {formatSignedRupiah(group.net)}
+                    {formatSignedSums(group.net)}
                   </span>
                 </p>
-                {group.items.map((transaction) => (
+                {group.items.map((item) => (
                   <div
-                    key={transaction.id}
+                    key={item.id}
                     className="border-divider flex items-center gap-2.5 border-b px-3.5 py-2.5"
                   >
                     <Icon
-                      name={CATEGORIES[transaction.category].icon}
+                      name={item.categoryIcon}
                       size={15}
                       className={
-                        transaction.amount > 0
-                          ? TEXT_TONE.income
-                          : TEXT_TONE.muted
+                        item.amount > 0 ? TEXT_TONE.income : TEXT_TONE.muted
                       }
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-note">{transaction.name}</p>
-                      <p className="text-muted text-kicker">
-                        {transaction.wallet}
-                      </p>
+                      <p className="truncate text-note">{item.name}</p>
+                      <p className="text-muted text-kicker">{item.walletName}</p>
                     </div>
                     <span
                       className={cx(
                         "text-note font-semibold",
-                        transaction.amount > 0
-                          ? TEXT_TONE.income
-                          : TEXT_TONE.text,
+                        item.amount > 0 ? TEXT_TONE.income : TEXT_TONE.text,
                       )}
                     >
-                      {formatSignedRupiah(transaction.amount)}
+                      {formatSignedMoney(item.amount, item.currency)}
                     </span>
                   </div>
                 ))}

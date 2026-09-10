@@ -17,15 +17,15 @@ import {
   SearchInput,
 } from "@/components/ui/toolbar";
 import {
-  AMOUNT_FILTER_OPTIONS,
-  CATEGORY_FILTER_OPTIONS,
   RANGE_FILTER_OPTIONS,
   TRANSACTION_PAGE_SIZES,
-  WALLET_FILTER_OPTIONS,
+  TYPE_FILTER_OPTIONS,
+  TYPE_FILTER_VALUES,
+  getTransactionFilterOptions,
   getTransactions,
 } from "@/lib/data/transactions";
 import { transactionsSubtitle } from "@/lib/data/ledger";
-import { formatSignedRupiah } from "@/lib/format";
+import { formatSignedSums } from "@/lib/format";
 import { PAGE_META } from "@/lib/nav";
 import { readOption, readPage, readSize, readText } from "@/lib/search-params";
 
@@ -38,17 +38,23 @@ export default async function TransactionsPage(
 ) {
   const params = await props.searchParams;
 
+  // The category and wallet dropdowns are read live, so their allowed values
+  // are known before a filter can be validated against them.
+  const options = await getTransactionFilterOptions();
+  const categoryValues = options.categories.map((option) => option.value);
+  const walletValues = options.wallets.map((option) => option.value);
+
   const filters = {
     query: readText(params, "q"),
-    category: readOption(params, "category", CATEGORY_FILTER_OPTIONS),
-    wallet: readOption(params, "wallet", WALLET_FILTER_OPTIONS),
+    category: readOption(params, "category", categoryValues),
+    wallet: readOption(params, "wallet", walletValues),
+    type: readOption(params, "type", TYPE_FILTER_VALUES),
     range: readOption(params, "range", RANGE_FILTER_OPTIONS),
-    amount: readOption(params, "amount", AMOUNT_FILTER_OPTIONS),
     page: readPage(params),
     size: readSize(params, TRANSACTION_PAGE_SIZES),
   };
 
-  const { groups, stats, page, isEmpty } = await getTransactions(filters);
+  const { groups, stats, page, isEmpty, error } = await getTransactions(filters);
 
   return (
     <AppScreen
@@ -73,14 +79,14 @@ export default async function TransactionsPage(
               id="tx-filter-category"
               name="category"
               label="Category"
-              options={CATEGORY_FILTER_OPTIONS}
+              options={options.categories}
               value={filters.category}
             />
             <FilterSelect
               id="tx-filter-wallet"
               name="wallet"
               label="Wallet"
-              options={WALLET_FILTER_OPTIONS}
+              options={options.wallets}
               value={filters.wallet}
             />
             <FilterSelect
@@ -92,12 +98,12 @@ export default async function TransactionsPage(
               minWidth={140}
             />
             <FilterSelect
-              id="tx-filter-amount"
-              name="amount"
-              label="Amount"
-              options={AMOUNT_FILTER_OPTIONS}
-              value={filters.amount}
-              minWidth={170}
+              id="tx-filter-type"
+              name="type"
+              label="Type"
+              options={TYPE_FILTER_OPTIONS}
+              value={filters.type}
+              minWidth={130}
             />
             <FilterSubmit />
             <div className="ml-auto flex gap-2">
@@ -121,12 +127,12 @@ export default async function TransactionsPage(
                 </span>
                 <span className="flex-1" />
                 <span className="text-meta text-muted tabular-nums">
-                  {formatSignedRupiah(group.net)}
+                  {formatSignedSums(group.net)}
                 </span>
               </h2>
               <ul>
-                {group.items.map((transaction) => (
-                  <LedgerRow key={transaction.id} transaction={transaction} />
+                {group.items.map((item) => (
+                  <LedgerRow key={item.id} item={item} />
                 ))}
               </ul>
             </section>
@@ -134,9 +140,9 @@ export default async function TransactionsPage(
 
           {isEmpty ? (
             <EmptyState
-              message="No transactions match these filters."
+              message={error || "No transactions match these filters."}
               resetHref={BASE_PATH}
-              resetLabel="Clear them"
+              resetLabel={error ? "Try again" : "Clear them"}
             />
           ) : null}
 

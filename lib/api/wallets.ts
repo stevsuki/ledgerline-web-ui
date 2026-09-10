@@ -20,6 +20,7 @@ import type { CurrencyCode, WalletKind } from "@/types/ledger";
 
 const WALLETS = "/wallets";
 const OVERVIEW = `${WALLETS}/overview`;
+const OPTIONS = `${WALLETS}/options`;
 
 /**
  * A wallet exactly as the API states it: raw figures in the wallet's own
@@ -33,9 +34,18 @@ export type WalletRecord = {
   readonly icon: IconName;
   readonly currency: CurrencyCode;
   readonly reference: string;
-  /** Negative on a card is money owed. */
+  /**
+   * The figure its owner stated, as of `balanceUpdatedAt`. It is where the wallet
+   * started, not what is in it — `currentBalance` is that. Negative on a card is
+   * money owed.
+   */
   readonly balance: number;
-  /** When the figure itself was last typed, which is not when the row changed. */
+  /**
+   * That figure moved by every transaction filed against the wallet since it was
+   * stated, summed by the backend. This is the one to print.
+   */
+  readonly currentBalance: number;
+  /** When the figure itself was last stated, which is not when the row changed. */
   readonly balanceUpdatedAt: string;
   readonly includeInTotal: boolean;
   /** Cards only; `null` on every other kind. */
@@ -57,8 +67,15 @@ export type WalletOverviewRecord = {
   readonly baseCurrency: CurrencyCode;
   readonly totalHeld: number;
   readonly countedWallets: number;
-  /** Negative, or 0 when nothing is owed. */
+  /** Negative, or 0 when nothing is owed. Cards only. */
   readonly owedOnCards: number;
+  /**
+   * What the wallets that are not cards are short, negative, or 0 when none are.
+   * A card in the red owes; a bank account in the red is a different statement,
+   * and it only became possible once a balance followed its transactions.
+   */
+  readonly overdrawn: number;
+  readonly overdrawnWallets: number;
   readonly heldByCurrency: readonly CurrencyAmount[];
 };
 
@@ -103,6 +120,7 @@ function parseWallet(raw: unknown): WalletRecord | null {
     currency: readEnum(raw, "currency", CURRENCY_ORDER, "IDR"),
     reference: readString(raw, "reference") ?? "",
     balance: readNumber(raw, "balance") ?? 0,
+    currentBalance: readNumber(raw, "current_balance") ?? 0,
     balanceUpdatedAt: readString(raw, "balance_updated_at") ?? "",
     includeInTotal: readBoolean(raw, "include_in_total"),
     creditLimit: readCardField(raw, "credit_limit", kind),
@@ -152,6 +170,8 @@ function parseOverview(raw: unknown): WalletOverviewRecord | null {
     totalHeld: readNumber(raw, "total_held") ?? 0,
     countedWallets: readNumber(raw, "counted_wallets") ?? 0,
     owedOnCards: readNumber(raw, "owed_on_cards") ?? 0,
+    overdrawn: readNumber(raw, "overdrawn") ?? 0,
+    overdrawnWallets: readNumber(raw, "overdrawn_wallets") ?? 0,
     heldByCurrency: parseCurrencyAmounts(raw.held_by_currency),
   };
 }
@@ -185,6 +205,43 @@ export async function fetchWalletOverview(
     await apiRequest({ path: OVERVIEW, method: "GET", accessToken }),
     parseOverview,
   );
+}
+
+/** A wallet as a select offers it: the id it posts and the name it shows. */
+export type WalletOption = {
+  readonly id: string;
+  readonly name: string;
+};
+
+function parseWalletOptions(raw: unknown): readonly WalletOption[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  const options: WalletOption[] = [];
+  for (const entry of raw) {
+    if (!isRecord(entry)) {
+      continue;
+    }
+    const id = readString(entry, "id");
+    const name = readString(entry, "name");
+    if (id && name) {
+      options.push({ id, name });
+    }
+  }
+  return options;
+}
+
+/**
+ * GET /wallets/options — id and name only, for the transactions filter and the
+ * add-transaction sheet. The array is taken off the result rather than through
+ * `withParsed`, which would read a first, empty workspace as unreadable.
+ */
+export async function fetchWalletOptions(
+  accessToken: string,
+): Promise<ApiResult<readonly WalletOption[]>> {
+  const result = await apiRequest({ path: OPTIONS, method: "GET", accessToken });
+  return result.ok ? { ...result, data: parseWalletOptions(result.data) } : result;
 }
 
 /* ── writes ────────────────────────────────────────────────────────────── */

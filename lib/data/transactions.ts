@@ -1,13 +1,41 @@
 import type { IconName } from "@/components/ui/icon-sprite";
+import { fetchCategoryOptions, listCategories } from "@/lib/api/categories";
+import {
+  listTransactions,
+  type TransactionGroupRecord,
+  type TransactionItemRecord,
+  type TransactionSummaryRecord,
+} from "@/lib/api/transactions";
+import { fetchWalletOptions } from "@/lib/api/wallets";
+import { requireAccessToken } from "@/lib/auth/session";
+import { FALLBACK_MASTER_ID } from "@/lib/category-fields";
 import { CATEGORIES } from "@/lib/data/categories";
-import { formatDayHeading } from "@/lib/dates";
-import { paginate, type Paged } from "@/lib/pagination";
-import { formatRupiah, formatSignedRupiah } from "@/lib/format";
+import {
+  addDays,
+  formatDayHeading,
+  isoDayOf,
+  parseIsoDate,
+  startOfMonth,
+  todayInJakarta,
+  toIsoDate,
+} from "@/lib/dates";
+import { pagedFromTotal, type Paged } from "@/lib/pagination";
+import {
+  BASE_CURRENCY,
+  formatMoney,
+  formatSignedMoney,
+  formatSignedSums,
+  formatSums,
+} from "@/lib/format";
 import type {
   CategoryKey,
+  CategoryKind,
+  CurrencyCode,
+  LedgerDay,
+  LedgerItem,
   MiniStat,
+  MoneySum,
   Transaction,
-  TransactionGroup,
   WalletName,
 } from "@/types/ledger";
 
@@ -28,6 +56,13 @@ export const TODAY = "2026-08-27";
  * and a hand-typed weekday is exactly the kind of thing that drifts. The
  * artboard's rows had every weekday one day out — 27 August 2026 is a Thursday,
  * not the Wednesday it printed.
+ *
+ * Two rows are in USD, on the Wise account that is kept in it. They are here
+ * because a `Wise USD` wallet that only ever received rupiah was a currency
+ * model nothing exercised: the overview added dollars to rupiah and printed the
+ * answer with an "Rp" in front. Nothing downstream moves because of them —
+ * `lib/data/ledger.ts` reduces the base currency alone, so the month's totals
+ * are still the fifty-four rupiah rows and still the artboard's own.
  */
 type LedgerEntry = {
   readonly id: string;
@@ -38,6 +73,12 @@ type LedgerEntry = {
   readonly wallet: WalletName;
   /** Negative is money out. */
   readonly amount: number;
+  /**
+   * Omitted on a rupiah row, which is almost all of them. It is written out
+   * only where the row really is in something else, so the fifty-four rows the
+   * month was balanced on are untouched by the field existing.
+   */
+  readonly currency?: CurrencyCode;
 };
 
 const ENTRIES: readonly LedgerEntry[] = [
@@ -66,6 +107,7 @@ const ENTRIES: readonly LedgerEntry[] = [
   { id: "tx-20", date: "2026-08-20", name: "Kantin Tebet", note: "Lunch with Sari", category: "food", wallet: "Cash", amount: -56000 },
   { id: "tx-21", date: "2026-08-20", name: "BPJS Kesehatan", note: "Class I, August", category: "health", wallet: "BCA Payroll", amount: -150000 },
   { id: "tx-22", date: "2026-08-19", name: "Grab ride", note: "Menteng to Tebet", category: "transport", wallet: "GoPay", amount: -47000 },
+  { id: "tx-55", date: "2026-08-19", name: "Invoice #2026-115 — Halcyon Studio", note: "Retainer, billed in USD", category: "income", wallet: "Wise USD", amount: 1180, currency: "USD" },
   { id: "tx-23", date: "2026-08-18", name: "Kopi Tuku", note: "Tebet · morning", category: "food", wallet: "GoPay", amount: -62000 },
   { id: "tx-24", date: "2026-08-18", name: "Telkomsel Halo", note: "Postpaid, 25 GB", category: "utilities", wallet: "BCA Card", amount: -127000 },
   { id: "tx-25", date: "2026-08-17", name: "Invoice #2026-112 — Pijar Retail", note: "Landing page revamp", category: "income", wallet: "BCA Payroll", amount: 4200000 },
@@ -80,6 +122,7 @@ const ENTRIES: readonly LedgerEntry[] = [
   { id: "tx-32", date: "2026-08-13", name: "GoFood — Sate Khas Senayan", note: "Dinner in", category: "food", wallet: "GoPay", amount: -134000 },
   { id: "tx-33", date: "2026-08-12", name: "Notion Plus", note: "One workspace seat", category: "subs", wallet: "BCA Card", amount: -160000 },
   { id: "tx-34", date: "2026-08-12", name: "Gojek ride", note: "Tebet to Kuningan", category: "transport", wallet: "GoPay", amount: -38000 },
+  { id: "tx-56", date: "2026-08-12", name: "Vercel Pro", note: "One seat, charged in USD", category: "subs", wallet: "Wise USD", amount: -20, currency: "USD" },
   { id: "tx-35", date: "2026-08-11", name: "Kopi Tuku", note: "Tebet · morning", category: "food", wallet: "GoPay", amount: -62000 },
   { id: "tx-36", date: "2026-08-11", name: "Apotek K-24", note: "Vitamin D3 dan omega", category: "health", wallet: "Cash", amount: -141000 },
   { id: "tx-37", date: "2026-08-10", name: "Pertamina Pertamax", note: "Motor, full tank", category: "transport", wallet: "Cash", amount: -100000 },
@@ -118,21 +161,8 @@ export const TRANSACTIONS: readonly Transaction[] = ENTRIES.map((entry) => ({
   ...entry,
   day: formatDayHeading(entry.date),
   walletIcon: WALLET_ICON[entry.wallet],
+  currency: entry.currency ?? BASE_CURRENCY,
 }));
-
-export const CATEGORY_FILTER_OPTIONS = [
-  "All categories",
-  ...Object.values(CATEGORIES).map((category) => category.label),
-] as const;
-
-export const WALLET_FILTER_OPTIONS = [
-  "All wallets",
-  "BCA Payroll",
-  "BCA Card",
-  "GoPay",
-  "Cash",
-  "Wise USD",
-] as const;
 
 export const RANGE_FILTER_OPTIONS = [
   "This month",
@@ -140,12 +170,25 @@ export const RANGE_FILTER_OPTIONS = [
   "Year to date",
 ] as const;
 
-export const AMOUNT_FILTER_OPTIONS = [
-  "Any amount",
-  "Under Rp100.000",
-  "Rp100.000 – Rp1.000.000",
-  "Over Rp1.000.000",
-] as const;
+export type RangeFilter = (typeof RANGE_FILTER_OPTIONS)[number];
+
+/**
+ * The type filter, replacing the artboard's amount buckets: the backend filters
+ * by direction (`income` | `expense`), and "" is every type. The value is the
+ * one the API takes; the label is what the select shows.
+ */
+export const TYPE_FILTER_OPTIONS: readonly {
+  readonly value: string;
+  readonly label: string;
+}[] = [
+  { value: "", label: "Any type" },
+  { value: "income", label: "Income" },
+  { value: "expense", label: "Expense" },
+];
+
+export type TypeFilter = "" | "income" | "expense";
+
+export const TYPE_FILTER_VALUES: readonly TypeFilter[] = ["", "income", "expense"];
 
 export const TRANSACTION_PAGE_SIZES = [10, 25, 50] as const;
 
@@ -157,144 +200,340 @@ export const WALLET_NAMES: readonly WalletName[] = [
   "Wise USD",
 ];
 
+/* ── the filter dropdowns, read live from the API ──────────────────────── */
+
+export type FilterOption = { readonly value: string; readonly label: string };
+
+export type TransactionFilterOptions = {
+  readonly categories: readonly FilterOption[];
+  readonly wallets: readonly FilterOption[];
+};
+
+/** The sentinel row every dropdown opens on: no filter at all. */
+const ALL_CATEGORIES: FilterOption = { value: "", label: "All categories" };
+const ALL_WALLETS: FilterOption = { value: "", label: "All wallets" };
+
+function toFilterOption(option: {
+  readonly id: string;
+  readonly name: string;
+}): FilterOption {
+  return { value: option.id, label: option.name };
+}
+
+/**
+ * The category and wallet options the filter bar offers, each posting an id.
+ * Read from the same endpoints the rest of the app uses — `?slug=filter` for
+ * categories, `/wallets/options` for wallets — so a category or wallet added
+ * elsewhere is filterable at once. Either failing degrades to just its "All"
+ * row rather than emptying the bar.
+ */
+export async function getTransactionFilterOptions(): Promise<TransactionFilterOptions> {
+  const accessToken = await requireAccessToken();
+  const [categories, wallets] = await Promise.all([
+    fetchCategoryOptions(accessToken, "filter"),
+    fetchWalletOptions(accessToken),
+  ]);
+
+  return {
+    categories: [
+      ALL_CATEGORIES,
+      ...(categories.ok ? categories.data.map(toFilterOption) : []),
+    ],
+    wallets: [ALL_WALLETS, ...(wallets.ok ? wallets.data.map(toFilterOption) : [])],
+  };
+}
+
+/* ── the add-transaction sheet's selects ───────────────────────────────── */
+
+export type ComposerOption = { readonly id: string; readonly name: string };
+
+export type TransactionComposer = {
+  readonly categories: readonly ComposerOption[];
+  readonly wallets: readonly ComposerOption[];
+  /** The "Other" bucket, which the sheet offers to name instead of file under. */
+  readonly fallbackCategoryId: string;
+  readonly fallbackCategoryName: string;
+};
+
+/**
+ * The categories and wallets the add-transaction sheet posts by id. Categories
+ * are read whole rather than as options, so the sheet can tell which row is the
+ * fallback — the one it offers to name — from its master link.
+ */
+export async function getTransactionComposer(): Promise<TransactionComposer> {
+  const accessToken = await requireAccessToken();
+  const [categories, wallets] = await Promise.all([
+    listCategories(accessToken),
+    fetchWalletOptions(accessToken),
+  ]);
+
+  const rows = categories.ok ? categories.data : [];
+  const fallback = rows.find((row) => row.masterId === FALLBACK_MASTER_ID);
+
+  return {
+    categories: rows.map((row) => ({ id: row.id, name: row.name })),
+    wallets: wallets.ok ? wallets.data.map((w) => ({ id: w.id, name: w.name })) : [],
+    fallbackCategoryId: fallback?.id ?? "",
+    fallbackCategoryName: fallback?.name ?? "",
+  };
+}
+
+/* ── the query the screen runs ─────────────────────────────────────────── */
+
 export type TransactionFilters = {
   readonly query: string;
-  readonly category: (typeof CATEGORY_FILTER_OPTIONS)[number];
-  readonly wallet: (typeof WALLET_FILTER_OPTIONS)[number];
-  readonly range: (typeof RANGE_FILTER_OPTIONS)[number];
-  readonly amount: (typeof AMOUNT_FILTER_OPTIONS)[number];
+  /** A category id, or "" for every category. */
+  readonly category: string;
+  readonly wallet: string;
+  readonly type: TypeFilter;
+  readonly range: RangeFilter;
   readonly page: number;
   readonly size: number;
 };
 
-const AMOUNT_BOUNDS: Readonly<
-  Record<(typeof AMOUNT_FILTER_OPTIONS)[number], { min: number; max: number }>
-> = {
-  "Any amount": { min: 0, max: Number.POSITIVE_INFINITY },
-  "Under Rp100.000": { min: 0, max: 100_000 },
-  "Rp100.000 – Rp1.000.000": { min: 100_000, max: 1_000_000 },
-  "Over Rp1.000.000": { min: 1_000_000, max: Number.POSITIVE_INFINITY },
-};
+/** The workspace keeps Jakarta time, so a range is bounded in Jakarta's zone. */
+const JAKARTA_OFFSET = "+07:00";
+const YEAR_START_SUFFIX = "-01-01";
+/** "Last 90 days" is today and the 89 days before it, inclusive. */
+const LAST_90_LOOKBACK = 89;
 
-const RANGE_DAYS: Readonly<
-  Record<(typeof RANGE_FILTER_OPTIONS)[number], number>
-> = {
-  "This month": 31,
-  "Last 90 days": 90,
-  "Year to date": 365,
-};
-
-const MS_PER_DAY = 86_400_000;
-
-function matchesAmount(
-  amount: number,
-  option: (typeof AMOUNT_FILTER_OPTIONS)[number],
-): boolean {
-  const value = Math.abs(amount);
-  const { min, max } = AMOUNT_BOUNDS[option];
-  if (option === "Under Rp100.000") {
-    return value < max;
+/** A preset range, resolved to the RFC3339 bounds the backend filters on. */
+function rangeBounds(range: RangeFilter): {
+  readonly from: string;
+  readonly to: string;
+} {
+  const today = todayInJakarta();
+  const parsed = parseIsoDate(today);
+  if (!parsed) {
+    return { from: "", to: "" };
   }
-  if (option === "Over Rp1.000.000") {
-    return value > min;
+
+  let fromDay: string;
+  if (range === "This month") {
+    fromDay = toIsoDate(startOfMonth(parsed));
+  } else if (range === "Year to date") {
+    fromDay = `${today.slice(0, 4)}${YEAR_START_SUFFIX}`;
+  } else {
+    fromDay = toIsoDate(addDays(parsed, -LAST_90_LOOKBACK));
   }
-  return value >= min && value <= max;
+
+  return {
+    from: `${fromDay}T00:00:00${JAKARTA_OFFSET}`,
+    to: `${today}T23:59:59${JAKARTA_OFFSET}`,
+  };
 }
 
-function matchesRange(
-  date: string,
-  option: (typeof RANGE_FILTER_OPTIONS)[number],
-): boolean {
-  const days = (Date.parse(TODAY) - Date.parse(date)) / MS_PER_DAY;
-  return days >= 0 && days <= RANGE_DAYS[option];
-}
+/* ── resolving a row's icons from its live names ────────────────────────── */
 
-function matchesQuery(transaction: Transaction, query: string): boolean {
-  if (!query) {
-    return true;
-  }
-  const haystack = `${transaction.name} ${transaction.note}`.toLowerCase();
-  return haystack.includes(query.toLowerCase());
-}
+/**
+ * A live category name to the tile the artboard drew it with, when the account
+ * is still on one of the seven seeded names; otherwise its direction's tile.
+ * The list endpoint states the name, not the icon, so the icon is resolved here.
+ */
+const CATEGORY_ICON_BY_LABEL: Readonly<Record<string, IconName>> =
+  Object.fromEntries(
+    Object.values(CATEGORIES).map((category): [string, IconName] => [
+      category.label.toLowerCase(),
+      category.icon,
+    ]),
+  );
 
-function matchesCategory(
-  transaction: Transaction,
-  option: (typeof CATEGORY_FILTER_OPTIONS)[number],
-): boolean {
+const INCOME_ICON: IconName = "bank";
+const EXPENSE_ICON: IconName = "bag";
+
+function categoryIconFor(name: string, type: CategoryKind): IconName {
   return (
-    option === "All categories" ||
-    CATEGORIES[transaction.category].label === option
+    CATEGORY_ICON_BY_LABEL[name.toLowerCase()] ??
+    (type === "income" ? INCOME_ICON : EXPENSE_ICON)
   );
 }
 
-/** Rows carry their own day heading, so grouping is a stable single pass. */
-function groupByDay(items: readonly Transaction[]): TransactionGroup[] {
-  const groups: TransactionGroup[] = [];
+/** The fixture's wallet tiles, by name; anything else gets the generic wallet. */
+const WALLET_ICON_BY_NAME: Readonly<Record<string, IconName>> = WALLET_ICON;
+const FALLBACK_WALLET_ICON: IconName = "wallet";
 
-  for (const item of items) {
-    const last = groups[groups.length - 1];
-    if (last && last.day === item.day) {
-      groups[groups.length - 1] = {
-        day: last.day,
-        net: last.net + item.amount,
-        items: [...last.items, item],
-      };
-      continue;
-    }
-    groups.push({ day: item.day, net: item.amount, items: [item] });
-  }
-
-  return groups;
+function walletIconFor(name: string): IconName {
+  return WALLET_ICON_BY_NAME[name] ?? FALLBACK_WALLET_ICON;
 }
 
-function buildStats(matches: readonly Transaction[]): MiniStat[] {
-  const moneyIn = matches
-    .filter((item) => item.amount > 0)
-    .reduce((total, item) => total + item.amount, 0);
-  const moneyOut = matches
-    .filter((item) => item.amount < 0)
-    .reduce((total, item) => total - item.amount, 0);
-  const net = moneyIn - moneyOut;
+function toItem(record: TransactionItemRecord): LedgerItem {
+  return {
+    id: record.id,
+    name: record.name,
+    note: record.note,
+    categoryName: record.categoryName,
+    categoryIcon: categoryIconFor(record.categoryName, record.type),
+    walletName: record.walletName,
+    walletIcon: walletIconFor(record.walletName),
+    amount: record.amount,
+    currency: record.currency,
+  };
+}
+
+/** A day's net per currency, folded from its own rows, base currency first. */
+function netOf(items: readonly TransactionItemRecord[]): readonly MoneySum[] {
+  const byCurrency = new Map<CurrencyCode, number>();
+  for (const item of items) {
+    byCurrency.set(item.currency, (byCurrency.get(item.currency) ?? 0) + item.amount);
+  }
+
+  const sums: MoneySum[] = [...byCurrency].map(([currency, amount]) => ({
+    currency,
+    amount,
+  }));
+  return [
+    ...sums.filter((sum) => sum.currency === BASE_CURRENCY),
+    ...sums.filter((sum) => sum.currency !== BASE_CURRENCY),
+  ];
+}
+
+function toDay(group: TransactionGroupRecord): LedgerDay {
+  return {
+    day: formatDayHeading(isoDayOf(group.occurredAt)),
+    net: netOf(group.items),
+    items: group.items.map(toItem),
+  };
+}
+
+/* ── the stats strip, from the backend's summary ───────────────────────── */
+
+const UNCONVERTED = "unconverted";
+
+/** Only the currencies the headline cannot state reach the summary's list. */
+function unsignedNote(sums: readonly MoneySum[]): string | undefined {
+  return sums.length === 0
+    ? undefined
+    : `Plus ${formatSums(sums)}, ${UNCONVERTED}`;
+}
+
+function signedNote(sums: readonly MoneySum[]): string | undefined {
+  return sums.length === 0
+    ? undefined
+    : `${formatSignedSums(sums)}, ${UNCONVERTED}`;
+}
+
+function shownNote(summary: TransactionSummaryRecord): string | undefined {
+  return summary.otherEntries === 0
+    ? undefined
+    : `${summary.otherEntries} not in ${summary.baseCurrency}`;
+}
+
+function buildStats(
+  summary: TransactionSummaryRecord,
+  total: number,
+): readonly MiniStat[] {
+  const base = summary.baseCurrency;
+  const moneyIn = summary.byCurrency.map((row) => ({
+    currency: row.currency,
+    amount: row.moneyIn,
+  }));
+  const moneyOut = summary.byCurrency.map((row) => ({
+    currency: row.currency,
+    amount: row.moneyOut,
+  }));
+  const net = summary.byCurrency.map((row) => ({
+    currency: row.currency,
+    amount: row.net,
+  }));
 
   return [
-    { id: "shown", label: "Shown", value: `${matches.length} entries`, tone: "text" },
-    { id: "in", label: "Money in", value: formatRupiah(moneyIn), tone: "income" },
-    { id: "out", label: "Money out", value: formatRupiah(moneyOut), tone: "expense" },
+    {
+      id: "shown",
+      label: "Shown",
+      value: `${total} entries`,
+      tone: "text",
+      note: shownNote(summary),
+    },
+    {
+      id: "in",
+      label: "Money in",
+      value: formatMoney(summary.moneyIn, base),
+      tone: "income",
+      note: unsignedNote(moneyIn),
+    },
+    {
+      id: "out",
+      label: "Money out",
+      value: formatMoney(summary.moneyOut, base),
+      tone: "expense",
+      note: unsignedNote(moneyOut),
+    },
     {
       id: "net",
       label: "Net",
-      value: formatSignedRupiah(net),
-      tone: net >= 0 ? "income" : "expense",
+      value: formatSignedMoney(summary.net, base),
+      tone: summary.net >= 0 ? "income" : "expense",
+      note: signedNote(net),
     },
   ];
 }
 
-export type TransactionsResult = {
-  readonly groups: readonly TransactionGroup[];
+/** The zeroed strip a screen shows when the API could not answer at all. */
+function emptyStats(): readonly MiniStat[] {
+  return buildStats(
+    {
+      baseCurrency: BASE_CURRENCY,
+      moneyIn: 0,
+      moneyOut: 0,
+      net: 0,
+      otherEntries: 0,
+      byCurrency: [],
+    },
+    0,
+  );
+}
+
+/* ── the screen ────────────────────────────────────────────────────────── */
+
+export type LedgerScreen = {
+  readonly groups: readonly LedgerDay[];
   readonly stats: readonly MiniStat[];
-  readonly page: Paged<Transaction>;
+  readonly page: Paged<LedgerItem>;
   readonly isEmpty: boolean;
+  /** Why the screen is empty, when the API could not answer at all. */
+  readonly error: string;
 };
 
+/**
+ * The transactions screen, served from `ledgerline-backend`. The list is
+ * grouped and summed in SQL, so the rows, the day nets and the four stats are
+ * all one read — nothing is re-derived here that the backend already stated.
+ */
 export async function getTransactions(
   filters: TransactionFilters,
-): Promise<TransactionsResult> {
-  const matches = TRANSACTIONS.filter(
-    (transaction) =>
-      matchesQuery(transaction, filters.query) &&
-      matchesCategory(transaction, filters.category) &&
-      (filters.wallet === "All wallets" || transaction.wallet === filters.wallet) &&
-      matchesRange(transaction.date, filters.range) &&
-      matchesAmount(transaction.amount, filters.amount),
-  );
+): Promise<LedgerScreen> {
+  const accessToken = await requireAccessToken();
+  const bounds = rangeBounds(filters.range);
+  const result = await listTransactions(accessToken, {
+    search: filters.query,
+    category: filters.category,
+    wallet: filters.wallet,
+    type: filters.type,
+    occurredFrom: bounds.from,
+    occurredTo: bounds.to,
+    page: filters.page,
+    perPage: filters.size,
+  });
 
-  const page = paginate(matches, filters.page, filters.size);
+  if (!result.ok) {
+    return {
+      groups: [],
+      stats: emptyStats(),
+      page: pagedFromTotal<LedgerItem>([], filters.page, filters.size, 0),
+      isEmpty: true,
+      error: result.error.message,
+    };
+  }
+
+  const total = result.meta?.totalItems ?? 0;
+  const items = result.data.groups.flatMap((group) => group.items.map(toItem));
 
   return {
-    groups: groupByDay(page.items),
-    stats: buildStats(matches),
-    page,
-    isEmpty: matches.length === 0,
+    groups: result.data.groups.map(toDay),
+    stats: buildStats(result.data.summary, total),
+    page: pagedFromTotal(items, filters.page, filters.size, total),
+    isEmpty: total === 0,
+    error: "",
   };
 }
 

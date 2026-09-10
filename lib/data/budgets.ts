@@ -94,11 +94,35 @@ function statusOf(record: BudgetRecord): string {
   return percentLabel(record.usedPercent);
 }
 
+/**
+ * What this cycle may spend — the limit, plus whatever a rollover budget did
+ * not spend last cycle. It is what the backend measured `used_percent` and
+ * `remaining` against, so it is the figure the card states the spend against:
+ * "Rp30.000 of Rp2.000.000" beside "Rp3.470.000 left" is two answers.
+ */
+function spendableOf(record: BudgetRecord): number {
+  return record.monthlyLimit + record.carriedOver;
+}
+
+/**
+ * A carry is named rather than folded in quietly: a limit someone set to
+ * Rp2.000.000 printing as Rp3.500.000 needs the line to say where the rest came
+ * from. A rollover budget with nothing carried in still says it rolls over —
+ * that is the setting, and it holds for the cycles after this one.
+ */
+function rolloverNote(record: BudgetRecord): string {
+  if (record.carriedOver > 0) {
+    return `${formatRupiah(record.carriedOver)} rolled over`;
+  }
+  return record.rollover ? "rolls over" : "";
+}
+
 function metaOf(record: BudgetRecord): string {
   const alerts = record.isFixed
     ? "Fixed commitment · alerts only if it changes"
     : `Alerts at ${percentLabel(record.alertThresholdPercent)} of limit`;
-  return record.rollover ? `${alerts} · rolls over` : alerts;
+  const carry = rolloverNote(record);
+  return carry === "" ? alerts : `${alerts} · ${carry}`;
 }
 
 /** "Rp180.000 over" / "Rp1.280.000 left", from the figure the backend signed. */
@@ -121,6 +145,12 @@ export type BudgetDraft = {
   readonly threshold: string;
   /** Whether the threshold needs the Custom field to be reachable at all. */
   readonly isCustomThreshold: boolean;
+  /**
+   * What carried in from last cycle, as a figure rather than a string: it is
+   * not a field anybody edits, it is what the threshold is really measured
+   * against while this cycle lasts. 0 on a budget that carried nothing.
+   */
+  readonly carriedOver: number;
   readonly rollover: boolean;
   readonly isFixed: boolean;
 };
@@ -137,6 +167,7 @@ export type BudgetRow = {
   /** Where the alert threshold sits on the track; "" when there is none. */
   readonly thresholdWidth: string;
   readonly spent: string;
+  /** What may be spent this cycle: the limit, with any carry already in it. */
   readonly limit: string;
   readonly remaining: string;
   readonly status: string;
@@ -151,6 +182,7 @@ function toDraft(record: BudgetRecord): BudgetDraft {
     limit: formatFigure(record.monthlyLimit, record.currency),
     threshold: String(record.alertThresholdPercent),
     isCustomThreshold: !isPreset(record.alertThresholdPercent / FULL_PERCENT),
+    carriedOver: record.carriedOver,
     rollover: record.rollover,
     isFixed: record.isFixed,
   };
@@ -169,7 +201,7 @@ function toRow(record: BudgetRecord): BudgetRow {
       ? ""
       : trackWidth(record.alertThresholdPercent),
     spent: formatRupiah(record.spent),
-    limit: formatRupiah(record.monthlyLimit),
+    limit: formatRupiah(spendableOf(record)),
     remaining: remainingNote(record.remaining),
     status: statusOf(record),
     draft: toDraft(record),
@@ -181,6 +213,12 @@ function toRow(record: BudgetRecord): BudgetRow {
 export type Allocation = {
   readonly total: string;
   readonly categoryCount: string;
+  /**
+   * "plus Rp800.000 rolled over", or "" when nothing carried in. The total
+   * above is the plan alone, while the share and what is left below it answer
+   * against the plan plus this, exactly as the backend summed them.
+   */
+  readonly carriedNote: string;
   /** The figure the panel is really consulted for. */
   readonly spent: string;
   readonly percentLabel: string;
@@ -240,14 +278,27 @@ function uncountedNote(overview: BudgetOverviewRecord): string {
   return `${plural(overview.uncountedBudgets, "budget")} in another currency, not counted here`;
 }
 
+/**
+ * What the share is a share *of*. Once something has rolled in, "of allocation"
+ * names the wrong denominator: the backend divided by the allocation plus the
+ * carry, and the total printed above this is the allocation on its own.
+ */
+function allocationBasis(carriedOver: number): string {
+  return carriedOver > 0 ? "allocation + rollover" : "allocation";
+}
+
 function toAllocation(overview: BudgetOverviewRecord): Allocation {
   const pace = paceOf(overview.usedPercent, overview.cycleElapsedPercent);
 
   return {
     total: formatRupiah(overview.totalAllocated),
     categoryCount: `across ${pluralCategory(overview.categoryCount)}`,
+    carriedNote:
+      overview.totalCarriedOver > 0
+        ? `plus ${formatRupiah(overview.totalCarriedOver)} rolled over`
+        : "",
     spent: formatRupiah(overview.totalSpent),
-    percentLabel: `${percentLabel(overview.usedPercent)} of allocation`,
+    percentLabel: `${percentLabel(overview.usedPercent)} of ${allocationBasis(overview.totalCarriedOver)}`,
     remainingNote:
       overview.totalLeft < 0
         ? `${formatRupiah(-overview.totalLeft)} over`
@@ -382,6 +433,7 @@ function blankDraft(
     limit: "",
     threshold: DEFAULT_THRESHOLD,
     isCustomThreshold: false,
+    carriedOver: 0,
     rollover: false,
     isFixed: false,
   };
@@ -407,6 +459,7 @@ export type BudgetsScreen = {
 const EMPTY_ALLOCATION: Allocation = {
   total: formatRupiah(0),
   categoryCount: "across no categories yet",
+  carriedNote: "",
   spent: formatRupiah(0),
   percentLabel: "0% of allocation",
   remainingNote: `${formatRupiah(0)} unspent`,
