@@ -1,5 +1,6 @@
 import {
   apiRequest,
+  withParsed,
   withQuery,
   withoutData,
 } from "@/lib/api/client";
@@ -266,5 +267,213 @@ export async function createTransaction(
       accessToken,
       body: transactionBody(input),
     }),
+  );
+}
+
+/* ── the dashboard's two reads ─────────────────────────────────────────── */
+
+const OVERVIEW = `${TRANSACTIONS}/overview`;
+const TREND = `${TRANSACTIONS}/trend`;
+
+/** One category's spend inside a period, stated positive by the backend. */
+export type CategorySpendRecord = {
+  readonly categoryId: string;
+  readonly name: string;
+  /** "" when the category has no tile of its own; the reader resolves it. */
+  readonly icon: string;
+  readonly color: string;
+  readonly spent: number;
+};
+
+/**
+ * One period's totals. `moneyOut` is negative, as the rows are stored, so `net`
+ * is the two added rather than a subtraction invented on this side.
+ */
+export type TransactionPeriodRecord = {
+  readonly moneyIn: number;
+  readonly moneyOut: number;
+  readonly net: number;
+  readonly incomeEntries: number;
+  readonly expenseEntries: number;
+  readonly byCategory: readonly CategorySpendRecord[];
+};
+
+/**
+ * The reported month beside the month its deltas are measured against.
+ *
+ * Both periods are counted the same way, which is the only reason a ratio of the
+ * two means anything. Deciding what to print when `previous` is empty is this
+ * app's job, not the API's — see `lib/data/analytics.ts`.
+ */
+export type TransactionOverviewRecord = {
+  readonly baseCurrency: CurrencyCode;
+  /** "2026-09" — the month the figures belong to. */
+  readonly month: string;
+  readonly current: TransactionPeriodRecord;
+  readonly previous: TransactionPeriodRecord;
+  /** Rows outside the base currency, counted but never added in. */
+  readonly otherEntries: number;
+};
+
+/** One bar. The backend sends the period it starts on; the label is written here. */
+export type TrendPointRecord = {
+  readonly start: string;
+  readonly moneyIn: number;
+  readonly moneyOut: number;
+};
+
+export type TransactionTrendRange = "weekly" | "monthly";
+
+export type TransactionTrendRecord = {
+  readonly baseCurrency: CurrencyCode;
+  readonly range: TransactionTrendRange;
+  readonly points: readonly TrendPointRecord[];
+};
+
+/** A figure the API stated, or 0 when it stated none. */
+function figure(raw: Record<string, unknown>, key: string): number {
+  return readNumber(raw, key) ?? 0;
+}
+
+function parseCategorySpend(raw: unknown): CategorySpendRecord | null {
+  if (!isRecord(raw)) {
+    return null;
+  }
+
+  const categoryId = readString(raw, "category_id");
+  if (!categoryId) {
+    return null;
+  }
+
+  return {
+    categoryId,
+    name: readString(raw, "name") ?? "",
+    icon: readString(raw, "icon") ?? "",
+    color: readString(raw, "color") ?? "",
+    spent: figure(raw, "spent"),
+  };
+}
+
+function parseCategorySpends(raw: unknown): readonly CategorySpendRecord[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  const entries: CategorySpendRecord[] = [];
+  for (const entry of raw) {
+    const parsed = parseCategorySpend(entry);
+    if (parsed) {
+      entries.push(parsed);
+    }
+  }
+  return entries;
+}
+
+const EMPTY_PERIOD: TransactionPeriodRecord = {
+  moneyIn: 0,
+  moneyOut: 0,
+  net: 0,
+  incomeEntries: 0,
+  expenseEntries: 0,
+  byCategory: [],
+};
+
+function parsePeriod(raw: unknown): TransactionPeriodRecord {
+  if (!isRecord(raw)) {
+    return EMPTY_PERIOD;
+  }
+
+  return {
+    moneyIn: figure(raw, "money_in"),
+    moneyOut: figure(raw, "money_out"),
+    net: figure(raw, "net"),
+    incomeEntries: figure(raw, "income_entries"),
+    expenseEntries: figure(raw, "expense_entries"),
+    byCategory: parseCategorySpends(raw.by_category),
+  };
+}
+
+function parseOverview(raw: unknown): TransactionOverviewRecord | null {
+  if (!isRecord(raw)) {
+    return null;
+  }
+
+  return {
+    baseCurrency: readEnum(raw, "base_currency", CURRENCY_ORDER, "IDR"),
+    month: readString(raw, "month") ?? "",
+    current: parsePeriod(raw.current),
+    previous: parsePeriod(raw.previous),
+    otherEntries: figure(raw, "other_entries"),
+  };
+}
+
+const TREND_RANGES: readonly TransactionTrendRange[] = ["weekly", "monthly"];
+
+function parseTrendPoint(raw: unknown): TrendPointRecord | null {
+  if (!isRecord(raw)) {
+    return null;
+  }
+
+  const start = readString(raw, "start");
+  if (!start) {
+    return null;
+  }
+
+  return {
+    start,
+    moneyIn: figure(raw, "money_in"),
+    moneyOut: figure(raw, "money_out"),
+  };
+}
+
+function parseTrend(raw: unknown): TransactionTrendRecord | null {
+  if (!isRecord(raw)) {
+    return null;
+  }
+
+  const points: TrendPointRecord[] = [];
+  if (Array.isArray(raw.points)) {
+    for (const entry of raw.points) {
+      const point = parseTrendPoint(entry);
+      if (point) {
+        points.push(point);
+      }
+    }
+  }
+
+  return {
+    baseCurrency: readEnum(raw, "base_currency", CURRENCY_ORDER, "IDR"),
+    range: readEnum(raw, "range", TREND_RANGES, "weekly"),
+    points,
+  };
+}
+
+/**
+ * GET /transactions/overview — the dashboard's month and the one before it.
+ *
+ * One call for both periods on purpose: every delta on the screen divides one by
+ * the other, and two calls could read the ledger a transaction apart.
+ */
+export async function fetchTransactionOverview(
+  accessToken: string,
+): Promise<ApiResult<TransactionOverviewRecord>> {
+  return withParsed(
+    await apiRequest({ path: OVERVIEW, method: "GET", accessToken }),
+    parseOverview,
+  );
+}
+
+/** GET /transactions/trend — one point per period, empty periods included. */
+export async function fetchTransactionTrend(
+  accessToken: string,
+  range: TransactionTrendRange,
+): Promise<ApiResult<TransactionTrendRecord>> {
+  return withParsed(
+    await apiRequest({
+      path: withQuery(TREND, { range }),
+      method: "GET",
+      accessToken,
+    }),
+    parseTrend,
   );
 }

@@ -1,21 +1,31 @@
+import {
+  fetchTransactionOverview,
+  fetchTransactionTrend,
+  type CategorySpendRecord,
+  type TransactionOverviewRecord,
+  type TransactionPeriodRecord,
+  type TrendPointRecord,
+} from "@/lib/api/transactions";
+import {
+  fetchWalletOverview,
+  listWallets,
+  type WalletOverviewRecord,
+  type WalletRecord,
+} from "@/lib/api/wallets";
+import { requireAccessToken } from "@/lib/auth/session";
+import { RAMP_STEPS } from "@/lib/category-fields";
+import { isoDayOf, monthLabel, parseIsoDate, todayInJakarta } from "@/lib/dates";
 import { savingStreakLength } from "@/lib/data/goals";
 import {
-  REPORTING_MONTH_LABEL,
-  balanceGrowth,
   categorySpend,
-  expenseGrowth,
-  incomeGrowth,
-  incomeRowCount,
   largestRowIn,
   lastCheaperMonth,
   monthTotals,
-  monthlySeries,
   monthlySpendByCategory,
   priorSpendOn,
   risingStreak,
   shareOf,
   spendByCategory,
-  weeklyTrend,
   type CategorySpend,
 } from "@/lib/data/ledger";
 import { firstDaysNames, firstDaysTotal } from "@/lib/data/recurring";
@@ -25,15 +35,16 @@ import {
   formatRupiah,
   formatSignedPercent,
 } from "@/lib/format";
+import type { ApiResult } from "@/types/api";
 import type {
   CategoryKey,
+  CurrencyCode,
   CategoryRank,
   Insight,
   RampStep,
   SummaryStat,
   Tone,
   TrendMode,
-  TrendPoint,
 } from "@/types/ledger";
 
 /**
@@ -44,17 +55,7 @@ import type {
 
 /* ── the trend chart ───────────────────────────────────────────────────── */
 
-const SERIES_BY_MODE: Readonly<Record<TrendMode, () => readonly TrendPoint[]>> =
-  {
-    weekly: weeklyTrend,
-    monthly: monthlySeries,
-  };
-
-export const TREND_RANGE_LABEL: Readonly<Record<TrendMode, string>> = {
-  weekly: `Weeks 1–${weeklyTrend().length}, ${REPORTING_MONTH_LABEL}`,
-  monthly: `${monthlySeries().length} months to ${REPORTING_MONTH_LABEL}`,
-};
-
+/** One bar, scaled and phrased here; the API sends the period and the figures. */
 export type TrendBar = {
   readonly label: string;
   readonly incomeHeight: string;
@@ -66,27 +67,6 @@ export type TrendBar = {
 
 const FULL_PERCENT = 100;
 const HEIGHT_PRECISION = 1;
-
-export async function getTrend(mode: TrendMode): Promise<readonly TrendBar[]> {
-  const rows = SERIES_BY_MODE[mode]();
-
-  // Bars are scaled against the tallest one, so the chart always fills its box.
-  const peak = Math.max(
-    ...rows.map((row) => Math.max(row.income, row.expense)),
-  );
-
-  const height = (value: number): string =>
-    `${(shareOf(value, peak) * FULL_PERCENT).toFixed(HEIGHT_PRECISION)}%`;
-
-  return rows.map((row) => ({
-    label: row.label,
-    incomeHeight: height(row.income),
-    expenseHeight: height(row.expense),
-    incomeLabel: formatRupiah(row.income),
-    expenseLabel: formatRupiah(row.expense),
-    netLabel: formatRupiah(row.income - row.expense),
-  }));
-}
 
 /* ── donut geometry — ported from the artboard's `arc(i)` ──────────────── */
 
@@ -133,42 +113,6 @@ export type DonutData = {
   readonly totalNote: string;
 };
 
-export async function getSpendDonut(): Promise<DonutData> {
-  const slices = spendByCategory();
-  const total = slices.reduce((sum, slice) => sum + slice.value, 0);
-
-  // The ring starts at twelve o'clock and is walked clockwise, one slice at a
-  // time, each taking the share of a full turn its own share of the spend is.
-  let angle = -QUARTER_TURN;
-
-  const segments = slices.map((slice) => {
-    const start = angle;
-    const end = start + shareOf(slice.value, total) * FULL_TURN;
-    angle = end;
-
-    return {
-      id: slice.key,
-      label: slice.label,
-      step: slice.step,
-      path: arcPath(start, end - SLICE_GAP),
-      percent: formatPercent(shareOf(slice.value, total)),
-      value: formatRupiah(slice.value),
-    };
-  });
-
-  return {
-    segments,
-    totalLabel: "Total spent",
-    totalValue: formatRupiah(total),
-    totalNote: `${slices.length} categories`,
-  };
-}
-
-/** The donut's caption: which month, and what it totalled. */
-export function donutCaption(): string {
-  return `${REPORTING_MONTH_LABEL} · ${formatRupiah(monthTotals().expense)}`;
-}
-
 /* ── the dashboard's four stats ────────────────────────────────────────── */
 
 /** A rising expense is bad news, a rising income is good — hence two of these. */
@@ -181,75 +125,7 @@ function toneForSpendChange(ratio: number): Tone {
 
 const STAT_DELTA_DIGITS = 1;
 
-export async function getSummaryStats(): Promise<readonly SummaryStat[]> {
-  const { closingBalance, income, expense, net, savingsRate } = monthTotals();
-
-  return [
-    {
-      id: "balance",
-      label: "Total balance",
-      value: formatRupiah(closingBalance),
-      icon: "wallet",
-      iconTone: "muted",
-      valueTone: "text",
-      delta: formatSignedPercent(balanceGrowth(), STAT_DELTA_DIGITS),
-      deltaTone: "income",
-      deltaNote: "vs last month",
-    },
-    {
-      id: "income",
-      label: `Income, ${REPORTING_MONTH_LABEL.split(" ")[0]}`,
-      value: formatRupiah(income),
-      icon: "up",
-      iconTone: "income",
-      valueTone: "income",
-      delta: formatSignedPercent(incomeGrowth(), STAT_DELTA_DIGITS),
-      deltaTone: "income",
-      deltaNote: `${incomeRowCount()} client invoices`,
-    },
-    {
-      id: "expense",
-      label: `Expense, ${REPORTING_MONTH_LABEL.split(" ")[0]}`,
-      value: formatRupiah(expense),
-      icon: "down",
-      iconTone: "expense",
-      valueTone: "text",
-      delta: formatSignedPercent(expenseGrowth(), STAT_DELTA_DIGITS),
-      deltaTone: toneForSpendChange(expenseGrowth()),
-      deltaNote: `driven by ${fastestRisingCategory().label.toLowerCase()}`,
-    },
-    {
-      id: "saved",
-      label: "Net saved",
-      value: formatRupiah(net),
-      icon: "flag",
-      iconTone: "accent",
-      valueTone: "text",
-      delta: formatPrecisePercent(savingsRate),
-      deltaTone: "income",
-      deltaNote: "of income kept",
-    },
-  ];
-}
-
 /* ── the insights screen ───────────────────────────────────────────────── */
-
-/**
- * The category that grew the most against last month, ignoring the catch-all.
- * "Driven by other" names the bucket for everything unclassified, which is not
- * an explanation of anything — the point of the line is to say what to look at.
- */
-const UNCLASSIFIED: CategoryKey = "other";
-
-function fastestRisingCategory(): CategorySpend {
-  const [first, ...rest] = spendByCategory().filter(
-    (entry) => entry.key !== UNCLASSIFIED,
-  );
-  return rest.reduce(
-    (leader, entry) => (entry.change > leader.change ? entry : leader),
-    first,
-  );
-}
 
 const ORDINALS = [
   "",
@@ -429,3 +305,389 @@ export async function getCategoryRanking(): Promise<readonly CategoryRank[]> {
     }));
 }
 
+
+/* ── the dashboard, from the API ───────────────────────────────────────── */
+
+/**
+ * Four stat cards, a donut, and a bar chart, all measured over the same month.
+ *
+ * The deltas are what make this screen a single read rather than four: each one
+ * is a ratio of two figures, so both have to be counted the same way and on the
+ * same data. `GET /transactions/overview` answers the reported month and the one
+ * before it together for exactly that reason.
+ *
+ * Where a comparison cannot honestly be made the delta says so rather than
+ * printing a number. An empty earlier month is not "0%" — it is no comparison at
+ * all, and a "0%" beside a month that earned nothing would read as "unchanged".
+ */
+
+const NO_DELTA = "—";
+
+/** A ratio against last month, or `null` when there is nothing to divide by. */
+function changeAgainst(current: number, prior: number): number | null {
+  return prior === 0 ? null : (current - prior) / prior;
+}
+
+type Delta = { readonly delta: string; readonly deltaTone: Tone; readonly deltaNote: string };
+
+function deltaOf(ratio: number | null, tone: Tone, note: string, missingNote: string): Delta {
+  if (ratio === null) {
+    return { delta: NO_DELTA, deltaTone: "muted", deltaNote: missingNote };
+  }
+  return {
+    delta: formatSignedPercent(ratio, STAT_DELTA_DIGITS),
+    deltaTone: tone,
+    deltaNote: note,
+  };
+}
+
+function plural(count: number, noun: string): string {
+  return count === 1 ? `${count} ${noun}` : `${count} ${noun}s`;
+}
+
+/** The one plural here that is not an "s". */
+function pluralEntries(count: number): string {
+  return count === 1 ? "1 entry" : `${count} entries`;
+}
+
+/** Expense is stored negative; a spend reads as a magnitude. */
+function spentOf(period: TransactionPeriodRecord): number {
+  return -period.moneyOut;
+}
+
+/**
+ * The category that grew the most against last month, or "" when none did.
+ *
+ * A month where everything fell has no "driven by" — naming whichever category
+ * fell least would turn a quiet month into a culprit.
+ */
+function drivenBy(
+  current: readonly CategorySpendRecord[],
+  previous: readonly CategorySpendRecord[],
+): string {
+  const before = new Map(previous.map((entry) => [entry.categoryId, entry.spent]));
+
+  let leader = "";
+  let biggest = 0;
+  for (const entry of current) {
+    const rise = entry.spent - (before.get(entry.categoryId) ?? 0);
+    if (rise > biggest) {
+      biggest = rise;
+      leader = entry.name;
+    }
+  }
+  return leader;
+}
+
+const NOTHING_LAST_MONTH = "no figure last month";
+
+function balanceStat(
+  held: number,
+  overview: TransactionOverviewRecord,
+  blockedNote: string,
+): SummaryStat {
+  // What the month opened with, read back from what it holds now. It only holds
+  // while the headline counts every wallet — see `dashboardBalanceBlocked`.
+  const opening = held - overview.current.net;
+  const ratio = blockedNote === "" ? changeAgainst(held, opening) : null;
+
+  return {
+    id: "balance",
+    label: "Total balance",
+    value: formatRupiah(held),
+    icon: "wallet",
+    iconTone: "muted",
+    valueTone: "text",
+    ...deltaOf(
+      ratio,
+      ratio !== null && ratio < 0 ? "expense" : "income",
+      "vs the start of the month",
+      blockedNote === "" ? NOTHING_LAST_MONTH : blockedNote,
+    ),
+  };
+}
+
+function incomeStat(overview: TransactionOverviewRecord, monthName: string): SummaryStat {
+  const { current, previous } = overview;
+
+  return {
+    id: "income",
+    label: `Income, ${monthName}`,
+    value: formatRupiah(current.moneyIn),
+    icon: "up",
+    iconTone: "income",
+    valueTone: "income",
+    ...deltaOf(
+      changeAgainst(current.moneyIn, previous.moneyIn),
+      "income",
+      pluralEntries(current.incomeEntries),
+      NOTHING_LAST_MONTH,
+    ),
+  };
+}
+
+function expenseStat(overview: TransactionOverviewRecord, monthName: string): SummaryStat {
+  const { current, previous } = overview;
+  const ratio = changeAgainst(spentOf(current), spentOf(previous));
+  const leader = drivenBy(current.byCategory, previous.byCategory);
+
+  return {
+    id: "expense",
+    label: `Expense, ${monthName}`,
+    value: formatRupiah(spentOf(current)),
+    icon: "down",
+    iconTone: "expense",
+    valueTone: "text",
+    ...deltaOf(
+      ratio,
+      toneForSpendChange(ratio ?? 0),
+      leader === ""
+        ? pluralEntries(current.expenseEntries)
+        : `driven by ${leader.toLowerCase()}`,
+      NOTHING_LAST_MONTH,
+    ),
+  };
+}
+
+function savedStat(overview: TransactionOverviewRecord): SummaryStat {
+  const { net, moneyIn } = overview.current;
+
+  return {
+    id: "saved",
+    label: "Net saved",
+    value: formatRupiah(net),
+    icon: "flag",
+    iconTone: "accent",
+    valueTone: "text",
+    // Not a month-on-month change: the share of what came in that stayed in.
+    delta: moneyIn <= 0 ? NO_DELTA : formatPrecisePercent(shareOf(net, moneyIn)),
+    deltaTone: moneyIn <= 0 ? "muted" : "income",
+    deltaNote: moneyIn <= 0 ? "no income this month" : "of income kept",
+  };
+}
+
+/**
+ * Why the balance delta cannot be stated, or "" when it can.
+ *
+ * The opening balance is inferred by taking this month's net back off what the
+ * wallets hold now, and that inference has two ways of being wrong. Restating a
+ * wallet's balance mid-month folds part of the month into the stated figure, so
+ * subtracting the net removes it twice. And the headline counts only wallets in
+ * the black, so while one is overdrawn the figure the net is taken off is not the
+ * figure the net moved. Both are hidden rather than approximated.
+ */
+function dashboardBalanceBlocked(
+  wallets: readonly WalletRecord[],
+  base: CurrencyCode,
+  overdrawn: number,
+  monthStartIso: string,
+): string {
+  if (overdrawn !== 0) {
+    return "a wallet is overdrawn";
+  }
+
+  const restated = wallets.some(
+    (wallet) =>
+      wallet.includeInTotal &&
+      wallet.currency === base &&
+      isoDayOf(wallet.balanceUpdatedAt) >= monthStartIso,
+  );
+  return restated ? "a balance was restated this month" : "";
+}
+
+/* ── the donut ─────────────────────────────────────────────────────────── */
+
+/** A category's stored ramp step, or its position when it was never given one. */
+function stepOf(color: string, index: number): RampStep {
+  const stored = RAMP_STEPS.find((step) => step === color);
+  return stored ?? RAMP_STEPS[index % RAMP_STEPS.length];
+}
+
+function toDonut(
+  categories: readonly CategorySpendRecord[],
+  monthName: string,
+): { readonly donut: DonutData; readonly caption: string } {
+  const total = categories.reduce((sum, entry) => sum + entry.spent, 0);
+
+  // The ring starts at twelve o'clock and is walked clockwise, each slice taking
+  // the share of a full turn its own share of the spend is.
+  let angle = -QUARTER_TURN;
+
+  const segments = categories.map((entry, index) => {
+    const start = angle;
+    const end = start + shareOf(entry.spent, total) * FULL_TURN;
+    angle = end;
+
+    return {
+      id: entry.categoryId,
+      label: entry.name,
+      step: stepOf(entry.color, index),
+      path: arcPath(start, end - SLICE_GAP),
+      percent: formatPercent(shareOf(entry.spent, total)),
+      value: formatRupiah(entry.spent),
+    };
+  });
+
+  return {
+    donut: {
+      segments,
+      totalLabel: "Total spent",
+      totalValue: formatRupiah(total),
+      totalNote: pluralCategories(categories.length),
+    },
+    caption: `${monthName} · ${formatRupiah(total)}`,
+  };
+}
+
+function pluralCategories(count: number): string {
+  return count === 1 ? "1 category" : `${count} categories`;
+}
+
+/* ── the bar chart ─────────────────────────────────────────────────────── */
+
+const SHORT_MONTH_LENGTH = 3;
+
+function shortMonth(start: string): string {
+  const date = new Date(start);
+  return monthLabel(date).split(" ")[0].slice(0, SHORT_MONTH_LENGTH);
+}
+
+function toBars(
+  points: readonly TrendPointRecord[],
+  mode: TrendMode,
+): readonly TrendBar[] {
+  // Bars are scaled against the tallest figure in the window, so the chart fills
+  // its box whatever the month's size.
+  const peak = Math.max(
+    0,
+    ...points.map((point) => Math.max(point.moneyIn, -point.moneyOut)),
+  );
+
+  const height = (value: number): string =>
+    `${(shareOf(value, peak) * FULL_PERCENT).toFixed(HEIGHT_PRECISION)}%`;
+
+  return points.map((point, index) => {
+    const spent = -point.moneyOut;
+    return {
+      label: mode === "weekly" ? `W${index + 1}` : shortMonth(point.start),
+      incomeHeight: height(point.moneyIn),
+      expenseHeight: height(spent),
+      incomeLabel: formatRupiah(point.moneyIn),
+      expenseLabel: formatRupiah(spent),
+      netLabel: formatRupiah(point.moneyIn - spent),
+    };
+  });
+}
+
+function trendLabel(mode: TrendMode, count: number, monthName: string): string {
+  return mode === "weekly"
+    ? `Weeks 1–${count}, ${monthName}`
+    : `${count} months to ${monthName}`;
+}
+
+/* ── the screen ────────────────────────────────────────────────────────── */
+
+export type DashboardScreen = {
+  readonly subtitle: string;
+  readonly stats: readonly SummaryStat[];
+  readonly donut: DonutData;
+  readonly donutCaption: string;
+  /** What went wrong with the month's figures; the stats and the donut share it. */
+  readonly monthError: string;
+  readonly bars: readonly TrendBar[];
+  readonly trendLabel: string;
+  readonly trendError: string;
+  /** Rows in another currency, which none of the figures above absorb. */
+  readonly uncountedNote: string;
+};
+
+const EMPTY_DONUT: DonutData = {
+  segments: [],
+  totalLabel: "Total spent",
+  totalValue: formatRupiah(0),
+  totalNote: pluralCategories(0),
+};
+
+/** Days left in the month a day falls in, counted from the real calendar. */
+function daysLeftInMonth(todayIso: string): number {
+  const today = parseIsoDate(todayIso);
+  if (today === null) {
+    return 0;
+  }
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  return lastDay - today.getDate();
+}
+
+function uncountedNote(count: number): string {
+  return count === 0
+    ? ""
+    : `${pluralEntries(count)} in another currency, not counted here`;
+}
+
+/**
+ * Every panel on the dashboard, read together.
+ *
+ * A failure does not take the page down, unlike `/budgets`: no panel here states
+ * the sum of another, so a trend that could not be read is one panel saying so
+ * beside three that are still true. The month's figures are one read, though, so
+ * the stats and the donut fail as a pair.
+ */
+export async function getDashboardScreen(mode: TrendMode): Promise<DashboardScreen> {
+  const accessToken = await requireAccessToken();
+  const [overview, trend, walletOverview, wallets] = await Promise.all([
+    fetchTransactionOverview(accessToken),
+    fetchTransactionTrend(accessToken, mode),
+    fetchWalletOverview(accessToken),
+    listWallets(accessToken),
+  ]);
+
+  const today = todayInJakarta();
+  const monthStartIso = `${today.slice(0, MONTH_ISO_LENGTH)}-01`;
+  const monthName = monthLabel(new Date(monthStartIso));
+  const subtitle = `${monthName} · ${plural(daysLeftInMonth(today), "day")} left in the cycle`;
+
+  const monthReadable = overview.ok && walletOverview.ok;
+  const month = monthReadable
+    ? toDonut(overview.data.current.byCategory, monthName)
+    : { donut: EMPTY_DONUT, caption: monthName };
+
+  let stats: readonly SummaryStat[] = [];
+  if (monthReadable) {
+    const blocked = dashboardBalanceBlocked(
+      wallets.ok ? wallets.data : [],
+      walletOverview.data.baseCurrency,
+      walletOverview.data.overdrawn,
+      monthStartIso,
+    );
+    stats = [
+      balanceStat(walletOverview.data.totalHeld, overview.data, blocked),
+      incomeStat(overview.data, monthName),
+      expenseStat(overview.data, monthName),
+      savedStat(overview.data),
+    ];
+  }
+
+  return {
+    subtitle,
+    stats,
+    donut: month.donut,
+    donutCaption: month.caption,
+    monthError: monthError(overview, walletOverview),
+    bars: trend.ok ? toBars(trend.data.points, mode) : [],
+    trendLabel: trendLabel(mode, trend.ok ? trend.data.points.length : 0, monthName),
+    trendError: trend.ok ? "" : trend.error.message,
+    uncountedNote: overview.ok ? uncountedNote(overview.data.otherEntries) : "",
+  };
+}
+
+const MONTH_ISO_LENGTH = 7;
+
+function monthError(
+  overview: ApiResult<TransactionOverviewRecord>,
+  walletOverview: ApiResult<WalletOverviewRecord>,
+): string {
+  if (!overview.ok) {
+    return overview.error.message;
+  }
+  return walletOverview.ok ? "" : walletOverview.error.message;
+}
