@@ -73,7 +73,7 @@ export default async function TransactionsPage(
               label="Search transactions"
               placeholder="Merchant or note"
               defaultValue={filters.query}
-              className="min-w-[190px] flex-1"
+              className="`min-w-47.5 flex-1"
             />
             <FilterSelect
               id="tx-filter-category"
@@ -108,7 +108,7 @@ export default async function TransactionsPage(
             <FilterSubmit />
             <div className="ml-auto flex gap-2">
               <FilterReset href={BASE_PATH} />
-              <OpenTransactionButton className="btn btn-primary h-[38px]">
+              <OpenTransactionButton className="btn btn-primary h-9.5">
                 <Icon name="plus" size={15} />
                 New
               </OpenTransactionButton>
