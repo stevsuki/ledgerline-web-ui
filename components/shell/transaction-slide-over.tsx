@@ -1,15 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useId, useState } from "react";
+import { useActionState, useId, useState, useTransition } from "react";
 
 import { FormBanner } from "@/components/auth/form-feedback";
 import { useAppChrome } from "@/components/shell/app-chrome";
+import { Icon } from "@/components/ui/icon";
 import { SlideOver } from "@/components/ui/slide-over";
 import { IDLE_AUTH_STATE, type AuthFormState } from "@/lib/auth/form-state";
 import { CATEGORY_NAME_MAX_LENGTH } from "@/lib/category-fields";
-import { saveTransactionAction } from "@/lib/transactions/actions";
+import { createCategoryInlineAction } from "@/lib/categories/actions";
+import { formatDayHeading } from "@/lib/dates";
+import {
+  deleteTransactionAction,
+  saveTransactionAction,
+} from "@/lib/transactions/actions";
 import { cx } from "@/lib/tone";
+import type { TransactionDraft } from "@/types/ledger";
 
 const QUICK_AMOUNTS = ["25.000", "62.000", "150.000", "425.000"] as const;
 
@@ -18,10 +25,32 @@ type TransactionKind = "expense" | "income";
 /** A category or wallet as the sheet posts it: the id it sends, the name shown. */
 type Option = { readonly id: string; readonly name: string };
 
-const INCOME_IMPACT =
-  "Adds to August income and lifts your savings rate above 41%.";
+/** A category carries its direction, because only the matching half is offered. */
+type CategoryOption = Option & { readonly kind: TransactionKind };
+
+/** The first category that can carry this direction, or "" when none can. */
+function firstCategoryOf(
+  categories: readonly CategoryOption[],
+  kind: TransactionKind,
+): string {
+  return categories.find((option) => option.kind === kind)?.id ?? "";
+}
 
 const NO_ERRORS: Readonly<Record<string, string>> = {};
+
+/** What the sheet opens on when it is adding rather than correcting. */
+const BLANK_DRAFT: TransactionDraft = {
+  id: "",
+  categoryId: "",
+  walletId: "",
+  type: "expense",
+  amount: "",
+  currency: "IDR",
+  name: "",
+  note: "",
+  date: "",
+  time: "",
+};
 
 /**
  * How full the budget for this category is, or "" when none is measured against
@@ -44,21 +73,14 @@ function budgetWidthFor(
   return found?.[1] ?? "";
 }
 
-/**
- * What the impact line says, unwound rather than nested: income, spending that
- * is naming a category of its own, and spending filed under an existing one.
- */
+/** What the impact line says: money in, or spending measured against a limit. */
 function impactOf(
   kind: TransactionKind,
   category: string,
-  newCategory: string,
   budgetWidths: Readonly<Record<string, string>>,
 ): string {
   if (kind === "income") {
-    return INCOME_IMPACT;
-  }
-  if (newCategory !== "") {
-    return `Files under ${newCategory}, which this transaction creates — nothing is budgeted against it yet.`;
+    return "Counts as money in for the month this date falls in.";
   }
 
   const width = budgetWidthFor(budgetWidths, category);
@@ -68,23 +90,26 @@ function impactOf(
   return `Counts against ${category} — that budget sits at ${width} of its limit.`;
 }
 
-function saveLabel(isPending: boolean): string {
-  return isPending ? "Saving…" : "Save transaction";
+function saveLabel(isEdit: boolean, isPending: boolean): string {
+  if (isPending) {
+    return "Saving…";
+  }
+  return isEdit ? "Save changes" : "Save transaction";
+}
+
+/** The add sheet is dated today; an edit is dated whatever it is correcting. */
+function sheetSubtitle(draft: TransactionDraft, today: string): string {
+  return draft.id === "" ? today : `Recorded ${formatDayHeading(draft.date)}`;
 }
 
 export function TransactionSlideOver({
   categories,
-  fallbackCategoryId,
-  fallbackCategoryName,
   wallets,
   budgetWidths,
   today,
   todayIso,
 }: {
-  readonly categories: readonly Option[];
-  /** The bucket that offers to be named instead of picked — "Other". */
-  readonly fallbackCategoryId: string;
-  readonly fallbackCategoryName: string;
+  readonly categories: readonly CategoryOption[];
   readonly wallets: readonly Option[];
   /** Category name → how full that budget is, for the impact line. */
   readonly budgetWidths: Readonly<Record<string, string>>;
@@ -92,8 +117,11 @@ export function TransactionSlideOver({
   /** Today as an ISO day, for the date field's default. */
   readonly todayIso: string;
 }) {
-  const { isTransactionOpen, closeTransaction, showToast } = useAppChrome();
+  const { isTransactionOpen, closeTransaction, editingTransaction, showToast } =
+    useAppChrome();
   const formId = useId();
+  const [removeError, setRemoveError] = useState("");
+  const [isRemoving, startRemoving] = useTransition();
 
   const [state, formAction, isSaving] = useActionState(
     async (previousState: AuthFormState, formData: FormData) => {
@@ -106,6 +134,36 @@ export function TransactionSlideOver({
     },
     IDLE_AUTH_STATE,
   );
+
+  const draft = editingTransaction ?? BLANK_DRAFT;
+  const isEdit = draft.id !== "";
+  const isBusy = isSaving || isRemoving;
+
+  // One action serves every row, so its state outlives the sheet that failed.
+  // A rejected save on one entry must not greet the next one opened, which is
+  // what the id echoed back in `values` settles.
+  const isCurrent = (state.values.id ?? "") === draft.id;
+
+  /**
+   * The sheet stays open until the delete answers: closing first would unmount
+   * the transition that is still carrying it.
+   */
+  function remove() {
+    const label = draft.name || "this transaction";
+    if (!window.confirm(`Remove ${label} from this ledger?`)) {
+      return;
+    }
+
+    startRemoving(async () => {
+      const error = await deleteTransactionAction(draft.id);
+      if (error) {
+        setRemoveError(error);
+        return;
+      }
+      closeTransaction();
+      showToast("Transaction removed");
+    });
+  }
 
   // Nothing can be recorded without somewhere to record it against, and an
   // empty wallet select is a dead end that explains none of that. The sheet
@@ -151,17 +209,17 @@ export function TransactionSlideOver({
     <SlideOver
       open={isTransactionOpen}
       onClose={closeTransaction}
-      title="Add transaction"
-      subtitle={today}
+      title={isEdit ? "Edit transaction" : "Add transaction"}
+      subtitle={sheetSubtitle(draft, today)}
       footer={
         <>
           <button
             type="submit"
             form={formId}
-            disabled={isSaving}
+            disabled={isBusy}
             className="btn btn-primary flex-1"
           >
-            {saveLabel(isSaving)}
+            {saveLabel(isEdit, isSaving)}
           </button>
           <button
             type="button"
@@ -170,19 +228,29 @@ export function TransactionSlideOver({
           >
             Cancel
           </button>
+          {isEdit ? (
+            <button
+              type="button"
+              disabled={isBusy}
+              className="btn btn-ghost text-expense ml-auto"
+              onClick={remove}
+            >
+              {isRemoving ? "Removing…" : "Remove entry"}
+            </button>
+          ) : null}
         </>
       }
     >
-      {/* Keyed on the open flag so each time the sheet opens it starts clean. */}
+      {/* Keyed on the entry so the fields reset between rows, and each time the
+          sheet reopens on a blank one. */}
       <TransactionFields
-        key={String(isTransactionOpen)}
+        key={`${draft.id}-${String(isTransactionOpen)}`}
         formId={formId}
         formAction={formAction}
-        fieldErrors={isTransactionOpen ? state.fieldErrors : NO_ERRORS}
-        bannerError={isTransactionOpen ? state.error : ""}
+        fieldErrors={isCurrent ? state.fieldErrors : NO_ERRORS}
+        bannerError={removeError || (isCurrent ? state.error : "")}
+        draft={draft}
         categories={categories}
-        fallbackCategoryId={fallbackCategoryId}
-        fallbackCategoryName={fallbackCategoryName}
         wallets={wallets}
         budgetWidths={budgetWidths}
         todayIso={todayIso}
@@ -196,9 +264,8 @@ function TransactionFields({
   formAction,
   fieldErrors,
   bannerError,
+  draft,
   categories,
-  fallbackCategoryId,
-  fallbackCategoryName,
   wallets,
   budgetWidths,
   todayIso,
@@ -207,39 +274,84 @@ function TransactionFields({
   readonly formAction: (formData: FormData) => void;
   readonly fieldErrors: Readonly<Record<string, string>>;
   readonly bannerError: string;
-  readonly categories: readonly Option[];
-  readonly fallbackCategoryId: string;
-  readonly fallbackCategoryName: string;
+  readonly draft: TransactionDraft;
+  readonly categories: readonly CategoryOption[];
   readonly wallets: readonly Option[];
   readonly budgetWidths: Readonly<Record<string, string>>;
   readonly todayIso: string;
 }) {
-  const [kind, setKind] = useState<TransactionKind>("expense");
-  const [amount, setAmount] = useState("62.000");
-  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
-  const [customName, setCustomName] = useState("");
-  const [walletId, setWalletId] = useState(wallets[0]?.id ?? "");
+  const [kind, setKind] = useState<TransactionKind>(draft.type);
+  const [amount, setAmount] = useState(draft.amount);
+  const [walletId, setWalletId] = useState(
+    draft.walletId || (wallets[0]?.id ?? ""),
+  );
 
-  // Only the fallback offers to be named, and only a name actually typed counts.
-  const isNaming = categoryId !== "" && categoryId === fallbackCategoryId;
-  const newCategory = isNaming ? customName.trim() : "";
+  // A category named here is committed before the transaction is, so it exists
+  // whatever happens next. It is held locally as well because the select is fed
+  // from the layout, which re-reads on its own schedule — this way the new one
+  // is selectable the instant it is made.
+  const [minted, setMinted] = useState<readonly CategoryOption[]>([]);
+  const [isNaming, setNaming] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [nameError, setNameError] = useState("");
+  const [isMinting, startMinting] = useTransition();
+
+  const known = [
+    ...categories,
+    ...minted.filter((row) => !categories.some((option) => option.id === row.id)),
+  ];
+
+  const [categoryId, setCategoryId] = useState(
+    draft.categoryId || firstCategoryOf(known, draft.type),
+  );
+
+  // The select only holds the half that can carry this direction, so switching
+  // direction has to move the selection with it rather than leave it pointing
+  // at a category the backend would refuse.
+  const offered = known.filter((option) => option.kind === kind);
+  function selectKind(next: TransactionKind) {
+    setKind(next);
+    setCategoryId(firstCategoryOf(known, next));
+  }
+
+  function mintCategory() {
+    if (newName.trim() === "") {
+      return;
+    }
+    startMinting(async () => {
+      const created = await createCategoryInlineAction(newName, kind);
+      if (!created.ok) {
+        setNameError(created.error);
+        return;
+      }
+      setMinted((rows) => [...rows, created]);
+      setCategoryId(created.id);
+      setNewName("");
+      setNameError("");
+      setNaming(false);
+    });
+  }
+
   const categoryName =
     categories.find((option) => option.id === categoryId)?.name ?? "";
-  const impact = impactOf(kind, categoryName, newCategory, budgetWidths);
+  const impact = impactOf(kind, categoryName, budgetWidths);
 
   return (
     <form id={formId} action={formAction} className="flex flex-col gap-4">
       {bannerError ? <FormBanner tone="error" message={bannerError} /> : null}
 
       <div className="seg w-full" role="group" aria-label="Transaction type">
-        <KindOption kind="expense" label="Expense" current={kind} onSelect={setKind} />
-        <KindOption kind="income" label="Income" current={kind} onSelect={setKind} />
+        <KindOption kind="expense" label="Expense" current={kind} onSelect={selectKind} />
+        <KindOption kind="income" label="Income" current={kind} onSelect={selectKind} />
       </div>
 
       <div>
         <span className="panel-kicker">Amount</span>
         <div className="border-divider mt-2 flex min-w-0 items-baseline gap-2 border-b pb-2.5">
-          <span className="text-muted text-base">Rp</span>
+          {/* An entry keeps the currency it arrived in, so the prefix states it. */}
+          <span className="text-muted text-base">
+            {draft.currency === "IDR" ? "Rp" : draft.currency}
+          </span>
           <input
             data-autofocus
             name="amount"
@@ -273,7 +385,8 @@ function TransactionFields({
           id="tx-name"
           name="name"
           className="input"
-          defaultValue=""
+          required
+          defaultValue={draft.name}
           placeholder="Kopi Tuku"
         />
         {fieldErrors.name ? (
@@ -283,46 +396,93 @@ function TransactionFields({
 
       <div className="field">
         <label htmlFor="tx-category">Category</label>
-        <select
-          id="tx-category"
-          name="category_id"
-          className="input"
-          value={categoryId}
-          onChange={(event) => setCategoryId(event.target.value)}
-        >
-          {categories.map((option) => (
-            <option key={option.id} value={option.id}>
-              {option.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/*
-        Other is the one category that can be told what it really is. Naming it
-        here is the same act as adding one on the categories screen — it joins
-        the list, so the next transaction can pick it by name.
-      */}
-      {isNaming ? (
-        <div>
-          <div className="field">
-            <label htmlFor="tx-category-name">Name this category</label>
-            <input
-              id="tx-category-name"
-              name="new_category"
-              className="input"
-              value={customName}
-              maxLength={CATEGORY_NAME_MAX_LENGTH}
-              placeholder="Course fees"
-              onChange={(event) => setCustomName(event.target.value)}
-            />
-          </div>
-          <p className="text-meta text-muted mt-1.5">
-            Kept in Categories from here on. Leave it blank to file this one under{" "}
-            {fallbackCategoryName}.
-          </p>
+        <div className="flex items-center gap-2">
+          <select
+            id="tx-category"
+            name="category_id"
+            className="input min-w-0 flex-1"
+            value={categoryId}
+            onChange={(event) => setCategoryId(event.target.value)}
+          >
+            {offered.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.name}
+              </option>
+            ))}
+          </select>
+          {/* Nothing fits, rather than nothing exists: the way out is beside the
+              select rather than on another screen, because leaving this sheet
+              to make a category is where a half-typed entry gets abandoned. */}
+          <button
+            type="button"
+            className="btn btn-secondary text-accent text-note flex-none"
+            onClick={() => {
+              setNaming(true);
+              setNameError("");
+            }}
+          >
+            <Icon name="plus" size={14} />
+            New
+          </button>
         </div>
-      ) : null}
+
+        {isNaming ? (
+          <div className="inset mt-2 flex flex-col gap-2 p-3">
+            <label htmlFor="tx-new-category" className="panel-kicker">
+              New {kind} category
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <input
+                id="tx-new-category"
+                className="input min-w-0 flex-1"
+                value={newName}
+                maxLength={CATEGORY_NAME_MAX_LENGTH}
+                placeholder="Course fees"
+                onChange={(event) => setNewName(event.target.value)}
+                // Enter here would submit the transaction around it, which is
+                // not what somebody naming a category just asked for.
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    mintCategory();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                className="btn btn-primary text-note flex-none"
+                disabled={isMinting}
+                onClick={mintCategory}
+              >
+                {isMinting ? "Creating…" : "Create"}
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost text-note flex-none"
+                onClick={() => {
+                  setNaming(false);
+                  setNameError("");
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+            {nameError ? (
+              <p className="text-expense text-meta">{nameError}</p>
+            ) : null}
+            <p className="text-meta text-muted">
+              Kept in Categories from here on. Give it a tile and a colour there
+              whenever you like.
+            </p>
+          </div>
+        ) : null}
+
+        {offered.length === 0 && !isNaming ? (
+          <p className="text-meta text-muted mt-1.5">
+            No {kind} category yet — name the first one with New.
+          </p>
+        ) : null}
+      </div>
 
       <div className="field">
         <label htmlFor="tx-wallet">Wallet</label>
@@ -349,7 +509,7 @@ function TransactionFields({
             name="date"
             className="input"
             type="date"
-            defaultValue={todayIso}
+            defaultValue={draft.date || todayIso}
           />
           {fieldErrors.date ? (
             <p className="text-expense text-meta mt-1.5">{fieldErrors.date}</p>
@@ -357,17 +517,26 @@ function TransactionFields({
         </div>
         <div className="field">
           <label htmlFor="tx-time">Time</label>
-          <input id="tx-time" name="time" className="input" type="time" />
+          <input
+            id="tx-time"
+            name="time"
+            className="input"
+            type="time"
+            defaultValue={draft.time}
+          />
         </div>
       </div>
 
       <div className="field">
         <label htmlFor="tx-note">Note</label>
+        {/* Required by the backend, which refuses a blank one on save. */}
         <textarea
           id="tx-note"
           name="note"
           className="input"
           rows={3}
+          required
+          defaultValue={draft.note}
           placeholder="Merchant, project or reference"
         />
         {fieldErrors.note ? (
@@ -376,7 +545,10 @@ function TransactionFields({
       </div>
 
       {/* The wallet and category ids are on the selects; the type rides on the
-          segmented control's radios, all posting under the backend's own tags. */}
+          segmented control's radios, all posting under the backend's own tags.
+          The id is what tells an update from a create — blank means create. */}
+      <input type="hidden" name="id" value={draft.id} />
+      <input type="hidden" name="currency" value={draft.currency} />
       <input type="hidden" name="type" value={kind} />
 
       <p className="text-muted text-note">{impact}</p>

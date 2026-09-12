@@ -56,9 +56,10 @@ const MESSAGE_BY_CODE: Partial<Readonly<Record<ApiErrorCode, string>>> = {
   CATEGORY_NAME_TAKEN: "A category already goes by that name.",
   CATEGORY_NOT_FOUND: "That category no longer exists. Reload the page.",
   CATEGORY_INVALID_TYPE: "A category is either income or expense.",
-  CATEGORY_INVALID_MASTER:
-    "That master category no longer exists. Reload the page.",
   CATEGORY_INVALID_DATA: CHECK_FIELDS,
+  // CATEGORY_IN_USE is deliberately absent: the backend names which of the two
+  // is holding the category — a budget, or transactions — and that is the part
+  // worth reading. An entry here would replace it with something vaguer.
 
   /* the wallet editor */
   WALLET_NAME_TAKEN: "A wallet with that name already exists.",

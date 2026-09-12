@@ -3,12 +3,9 @@ import { listCategories, type CategoryRecord } from "@/lib/api/categories";
 import { requireAccessToken } from "@/lib/auth/session";
 import {
   CATEGORY_KIND_LABEL,
-  FALLBACK_MASTER_ID,
   ICON_BY_CATEGORY_KIND,
-  MASTER_DEFAULTS,
   RAMP_STEPS,
 } from "@/lib/category-fields";
-import { CATEGORIES } from "@/lib/data/categories";
 import type { CategoryKind, MiniStat, RampStep } from "@/types/ledger";
 
 /**
@@ -22,24 +19,28 @@ import type { CategoryKind, MiniStat, RampStep } from "@/types/ledger";
  * nothing else does: which categories exist, which way each one runs, what it
  * is drawn with, and where it came from.
  *
- * It reads `/categories`, which is per user: `SeedDefaults` gives a new account
- * the seven master rows as `expense`, and everything after that is theirs.
+ * It reads `/categories`, which returns two things: the account's own
+ * categories, and the shared master rows it has not taken up yet. Nothing is
+ * seeded at registration, so a new account holds none of the first and sees all
+ * of the second — and the list agrees with what the pickers offer instead of
+ * quietly disagreeing with them.
+ *
+ * A shared row is shown, not held. It cannot be deleted, because there is
+ * nothing to delete; editing it takes it up first, and then it is the
+ * account's like any other.
  */
 
 /* ── resolving the two defaults ────────────────────────────────────────── */
 
 /**
- * A category wears its own tile; failing that, the one its master row was
- * drawn with on the artboard; failing that, its kind's.
+ * A category wears its own tile; failing that, its kind's.
+ *
+ * The seeded ones are given theirs by `SeedDefaults`, copied off the master row,
+ * so only a category named by hand before the icon column existed reaches the
+ * second line.
  */
 function iconOf(record: CategoryRecord): IconName {
-  if (record.icon !== "") {
-    return record.icon;
-  }
-  return (
-    MASTER_DEFAULTS[record.masterId]?.icon ??
-    ICON_BY_CATEGORY_KIND[record.kind]
-  );
+  return record.icon === "" ? ICON_BY_CATEGORY_KIND[record.kind] : record.icon;
 }
 
 /**
@@ -54,15 +55,7 @@ function stepOf(record: CategoryRecord, index: number): RampStep {
   if (record.color !== "") {
     return record.color;
   }
-  return (
-    MASTER_DEFAULTS[record.masterId]?.color ??
-    RAMP_STEPS[index % RAMP_STEPS.length]
-  );
-}
-
-/** Exactly one row catches spending nobody named, and it is this one. */
-function isFallback(record: CategoryRecord): boolean {
-  return record.masterId === FALLBACK_MASTER_ID;
+  return RAMP_STEPS[index % RAMP_STEPS.length];
 }
 
 /* ── the row ───────────────────────────────────────────────────────────── */
@@ -74,7 +67,6 @@ export type CategoryDraft = {
   readonly kind: CategoryKind;
   readonly icon: IconName;
   readonly color: RampStep;
-  readonly isFallback: boolean;
 };
 
 /** Why a category cannot be removed — said in the sheet, beside the button. */
@@ -88,41 +80,48 @@ export type CategoryRow = {
   readonly name: string;
   readonly icon: IconName;
   readonly step: RampStep;
-  /** "Expense · from the shared list · catches what is not named" */
+  /** "Built-in" or "Custom" — where the name came from, in one word. */
+  readonly origin: string;
+  /** "Expense" or "Income" — all that is still recorded about a row's origin. */
   readonly meta: string;
   readonly removal: CategoryRemoval;
   readonly draft: CategoryDraft;
 };
 
-const FALLBACK_REASON =
-  "This is where spending nobody named lands, and where naming one on a transaction starts. It stays.";
-
-const SEEDED_NOTE = "from the shared list";
-const OWN_NOTE = "added by hand";
-const FALLBACK_NOTE = "catches what is not named";
-
-function metaOf(record: CategoryRecord): string {
-  const parts = [CATEGORY_KIND_LABEL[record.kind]];
-  parts.push(record.masterId ? SEEDED_NOTE : OWN_NOTE);
-
-  if (isFallback(record)) {
-    parts.push(FALLBACK_NOTE);
-  }
-  return parts.join(" · ");
-}
+const SHARED_NOTE = "from the shared list, not yet yours";
 
 /**
- * Nothing points at a category yet — there are no transactions and no budgets
- * in the backend to point with — so the one rule left is the one this app owns:
- * the bucket the add-transaction sheet hangs "name this category" on cannot be
- * the thing you delete.
+ * Where a row the account holds came from is not recorded — a category taken up
+ * from the shared list is a plain copy of it. What the line can still say is
+ * which way it runs, and whether it is held at all.
+ */
+function metaOf(record: CategoryRecord): string {
+  const kind = CATEGORY_KIND_LABEL[record.kind];
+  return record.isOwn ? kind : `${kind} · ${SHARED_NOTE}`;
+}
+
+const SHARED_REASON =
+  "This one is offered to every account and is not yours yet, so there is nothing here to remove. Edit it and it becomes yours.";
+
+/**
+ * Only what the account holds can be removed. A shared row has no row of its
+ * own behind it; taking it off the list would mean hiding it, which nothing
+ * records.
+ *
+ * A second rule will end up here. Transactions and budgets both point at
+ * categories, and one still in use should say so rather than disappear from
+ * under them — but the list states no usage count, so that check has nothing to
+ * read yet. The backend's `ON DELETE RESTRICT` is what holds the line for now.
  */
 function removalOf(record: CategoryRecord): CategoryRemoval {
-  if (isFallback(record)) {
-    return { canRemove: false, reason: FALLBACK_REASON };
+  if (!record.isOwn) {
+    return { canRemove: false, reason: SHARED_REASON };
   }
   return { canRemove: true, reason: "" };
 }
+
+const BUILT_IN = "Built-in";
+const CUSTOM = "Custom";
 
 function toRow(record: CategoryRecord, index: number): CategoryRow {
   const step = stepOf(record, index);
@@ -133,6 +132,7 @@ function toRow(record: CategoryRecord, index: number): CategoryRow {
     name: record.name,
     icon,
     step,
+    origin: record.isBuiltIn ? BUILT_IN : CUSTOM,
     meta: metaOf(record),
     removal: removalOf(record),
     draft: {
@@ -141,7 +141,6 @@ function toRow(record: CategoryRecord, index: number): CategoryRow {
       kind: record.kind,
       icon,
       color: step,
-      isFallback: isFallback(record),
     },
   };
 }
@@ -150,7 +149,8 @@ function toRow(record: CategoryRecord, index: number): CategoryRow {
 
 function statsOf(records: readonly CategoryRecord[]): readonly MiniStat[] {
   const spending = records.filter((record) => record.kind === "expense").length;
-  const ownMade = records.filter((record) => record.masterId === "").length;
+  const earning = records.filter((record) => record.kind === "income").length;
+  const own = records.filter((record) => record.isOwn).length;
 
   return [
     {
@@ -158,7 +158,10 @@ function statsOf(records: readonly CategoryRecord[]): readonly MiniStat[] {
       label: "Categories",
       value: String(records.length),
       tone: "text",
-      note: "Every one of them selectable on a transaction",
+      note:
+        own === records.length
+          ? "Every one of them selectable on a transaction"
+          : `${own} yours, the rest offered from the shared list`,
     },
     {
       id: "cat-spending",
@@ -168,11 +171,11 @@ function statsOf(records: readonly CategoryRecord[]): readonly MiniStat[] {
       note: "The only kind a budget can be measured against",
     },
     {
-      id: "cat-own",
-      label: "Added by hand",
-      value: String(ownMade),
-      tone: ownMade > 0 ? "text" : "muted",
-      note: "Named here, rather than seeded with the account",
+      id: "cat-earning",
+      label: "Earning",
+      value: String(earning),
+      tone: earning > 0 ? "text" : "muted",
+      note: "What money coming in can be filed under",
     },
   ];
 }
@@ -195,7 +198,6 @@ function blankDraft(rows: readonly CategoryRow[]): CategoryDraft {
     kind: "expense",
     icon: ICON_BY_CATEGORY_KIND.expense,
     color: nextFreeStep(rows),
-    isFallback: false,
   };
 }
 
@@ -222,45 +224,4 @@ export async function getCategoriesScreen(): Promise<CategoriesScreen> {
 
   const rows = result.data.map(toRow);
   return { rows, stats: statsOf(result.data), draft: blankDraft(rows), error: "" };
-}
-
-/* ── the add-transaction sheet's picker ────────────────────────────────── */
-
-export type CategoryPicker = {
-  readonly labels: readonly string[];
-  /** The bucket that offers to be named instead of picked. */
-  readonly fallback: string;
-};
-
-/**
- * The fixture's own names, for when the API cannot be reached.
- *
- * The sheet this feeds saves nothing yet, and every other screen in the app is
- * still summed from that same fixture, so falling back to it keeps the whole
- * mock consistent rather than leaving an empty select behind.
- */
-const FIXTURE_PICKER: CategoryPicker = {
-  labels: Object.values(CATEGORIES).map((category) => category.label),
-  fallback: CATEGORIES.other.label,
-};
-
-/**
- * One call for both halves the add-transaction sheet needs: the names to offer,
- * and which of them is the one that asks to be named. Read from the API rather
- * than from a constant, because a category added on the categories screen has
- * to be selectable on the very next transaction.
- */
-export async function getCategoryPicker(): Promise<CategoryPicker> {
-  const accessToken = await requireAccessToken();
-  const result = await listCategories(accessToken);
-
-  if (!result.ok || result.data.length === 0) {
-    return FIXTURE_PICKER;
-  }
-
-  const fallback = result.data.find(isFallback);
-  return {
-    labels: result.data.map((record) => record.name),
-    fallback: fallback?.name ?? "",
-  };
 }

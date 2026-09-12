@@ -23,6 +23,7 @@ import {
   rampStepOrBlank,
 } from "@/lib/category-fields";
 import { iconNameOrBlank } from "@/lib/icon-choice";
+import type { CategoryKind } from "@/types/ledger";
 
 /**
  * The categories screen's mutations, over the live `/categories` endpoints.
@@ -79,7 +80,6 @@ function readInput(formData: FormData): ReadResult {
       color: rampStepOrBlank(text(formData, CATEGORY_FIELD.color)),
       // A category created here derives from no master row. On an edit the
       // field is left out entirely, so the seeded link is never cut by accident.
-      masterId: "",
     },
   };
 }
@@ -121,6 +121,56 @@ export async function saveCategoryAction(
 
   revalidateCategories();
   return noticeState(`${result.data.name} ${id ? "updated" : "added"}.`);
+}
+
+export type InlineCategory =
+  | {
+      readonly ok: true;
+      readonly id: string;
+      readonly name: string;
+      readonly kind: CategoryKind;
+    }
+  | { readonly ok: false; readonly error: string };
+
+/**
+ * Naming a category from inside the add-transaction sheet.
+ *
+ * A step of its own, deliberately: it commits here and reports here, before the
+ * transaction it was named for is saved. That is the whole difference from the
+ * flow this replaces, which created the category *while* saving a transaction —
+ * and left it stranded whenever that save then failed, unpickable because the
+ * list had not been re-read and unrepeatable because the name was now taken.
+ *
+ * Icon and colour are left blank on purpose. Asking for them at the moment
+ * somebody is trying to record a coffee is the friction this exists to remove;
+ * the categories screen is where a tile gets chosen, whenever they feel like it.
+ */
+export async function createCategoryInlineAction(
+  rawName: string,
+  rawKind: string,
+): Promise<InlineCategory> {
+  const name = rawName.trim();
+  if (
+    name.length < CATEGORY_NAME_MIN_LENGTH ||
+    name.length > CATEGORY_NAME_MAX_LENGTH
+  ) {
+    return { ok: false, error: NAME_ERROR };
+  }
+
+  const kind = parseCategoryKind(rawKind);
+  const accessToken = await requireAccessToken();
+  const result = await createCategory(accessToken, {
+    name,
+    kind,
+    icon: "",
+    color: "",
+  });
+  if (!result.ok) {
+    return { ok: false, error: failureState(result.error).error };
+  }
+
+  revalidateCategories();
+  return { ok: true, id: result.data.id, name: result.data.name, kind };
 }
 
 /**

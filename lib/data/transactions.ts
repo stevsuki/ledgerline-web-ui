@@ -8,10 +8,10 @@ import {
 } from "@/lib/api/transactions";
 import { fetchWalletOptions } from "@/lib/api/wallets";
 import { requireAccessToken } from "@/lib/auth/session";
-import { FALLBACK_MASTER_ID } from "@/lib/category-fields";
 import { CATEGORIES } from "@/lib/data/categories";
 import {
   addDays,
+  clockTimeOf,
   formatDayHeading,
   isoDayOf,
   parseIsoDate,
@@ -22,6 +22,7 @@ import {
 import { pagedFromTotal, type Paged } from "@/lib/pagination";
 import {
   BASE_CURRENCY,
+  formatFigure,
   formatMoney,
   formatSignedMoney,
   formatSignedSums,
@@ -228,18 +229,30 @@ function toFilterOption(option: {
  * elsewhere is filterable at once. Either failing degrades to just its "All"
  * row rather than emptying the bar.
  */
+/*
+Read from `/categories` rather than from the options endpoint, unlike the sheet
+below.
+
+Both endpoints mix in the shared master rows, which is right for a picker —
+those are categories the account could file something against. It is wrong here:
+narrowing the ledger to a category nothing has ever been filed under can only
+ever return nothing, and a filter guaranteed to come back empty is not a filter.
+You narrow by what you have, and pick from what you could have, so the shared
+half is dropped on the way through.
+*/
 export async function getTransactionFilterOptions(): Promise<TransactionFilterOptions> {
   const accessToken = await requireAccessToken();
   const [categories, wallets] = await Promise.all([
-    fetchCategoryOptions(accessToken, "filter"),
+    listCategories(accessToken),
     fetchWalletOptions(accessToken),
   ]);
 
+  const owned = categories.ok
+    ? categories.data.filter((record) => record.isOwn)
+    : [];
+
   return {
-    categories: [
-      ALL_CATEGORIES,
-      ...(categories.ok ? categories.data.map(toFilterOption) : []),
-    ],
+    categories: [ALL_CATEGORIES, ...owned.map(toFilterOption)],
     wallets: [ALL_WALLETS, ...(wallets.ok ? wallets.data.map(toFilterOption) : [])],
   };
 }
@@ -248,34 +261,39 @@ export async function getTransactionFilterOptions(): Promise<TransactionFilterOp
 
 export type ComposerOption = { readonly id: string; readonly name: string };
 
+/**
+ * A category states its direction too.
+ *
+ * The backend refuses an income filed under an expense category, so a select
+ * offering the whole list would let the sheet build a combination that cannot
+ * be saved and only say so afterwards. It offers the matching half instead.
+ */
+export type ComposerCategory = ComposerOption & { readonly kind: CategoryKind };
+
 export type TransactionComposer = {
-  readonly categories: readonly ComposerOption[];
+  readonly categories: readonly ComposerCategory[];
   readonly wallets: readonly ComposerOption[];
-  /** The "Other" bucket, which the sheet offers to name instead of file under. */
-  readonly fallbackCategoryId: string;
-  readonly fallbackCategoryName: string;
 };
 
 /**
- * The categories and wallets the add-transaction sheet posts by id. Categories
- * are read whole rather than as options, so the sheet can tell which row is the
- * fallback — the one it offers to name — from its master link.
+ * The categories and wallets the add-transaction sheet posts by id.
+ *
+ * The options endpoint, not `/categories`: an account owns nothing until it
+ * files something, so the plain list is empty on a fresh account and the select
+ * would have nothing in it. What comes back is the account's own categories plus
+ * the shared master rows it has not taken up — and the backend turns whichever
+ * id is posted back into a category the account owns.
  */
 export async function getTransactionComposer(): Promise<TransactionComposer> {
   const accessToken = await requireAccessToken();
   const [categories, wallets] = await Promise.all([
-    listCategories(accessToken),
+    fetchCategoryOptions(accessToken),
     fetchWalletOptions(accessToken),
   ]);
 
-  const rows = categories.ok ? categories.data : [];
-  const fallback = rows.find((row) => row.masterId === FALLBACK_MASTER_ID);
-
   return {
-    categories: rows.map((row) => ({ id: row.id, name: row.name })),
+    categories: categories.ok ? categories.data : [],
     wallets: wallets.ok ? wallets.data.map((w) => ({ id: w.id, name: w.name })) : [],
-    fallbackCategoryId: fallback?.id ?? "",
-    fallbackCategoryName: fallback?.name ?? "",
   };
 }
 
@@ -368,6 +386,21 @@ function toItem(record: TransactionItemRecord): LedgerItem {
     walletIcon: walletIconFor(record.walletName),
     amount: record.amount,
     currency: record.currency,
+    // The pencil opens a filled-in sheet without reading the row a second time:
+    // the list already stated every field the form edits.
+    draft: {
+      id: record.id,
+      categoryId: record.categoryId,
+      walletId: record.walletId,
+      type: record.type,
+      // The direction is a control of its own, so the field holds a magnitude.
+      amount: formatFigure(Math.abs(record.amount), record.currency),
+      currency: record.currency,
+      name: record.name,
+      note: record.note,
+      date: isoDayOf(record.occurredAt),
+      time: clockTimeOf(record.occurredAt),
+    },
   };
 }
 

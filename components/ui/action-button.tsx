@@ -3,6 +3,8 @@
 import type { ReactNode } from "react";
 
 import { useAppChrome } from "@/components/shell/app-chrome";
+import { Icon } from "@/components/ui/icon";
+import type { TransactionDraft } from "@/types/ledger";
 
 /** The artboard's demo actions all end in a confirmation toast rather than a mutation. */
 export function ActionButton({
@@ -47,9 +49,33 @@ export function OpenTransactionButton({
       type="button"
       className={className}
       aria-label={label}
-      onClick={openTransaction}
+      // Wrapped rather than passed straight through: the handler takes an
+      // optional draft, and a click event is not one.
+      onClick={() => openTransaction()}
     >
       {children}
+    </button>
+  );
+}
+
+/** The pencil on a ledger row. Icon-only, so it carries the entry's name. */
+export function EditTransactionButton({
+  draft,
+  name,
+}: {
+  readonly draft: TransactionDraft;
+  readonly name: string;
+}) {
+  const { openTransaction } = useAppChrome();
+
+  return (
+    <button
+      type="button"
+      aria-label={`Edit ${name}`}
+      className="btn btn-secondary btn-icon text-muted hover:text-text size-[30px]"
+      onClick={() => openTransaction(draft)}
+    >
+      <Icon name="pencil" size={14} />
     </button>
   );
 }

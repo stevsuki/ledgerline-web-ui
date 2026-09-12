@@ -9,7 +9,7 @@ import {
 import { AppScreen } from "@/components/shell/app-screen";
 import { ScreenStack } from "@/components/ui/layout";
 import { Panel, PanelHeader, PanelNotice } from "@/components/ui/panel";
-import { IconTile } from "@/components/ui/primitives";
+import { IconTile, Tag } from "@/components/ui/primitives";
 import { StatRow } from "@/components/ui/stats";
 import { CATEGORY_KIND_OPTIONS } from "@/lib/category-fields";
 import {
@@ -99,8 +99,8 @@ function CategoryList({
 }
 
 /**
- * One row of the list. Everything but the name and the pencil folds into the
- * meta line rather than scrolling sideways, so a phone loses nothing.
+ * One row of the list. Everything but the name, its origin and the pencil folds
+ * into the meta line rather than scrolling sideways, so a phone loses nothing.
  */
 function CategoryListRow({ row }: { readonly row: CategoryRow }) {
   return (
@@ -120,6 +120,9 @@ function CategoryListRow({ row }: { readonly row: CategoryRow }) {
         </p>
         <p className="text-meta text-muted mt-px">{row.meta}</p>
       </div>
+
+      {/* Whether the name is one the app ships with or one somebody typed. */}
+      <Tag className="flex-none">{row.origin}</Tag>
 
       <EditCategoryButton row={row} />
     </li>

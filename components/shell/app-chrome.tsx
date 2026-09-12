@@ -12,14 +12,22 @@ import {
 } from "react";
 
 import { Icon } from "@/components/ui/icon";
+import type { TransactionDraft } from "@/types/ledger";
 
 /** The two pieces of chrome any screen can reach: the toast and the slide-over. */
 
 type AppChrome = {
   readonly showToast: (message: string) => void;
-  readonly openTransaction: () => void;
+  /**
+   * Opens the transaction sheet: on a blank form, or on the entry handed in.
+   * One sheet serves both, so a field the add form can set is a field the
+   * pencil can correct.
+   */
+  readonly openTransaction: (draft?: TransactionDraft) => void;
   readonly closeTransaction: () => void;
   readonly isTransactionOpen: boolean;
+  /** The entry being edited, or null while the sheet is adding one. */
+  readonly editingTransaction: TransactionDraft | null;
 };
 
 const AppChromeContext = createContext<AppChrome | null>(null);
@@ -34,6 +42,8 @@ export function AppChromeProvider({
 }) {
   const [toast, setToast] = useState<string | null>(null);
   const [isTransactionOpen, setTransactionOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] =
+    useState<TransactionDraft | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -44,12 +54,28 @@ export function AppChromeProvider({
     timer.current = setTimeout(() => setToast(null), TOAST_MS);
   }, []);
 
-  const openTransaction = useCallback(() => setTransactionOpen(true), []);
+  const openTransaction = useCallback((draft?: TransactionDraft) => {
+    setEditingTransaction(draft ?? null);
+    setTransactionOpen(true);
+  }, []);
+
   const closeTransaction = useCallback(() => setTransactionOpen(false), []);
 
   const value = useMemo(
-    () => ({ showToast, openTransaction, closeTransaction, isTransactionOpen }),
-    [showToast, openTransaction, closeTransaction, isTransactionOpen],
+    () => ({
+      showToast,
+      openTransaction,
+      closeTransaction,
+      isTransactionOpen,
+      editingTransaction,
+    }),
+    [
+      showToast,
+      openTransaction,
+      closeTransaction,
+      isTransactionOpen,
+      editingTransaction,
+    ],
   );
 
   return (

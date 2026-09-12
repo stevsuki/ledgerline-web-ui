@@ -6,8 +6,8 @@ import { NavRail } from "@/components/shell/nav-rail";
 import { TransactionSlideOver } from "@/components/shell/transaction-slide-over";
 import { getBudgets } from "@/lib/data/budgets";
 import { getTransactionComposer } from "@/lib/data/transactions";
-import { todayInJakarta } from "@/lib/dates";
-import { SHELL_ID, WORKSPACE } from "@/lib/nav";
+import { formatDayHeading, todayInJakarta } from "@/lib/dates";
+import { SHELL_ID } from "@/lib/nav";
 import { requireProfile } from "@/lib/auth/session";
 import { RAIL_COOKIE, parseRailOpen } from "@/lib/preferences";
 
@@ -25,6 +25,10 @@ export default async function AppLayout({
   // The categories and wallets the add-transaction sheet offers, read live so
   // one added elsewhere is selectable on the very next transaction.
   const composer = await getTransactionComposer();
+
+  // The sheet dates a new entry today, so it has to be today: the workspace
+  // constant said 27 August 2026 whatever the calendar said.
+  const todayIso = todayInJakarta();
 
   // The slide-over's impact line needs to know how full each budget is.
   const budgets = await getBudgets();
@@ -49,12 +53,10 @@ export default async function AppLayout({
 
       <TransactionSlideOver
         categories={composer.categories}
-        fallbackCategoryId={composer.fallbackCategoryId}
-        fallbackCategoryName={composer.fallbackCategoryName}
         wallets={composer.wallets}
         budgetWidths={budgetWidths}
-        today={WORKSPACE.today}
-        todayIso={todayInJakarta()}
+        today={formatDayHeading(todayIso)}
+        todayIso={todayIso}
       />
     </AppChromeProvider>
   );

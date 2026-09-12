@@ -92,6 +92,34 @@ export type TransactionGroup = {
  * fixture through `Transaction`. Each carries its own resolved icon so the row
  * never has to reach back into a fixed lookup that a live name may not be in.
  */
+/**
+ * A row as the add/edit sheet holds it: ids rather than names, and the figure
+ * and the stamp already split into the fields that edit them.
+ *
+ * The list prints names because a name is what a reader recognises; the sheet
+ * posts ids because an id is what the backend takes. Carrying both off one read
+ * is what lets the pencil open a filled-in form without fetching the row again.
+ */
+export type TransactionDraft = {
+  readonly id: string;
+  readonly categoryId: string;
+  readonly walletId: string;
+  readonly type: CategoryKind;
+  /** The magnitude as the amount field holds it: grouped, and never signed. */
+  readonly amount: string;
+  /**
+   * What the row is denominated in. The sheet only types rupiah, but an entry
+   * that arrived in another currency keeps it: an edit to the note of a dollar
+   * row must not quietly redenominate the amount.
+   */
+  readonly currency: CurrencyCode;
+  readonly name: string;
+  readonly note: string;
+  /** The Jakarta day, and the Jakarta clock time on it. */
+  readonly date: string;
+  readonly time: string;
+};
+
 export type LedgerItem = {
   readonly id: string;
   readonly name: string;
@@ -103,6 +131,8 @@ export type LedgerItem = {
   /** Negative is money out. */
   readonly amount: number;
   readonly currency: CurrencyCode;
+  /** The same row, as the sheet would edit it. */
+  readonly draft: TransactionDraft;
 };
 
 /**

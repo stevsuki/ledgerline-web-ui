@@ -53,6 +53,23 @@ export function isoDayOf(timestamp: string): string {
   return Number.isNaN(parsed.getTime()) ? "" : JAKARTA_DAY.format(parsed);
 }
 
+const JAKARTA_CLOCK = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Jakarta",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+
+/**
+ * The Jakarta clock time a stamp fell at, as a `<input type="time">` reads it.
+ * The day is not enough to edit an entry with: saving it back without the time
+ * would quietly move every entry to midnight.
+ */
+export function clockTimeOf(timestamp: string): string {
+  const parsed = new Date(timestamp);
+  return Number.isNaN(parsed.getTime()) ? "" : JAKARTA_CLOCK.format(parsed);
+}
+
 export function toIsoDate(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }

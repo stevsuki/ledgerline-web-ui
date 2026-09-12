@@ -88,37 +88,6 @@ export function categoryIconChoices(current: IconName): readonly IconName[] {
   return withCurrent(CATEGORY_ICON_CHOICES, current);
 }
 
-/* ── the master rows ───────────────────────────────────────────────────── */
-
-/**
- * `master_categories` is a global list of **names only** — seven rows, fixed
- * ids, seeded into every new account by `SeedDefaults`. It carries no tile and
- * no colour, so this is where the seeded seven get theirs: the ids are pinned
- * by migrations 000020 and 000023, and the pairs are the artboard's own.
- *
- * It is a default, not a lock. The moment somebody picks a tile or a colour the
- * category carries its own, and this table is never consulted again.
- */
-export const FALLBACK_MASTER_ID = "00000000-0000-0000-0000-000000000007";
-
-/** What Go marshals a `uuid.Nil` as: a category deriving from no master row. */
-export const NIL_UUID = "00000000-0000-0000-0000-000000000000";
-
-export type MasterDefault = {
-  readonly icon: IconName;
-  readonly color: RampStep;
-};
-
-export const MASTER_DEFAULTS: Readonly<Record<string, MasterDefault>> = {
-  "00000000-0000-0000-0000-000000000001": { icon: "home", color: "c1" },
-  "00000000-0000-0000-0000-000000000002": { icon: "cup", color: "c2" },
-  "00000000-0000-0000-0000-000000000003": { icon: "car", color: "c3" },
-  "00000000-0000-0000-0000-000000000004": { icon: "monitor", color: "c4" },
-  "00000000-0000-0000-0000-000000000005": { icon: "wifi", color: "c5" },
-  "00000000-0000-0000-0000-000000000006": { icon: "heart", color: "c6" },
-  [FALLBACK_MASTER_ID]: { icon: "bag", color: "c7" },
-};
-
 /* ── the colour ────────────────────────────────────────────────────────── */
 
 /**

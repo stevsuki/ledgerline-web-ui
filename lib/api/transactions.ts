@@ -270,6 +270,39 @@ export async function createTransaction(
   );
 }
 
+/**
+ * PATCH /transactions/{id}. The sheet shows every field it can change, so every
+ * one of them is sent — a partial save would let the form and the row disagree.
+ */
+export async function updateTransaction(
+  accessToken: string,
+  id: string,
+  input: TransactionInput,
+): Promise<ApiResult<null>> {
+  return withoutData(
+    await apiRequest({
+      path: `${TRANSACTIONS}/${id}`,
+      method: "PATCH",
+      accessToken,
+      body: transactionBody(input),
+    }),
+  );
+}
+
+/** DELETE /transactions/{id} */
+export async function deleteTransaction(
+  accessToken: string,
+  id: string,
+): Promise<ApiResult<null>> {
+  return withoutData(
+    await apiRequest({
+      path: `${TRANSACTIONS}/${id}`,
+      method: "DELETE",
+      accessToken,
+    }),
+  );
+}
+
 /* ── the dashboard's two reads ─────────────────────────────────────────── */
 
 const OVERVIEW = `${TRANSACTIONS}/overview`;

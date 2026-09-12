@@ -8,7 +8,6 @@ import {
 import { isRecord, readEnum, readString } from "@/lib/api/parse";
 import {
   CATEGORY_KIND_ORDER,
-  NIL_UUID,
   RAMP_STEPS,
 } from "@/lib/category-fields";
 import type { ApiResult } from "@/types/api";
@@ -17,10 +16,10 @@ import type { CategoryKind, RampStep } from "@/types/ledger";
 /**
  * The `/categories` endpoints.
  *
- * A category is **per user**: `SeedDefaults` copies the seven `master_categories`
- * rows into an account at registration, all as `expense`, and everything after
- * that is the account's own. `master_category_id` is the only trace of where a
- * row came from, which is why it is carried through rather than dropped.
+ * A category is **per user**, and an account starts with none: nothing is seeded
+ * at registration. `/categories` is therefore only what the account has made or
+ * taken up — the pickers read `/categories/options`, which offers the shared
+ * master rows alongside it.
  *
  * This layer states what the API states and nothing more — what a row is drawn
  * with is decided in `lib/data/category-list.ts`.
@@ -35,8 +34,17 @@ export type CategoryRecord = {
   /** "" when the category has no icon of its own; the reader resolves one. */
   readonly icon: IconName | "";
   readonly color: RampStep | "";
-  /** The master row it derives from, or "" when it derives from none. */
-  readonly masterId: string;
+  /**
+   * False marks a shared master row: offered to this account, not held by it.
+   * It has no timestamps and nothing to delete, and editing it takes it up.
+   */
+  readonly isOwn: boolean;
+  /**
+   * Whether this name and direction are one of the shared master rows. Always
+   * true while the row still is one; for a row the account holds it is read off
+   * the same name-and-direction rule the offer list uses.
+   */
+  readonly isBuiltIn: boolean;
 };
 
 /* ── parsing ───────────────────────────────────────────────────────────── */
@@ -50,12 +58,6 @@ function readIcon(raw: Record<string, unknown>): IconName | "" {
 function readColor(raw: Record<string, unknown>): RampStep | "" {
   const value = readString(raw, "color");
   return RAMP_STEPS.find((step) => step === value) ?? "";
-}
-
-/** The zero uuid is how "no master row" comes back over the wire. */
-function readMasterId(raw: Record<string, unknown>): string {
-  const id = readString(raw, "master_category_id") ?? "";
-  return id === NIL_UUID ? "" : id;
 }
 
 function parseCategory(raw: unknown): CategoryRecord | null {
@@ -75,7 +77,8 @@ function parseCategory(raw: unknown): CategoryRecord | null {
     kind: readEnum(raw, "type", CATEGORY_KIND_ORDER, "expense"),
     icon: readIcon(raw),
     color: readColor(raw),
-    masterId: readMasterId(raw),
+    isOwn: raw.is_own !== false,
+    isBuiltIn: raw.is_built_in === true,
   };
 }
 
@@ -117,18 +120,23 @@ export async function listCategories(
 
 /* ── options ───────────────────────────────────────────────────────────── */
 
-/** A category as a select offers it: the id it posts and the name it shows. */
+/**
+ * A category as a select offers it.
+ *
+ * The id may name one of the account's own categories or a master row it has
+ * not taken up yet — the caller does not have to tell them apart, it posts the
+ * id back either way and the backend resolves it. `kind` rides along because
+ * the add-transaction sheet offers only the half matching the direction being
+ * recorded.
+ */
 export type CategoryOption = {
   readonly id: string;
   readonly name: string;
+  readonly kind: CategoryKind;
 };
 
-/**
- * The screens that ask for a shortlist rather than the whole list. `filter`
- * takes every type; `budget` narrows to expense, because a budget can only
- * limit money going out.
- */
-export type CategoryOptionSlug = "filter" | "budget";
+/** Narrow the offer to one direction, or omit for both. */
+export type CategoryOptionType = CategoryKind | "";
 
 function parseOption(raw: unknown): CategoryOption | null {
   if (!isRecord(raw)) {
@@ -137,7 +145,14 @@ function parseOption(raw: unknown): CategoryOption | null {
 
   const id = readString(raw, "id");
   const name = readString(raw, "name");
-  return id && name ? { id, name } : null;
+  if (!id || !name) {
+    return null;
+  }
+  return {
+    id,
+    name,
+    kind: readEnum(raw, "type", CATEGORY_KIND_ORDER, "expense"),
+  };
 }
 
 function parseOptions(raw: unknown): readonly CategoryOption[] {
@@ -158,16 +173,16 @@ function parseOptions(raw: unknown): readonly CategoryOption[] {
 /**
  * GET /categories/options?slug=… — the categories one screen may offer.
  *
- * The narrowing is the backend's to make, not this client's: `slug=budget`
- * already excludes income, so a budget form that read the full list and
- * filtered it here would be a second copy of that rule waiting to drift.
+ * Each caller asks for the direction it needs. That is not the rule living in
+ * two places: what a budget may limit is enforced where budgets are written, and
+ * this list only decides what is convenient to show.
  */
 export async function fetchCategoryOptions(
   accessToken: string,
-  slug: CategoryOptionSlug,
+  type: CategoryOptionType = "",
 ): Promise<ApiResult<readonly CategoryOption[]>> {
   const result = await apiRequest({
-    path: withQuery(`${CATEGORIES}/options`, { slug }),
+    path: withQuery(`${CATEGORIES}/options`, { type }),
     method: "GET",
     accessToken,
   });
@@ -182,28 +197,16 @@ export type CategoryInput = {
   /** An icon key from this app's sprite; "" hands the choice back to the reader. */
   readonly icon: string;
   readonly color: string;
-  /** The master row this derives from; "" for one named by hand. */
-  readonly masterId: string;
 };
 
-/**
- * The body both writes send. `master_category_id` is left out unless there is
- * one: on a create that means "derives from no master row", and on a patch an
- * absent field means "leave the link alone" — which is what keeps editing a
- * seeded category from quietly cutting it loose from the row it came from.
- */
+/** The body both writes send. */
 function categoryBody(input: CategoryInput): Record<string, unknown> {
-  const body: Record<string, unknown> = {
+  return {
     name: input.name,
     type: input.kind,
     icon: input.icon,
     color: input.color,
   };
-
-  if (input.masterId) {
-    body.master_category_id = input.masterId;
-  }
-  return body;
 }
 
 /** POST /categories */

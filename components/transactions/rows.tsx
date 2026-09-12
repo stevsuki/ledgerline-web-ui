@@ -1,3 +1,4 @@
+import { EditTransactionButton } from "@/components/ui/action-button";
 import { Icon } from "@/components/ui/icon";
 import { IconTile, Tag } from "@/components/ui/primitives";
 import { formatSignedMoney } from "@/lib/format";
@@ -42,12 +43,18 @@ export function RecentTransactionRow({
   );
 }
 
-/** The five-column ledger row, from the same live read as the one above. */
+/**
+ * The ledger row, from the same live read as the one above.
+ *
+ * The pencil is part of the row rather than a screen of its own: an entry is
+ * noticed as wrong while it is being read, and every figure in the app is
+ * summed out of these, so a typo here is a typo everywhere until it is fixed.
+ */
 export function LedgerRow({ item }: { readonly item: LedgerItem }) {
   const tone = toneFor(item.amount);
 
   return (
-    <li className="panel-row grid grid-cols-[34px_minmax(0,1fr)_auto] items-center gap-3 md:grid-cols-[34px_1fr_140px_132px_110px] md:gap-3.5">
+    <li className="panel-row grid grid-cols-[34px_minmax(0,1fr)_auto_auto] items-center gap-3 md:grid-cols-[34px_1fr_140px_132px_110px_auto] md:gap-3.5">
       <IconTile name={item.categoryIcon} tone={tone.icon} />
       <div className="min-w-0">
         <p className="text-row truncate">{item.name}</p>
@@ -66,6 +73,7 @@ export function LedgerRow({ item }: { readonly item: LedgerItem }) {
       <span className={cx(AMOUNT_CLASS, tone.amount, "text-right")}>
         {formatSignedMoney(item.amount, item.currency)}
       </span>
+      <EditTransactionButton draft={item.draft} name={item.name} />
     </li>
   );
 }

@@ -260,12 +260,7 @@ function CategoryFields({
         required
       />
 
-      <KindField
-        kinds={kinds}
-        kind={kind}
-        onChange={changeKind}
-        isFallback={draft.isFallback}
-      />
+      <KindField kinds={kinds} kind={kind} onChange={changeKind} />
 
       <IconChoiceField
         id="category-icon"
@@ -298,34 +293,16 @@ function CategoryFields({
   );
 }
 
-/**
- * Which way the category runs. The fallback cannot change: something has to
- * catch spending nobody named, and a category that has become income would
- * catch it silently.
- */
+/** Which way the category runs. Every category may change it. */
 function KindField({
   kinds,
   kind,
   onChange,
-  isFallback,
 }: {
   readonly kinds: readonly SelectChoice[];
   readonly kind: CategoryKind;
   readonly onChange: (next: string) => void;
-  readonly isFallback: boolean;
 }) {
-  if (isFallback) {
-    return (
-      <InsetBlock className="p-3.5">
-        <p className="text-row">Type stays Expense</p>
-        <p className="text-meta text-muted mt-1.5">
-          This is the bucket unnamed spending falls into, so it has to stay
-          somewhere money goes.
-        </p>
-      </InsetBlock>
-    );
-  }
-
   return (
     <div>
       <SelectField

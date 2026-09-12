@@ -519,7 +519,7 @@ export async function getBudgetsScreen(): Promise<BudgetsScreen> {
   const [listed, overview, options] = await Promise.all([
     listBudgets(accessToken),
     fetchBudgetOverview(accessToken),
-    fetchCategoryOptions(accessToken, "budget"),
+    fetchCategoryOptions(accessToken, "expense"),
   ]);
 
   if (!listed.ok) {
