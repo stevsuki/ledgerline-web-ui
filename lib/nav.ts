@@ -4,6 +4,8 @@ export type NavItem = {
   readonly href: string;
   readonly label: string;
   readonly icon: IconName;
+  /** The screen is still the design fixture, and the rail says so. */
+  readonly isPreview: boolean;
 };
 
 export type NavGroup = {
@@ -17,19 +19,27 @@ export type PageMeta = {
   readonly subtitle: string;
 };
 
-/** Copied verbatim from the artboard's `titles` map (lines ~1949-1967). */
+/**
+ * The heading each screen opens with.
+ *
+ * A subtitle here is a description, never a figure: a screen that can count its
+ * own rows states them from the API instead (`/dashboard`, `/transactions`,
+ * `/budgets`, `/recurring`). The artboard's numbers used to be copied into
+ * this map, which printed "184 entries this month" over an account that had
+ * none.
+ */
 export const PAGE_META = {
   dashboard: {
     title: "Dashboard",
-    subtitle: "August 2026 · 4 days left in the cycle",
+    subtitle: "This month at a glance",
   },
   transactions: {
     title: "Transactions",
-    subtitle: "184 entries this month across 5 wallets",
+    subtitle: "Every entry in this workspace, newest first",
   },
   budgets: {
     title: "Budgets",
-    subtitle: "6 category budgets · alerts on at 80%",
+    subtitle: "What each category is allowed to spend",
   },
   wallets: {
     title: "Wallets",
@@ -39,19 +49,22 @@ export const PAGE_META = {
     title: "Categories",
     subtitle: "The master list every transaction is filed under",
   },
-  goals: { title: "Goals", subtitle: "3 active goals · Rp206.400.000 saved" },
+  goals: {
+    title: "Goals",
+    subtitle: "Targets you are putting money aside for",
+  },
   recurring: {
     title: "Recurring",
-    subtitle: "7 scheduled items · Rp5.891.000 per month",
+    subtitle: "Payments that come round on a schedule",
   },
-  insights: { title: "Insights", subtitle: "Generated 27 August, 06:00" },
+  insights: { title: "Insights", subtitle: "Patterns read out of your ledger" },
   shared: {
     title: "Shared budget",
-    subtitle: "Household with Sari · you are the owner",
+    subtitle: "Budgets you keep together with someone else",
   },
   reminders: {
     title: "Reminders",
-    subtitle: "6 bills upcoming · 2 budget alerts",
+    subtitle: "Bills coming due and budgets near their limit",
   },
   settings: {
     title: "Settings",
@@ -95,7 +108,15 @@ export const WORKSPACE = {
   today: "Wednesday, 27 August 2026",
 } as const;
 
-export const STREAK_CARD = {
-  kicker: "7-month streak",
-  body: "Saved above target every month since February.",
+/**
+ * The rail's footer card.
+ *
+ * It used to congratulate every account on a seven-month saving streak, which
+ * an account ten seconds old had not earned. Nothing measures a streak yet, so
+ * the card states what the app is for instead — true on the first day and on
+ * the thousandth.
+ */
+export const RAIL_CARD = {
+  kicker: "Ledgerline",
+  body: WORKSPACE.tagline,
 } as const;

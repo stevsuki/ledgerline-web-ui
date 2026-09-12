@@ -3,7 +3,7 @@ import { RailToggle } from "@/components/shell/rail-toggle";
 import { SignOutButton } from "@/components/shell/sign-out-button";
 import { Icon } from "@/components/ui/icon";
 import { navGroupsFromMenus } from "@/lib/access/menus";
-import { NAV_ID, STREAK_CARD, WORKSPACE } from "@/lib/nav";
+import { NAV_ID, RAIL_CARD, WORKSPACE } from "@/lib/nav";
 import type { MenuNode } from "@/types/access";
 
 /** The rail: a Server Component, save for the active link and the collapse button. */
@@ -51,6 +51,7 @@ export function NavRail({
               href={item.href}
               label={item.label}
               icon={item.icon}
+              isPreview={item.isPreview}
             />
           ))}
         </div>
@@ -63,9 +64,9 @@ export function NavRail({
       <div className="rail-label border-accent/45 bg-accent/[0.09] mb-3 rounded-[var(--radius-panel)] border p-3">
         <p className="text-accent flex items-center gap-[7px] font-[family-name:var(--font-heading)] text-[11px] font-semibold tracking-[0.06em] uppercase">
           <Icon name="flame" size={14} />
-          <span>{STREAK_CARD.kicker}</span>
+          <span>{RAIL_CARD.kicker}</span>
         </p>
-        <p className="text-meta text-muted mt-1.5">{STREAK_CARD.body}</p>
+        <p className="text-meta text-muted mt-1.5">{RAIL_CARD.body}</p>
       </div>
 
       <RailToggle />

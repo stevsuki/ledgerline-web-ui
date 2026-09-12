@@ -23,6 +23,7 @@ export default async function RemindersPage() {
     <AppScreen
       title={PAGE_META.reminders.title}
       subtitle={PAGE_META.reminders.subtitle}
+      isPreview
     >
       <ScreenStack>
         <SplitGrid>

@@ -90,23 +90,37 @@ export function SectionPanel({
   );
 }
 
-/** The line a table shows instead of rows: an empty result, or the reason the request failed. */
+/**
+ * The line a table shows instead of rows: an empty result, or the reason the
+ * request failed.
+ *
+ * An empty result is also a place the account can be stuck, so it takes an
+ * optional way out. The action sits under the line rather than inside it: the
+ * line is a paragraph, and a button is not something a paragraph may hold.
+ */
 export function PanelNotice({
   children,
   tone = "muted",
+  action,
 }: {
   readonly children: ReactNode;
   readonly tone?: "muted" | "expense";
+  readonly action?: ReactNode;
 }) {
+  const line = cx(
+    "text-[13px]",
+    tone === "expense" ? "text-expense" : "text-muted",
+  );
+
+  if (!action) {
+    return <p className={cx("panel-pad-x py-12", line)}>{children}</p>;
+  }
+
   return (
-    <p
-      className={cx(
-        "panel-pad-x py-12 text-[13px]",
-        tone === "expense" ? "text-expense" : "text-muted",
-      )}
-    >
-      {children}
-    </p>
+    <div className="panel-pad-x flex flex-col items-start gap-3.5 py-12">
+      <p className={line}>{children}</p>
+      {action}
+    </div>
   );
 }
 

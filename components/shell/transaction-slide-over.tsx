@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useId, useState } from "react";
 
 import { FormBanner } from "@/components/auth/form-feedback";
@@ -105,6 +106,46 @@ export function TransactionSlideOver({
     },
     IDLE_AUTH_STATE,
   );
+
+  // Nothing can be recorded without somewhere to record it against, and an
+  // empty wallet select is a dead end that explains none of that. The sheet
+  // still opens — the answer is one step away, so it is offered here rather
+  // than left for the reader to find.
+  if (wallets.length === 0) {
+    return (
+      <SlideOver
+        open={isTransactionOpen}
+        onClose={closeTransaction}
+        title="Add transaction"
+        subtitle="One thing first"
+        footer={
+          <>
+            <Link
+              data-autofocus
+              href="/wallets"
+              className="btn btn-primary flex-1"
+              onClick={closeTransaction}
+            >
+              Create a wallet
+            </Link>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={closeTransaction}
+            >
+              Cancel
+            </button>
+          </>
+        }
+      >
+        <p className="text-muted text-[13px]">
+          Every transaction is paid out of a wallet, and this workspace has none
+          yet. Add one — cash, a bank account, an e-wallet — and this sheet is
+          ready to use.
+        </p>
+      </SlideOver>
+    );
+  }
 
   return (
     <SlideOver

@@ -82,7 +82,7 @@ function CategoryList({
   }
   if (rows.length === 0) {
     return (
-      <PanelNotice>
+      <PanelNotice action={<AddCategoryButton />}>
         This workspace has no categories yet. Add the first one to file a
         transaction against it.
       </PanelNotice>

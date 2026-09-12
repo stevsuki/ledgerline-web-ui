@@ -27,6 +27,27 @@ export function pathForMenu(code: string): string | undefined {
   return PATH_BY_CODE[code];
 }
 
+/**
+ * Menus whose screens are still the design fixture rather than the account's
+ * own data.
+ *
+ * They stay in the rail — they are the reference the live screens are built
+ * against — but they are marked, so a new account does not read someone else's
+ * goals and bills as its own. A code leaves this list the day its screen is
+ * served from the API.
+ */
+const PREVIEW_CODES: ReadonlySet<string> = new Set([
+  "goals",
+  "recurring",
+  "insights",
+  "shared",
+  "reminders",
+]);
+
+export function isPreviewMenu(code: string): boolean {
+  return PREVIEW_CODES.has(code);
+}
+
 /** Whether the signed-in role may read a menu. */
 export function canReadMenu(
   menus: readonly MenuNode[],
@@ -53,9 +74,17 @@ export function navGroupsFromMenus(
         href: pathForMenu(page.code),
         label: page.name,
         icon: page.icon,
+        isPreview: isPreviewMenu(page.code),
       }))
-      .filter((item): item is { href: string; label: string; icon: IconName } =>
-        Boolean(item.href),
+      .filter(
+        (
+          item,
+        ): item is {
+          href: string;
+          label: string;
+          icon: IconName;
+          isPreview: boolean;
+        } => Boolean(item.href),
       );
 
     if (items.length > 0) {

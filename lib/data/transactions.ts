@@ -35,6 +35,7 @@ import type {
   LedgerItem,
   MiniStat,
   MoneySum,
+  RecentEntry,
   Transaction,
   WalletName,
 } from "@/types/ledger";
@@ -537,7 +538,52 @@ export async function getTransactions(
   };
 }
 
-/** The dashboard's "Recent transactions" panel shows the newest seven. */
-export async function getRecentTransactions(): Promise<readonly Transaction[]> {
-  return TRANSACTIONS.slice(0, 7);
+/* ── the dashboard's recent panel ──────────────────────────────────────── */
+
+const RECENT_COUNT = 7;
+
+export type RecentTransactions = {
+  readonly items: readonly RecentEntry[];
+  /** Why the panel is empty, when the API could not answer at all. */
+  readonly error: string;
+};
+
+/** "Wednesday, 27 August" without the weekday — the row already has the month. */
+function dayLabelOf(occurredAt: string): string {
+  const [, label = ""] = formatDayHeading(isoDayOf(occurredAt)).split(", ");
+  return label;
+}
+
+/**
+ * The newest seven entries, unfiltered.
+ *
+ * No date bound is sent: the panel answers "what was recorded last", which an
+ * account that has not spent this month still has an answer to. That also makes
+ * an empty result mean exactly one thing — nothing has ever been recorded — so
+ * the setup checklist can tick its last step from it.
+ */
+export async function getRecentTransactions(): Promise<RecentTransactions> {
+  const accessToken = await requireAccessToken();
+  const result = await listTransactions(accessToken, {
+    search: "",
+    category: "",
+    wallet: "",
+    type: "",
+    occurredFrom: "",
+    occurredTo: "",
+    page: 1,
+    perPage: RECENT_COUNT,
+  });
+
+  if (!result.ok) {
+    return { items: [], error: result.error.message };
+  }
+
+  const items = result.data.groups.flatMap((group) =>
+    group.items.map((item) => ({
+      ...toItem(item),
+      dayLabel: dayLabelOf(group.occurredAt),
+    })),
+  );
+  return { items: items.slice(0, RECENT_COUNT), error: "" };
 }

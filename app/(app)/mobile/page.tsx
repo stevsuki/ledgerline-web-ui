@@ -13,7 +13,7 @@ import type { IconName } from "@/components/ui/icon-sprite";
 import { ProgressTrack } from "@/components/ui/primitives";
 import { CATEGORIES } from "@/lib/data/categories";
 import { getBudgetsPreview } from "@/lib/data/budgets";
-import { getRecentTransactions, getTransactions } from "@/lib/data/transactions";
+import { TRANSACTIONS, getTransactions } from "@/lib/data/transactions";
 import { formatSignedMoney, formatSignedSums } from "@/lib/format";
 import { PAGE_META, WORKSPACE } from "@/lib/nav";
 import { BG_TONE, TEXT_TONE, cx } from "@/lib/tone";
@@ -32,8 +32,10 @@ const TAB_ICONS: readonly IconName[] = [
 ];
 
 export default async function MobilePage() {
-  const [recent, budgets, ledger] = await Promise.all([
-    getRecentTransactions(),
+  // This screen is the PWA artboard, not a live view, so its rows stay the
+  // fixture the artboard was drawn from.
+  const recent = TRANSACTIONS;
+  const [budgets, ledger] = await Promise.all([
     getBudgetsPreview(),
     getTransactions({
       query: "",
@@ -50,6 +52,7 @@ export default async function MobilePage() {
     <AppScreen
       title={PAGE_META.mobile.title}
       subtitle={PAGE_META.mobile.subtitle}
+      isPreview
     >
       <div className="animate-fade mx-auto flex w-full max-w-[var(--screen-max)] flex-wrap gap-[26px]">
         <PhoneFrame label="Home">

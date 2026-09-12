@@ -5,16 +5,26 @@ import { CategoryDonut } from "@/components/dashboard/category-donut";
 import { TrendChart } from "@/components/dashboard/trend-chart";
 import { AppScreen } from "@/components/shell/app-screen";
 import { RecentTransactionRow } from "@/components/transactions/rows";
+import { OpenTransactionButton } from "@/components/ui/action-button";
 import { Icon } from "@/components/ui/icon";
 import { ScreenStack, SplitGrid } from "@/components/ui/layout";
 import { Panel, PanelHeader, PanelNotice } from "@/components/ui/panel";
 import { LegendItem, LegendList, MeterRow } from "@/components/ui/primitives";
 import { StatGrid, SummaryStatCard } from "@/components/ui/stats";
-import { getDashboardScreen, type DashboardScreen } from "@/lib/data/analytics";
+import {
+  getDashboardScreen,
+  getSetupChecklist,
+  type DashboardScreen,
+  type SetupChecklist,
+  type SetupStep,
+} from "@/lib/data/analytics";
 import { getBudgetsPreview } from "@/lib/data/budgets";
-import { getRecentTransactions } from "@/lib/data/transactions";
+import {
+  getRecentTransactions,
+  type RecentTransactions,
+} from "@/lib/data/transactions";
 import { PAGE_META } from "@/lib/nav";
-import { BG_TONE } from "@/lib/tone";
+import { BG_TONE, cx } from "@/lib/tone";
 import type { TrendMode } from "@/types/ledger";
 
 export const metadata: Metadata = { title: PAGE_META.dashboard.title };
@@ -46,6 +56,9 @@ export default async function DashboardPage(
     getBudgetsPreview(),
   ]);
 
+  // Read last, because what is left to set up is partly what was just read.
+  const setup = await getSetupChecklist(recent);
+
   return (
     <AppScreen
       title={PAGE_META.dashboard.title}
@@ -53,6 +66,8 @@ export default async function DashboardPage(
       maxWidth={1340}
     >
       <ScreenStack gap={20}>
+        {setup.show ? <SetupPanel checklist={setup} /> : null}
+
         <MonthStats screen={screen} />
 
         <SplitGrid>
@@ -108,20 +123,7 @@ export default async function DashboardPage(
                 </Link>
               }
             />
-            {recent.length === 0 ? (
-              <PanelNotice>
-                Nothing recorded yet. The first entry you add shows up here.
-              </PanelNotice>
-            ) : (
-              <ul>
-                {recent.map((transaction) => (
-                  <RecentTransactionRow
-                    key={transaction.id}
-                    transaction={transaction}
-                  />
-                ))}
-              </ul>
-            )}
+            <RecentPanelBody recent={recent} />
           </Panel>
 
           <Panel>
@@ -134,7 +136,14 @@ export default async function DashboardPage(
               }
             />
             {budgets.length === 0 ? (
-              <PanelNotice>
+              <PanelNotice
+                action={
+                  <Link href="/budgets" className="btn btn-secondary text-note">
+                    Set a budget
+                    <Icon name="right" size={14} />
+                  </Link>
+                }
+              >
                 No budgets yet. Set one against a spending category to follow it
                 here.
               </PanelNotice>
@@ -156,6 +165,118 @@ export default async function DashboardPage(
         </SplitGrid>
       </ScreenStack>
     </AppScreen>
+  );
+}
+
+/**
+ * The card that answers "where do I start".
+ *
+ * It sits above the stats rather than inside one of the panels below, because
+ * the question it answers is about the whole screen and not about one panel on
+ * it. `getSetupChecklist` takes it away for good once the last step is ticked.
+ */
+function SetupPanel({ checklist }: { readonly checklist: SetupChecklist }) {
+  return (
+    <Panel className="panel-pad">
+      <div className="border-divider flex flex-wrap items-start justify-between gap-3 border-b pb-3.5">
+        <div className="min-w-0 flex-1">
+          <h2 className="panel-title">Set up your ledger</h2>
+          <p className="text-meta text-muted mt-0.5">
+            A few steps, and every panel below starts answering.
+          </p>
+        </div>
+        <span className="tag tag-neutral flex-none">
+          {checklist.doneCount} of {checklist.steps.length} done
+        </span>
+      </div>
+
+      <ol>
+        {checklist.steps.map((step) => (
+          <SetupRow key={step.id} step={step} />
+        ))}
+      </ol>
+    </Panel>
+  );
+}
+
+function SetupRow({ step }: { readonly step: SetupStep }) {
+  return (
+    <li className="border-divider flex flex-wrap items-center gap-3 border-b py-3.5 last:border-b-0 last:pb-0">
+      <span
+        aria-hidden="true"
+        className={cx(
+          "grid size-[22px] flex-none place-items-center rounded-full border",
+          step.done
+            ? "border-income/45 bg-income/15 text-income"
+            : "border-divider text-muted",
+        )}
+      >
+        {step.done ? <Icon name="check" size={13} /> : null}
+      </span>
+
+      <div className="min-w-0 flex-1">
+        <p className={cx("text-row font-semibold", step.done && "text-muted")}>
+          {step.label}
+        </p>
+        <p className="text-meta text-muted mt-px">{step.hint}</p>
+      </div>
+
+      {step.done ? null : <SetupAction step={step} />}
+    </li>
+  );
+}
+
+/** The last step has no screen of its own — it opens the shared sheet. */
+function SetupAction({ step }: { readonly step: SetupStep }) {
+  if (step.href === "") {
+    return (
+      <OpenTransactionButton className="btn btn-primary text-note flex-none">
+        <Icon name="plus" size={14} />
+        {step.action}
+      </OpenTransactionButton>
+    );
+  }
+
+  return (
+    <Link href={step.href} className="btn btn-secondary text-note flex-none">
+      {step.action}
+      <Icon name="right" size={14} />
+    </Link>
+  );
+}
+
+/**
+ * The newest entries, or the one thing worth doing instead of reading them.
+ *
+ * An unreachable API and an account that has recorded nothing are not the same
+ * empty panel, so they do not print the same line — and only the second is
+ * something the reader can act on.
+ */
+function RecentPanelBody({ recent }: { readonly recent: RecentTransactions }) {
+  if (recent.error) {
+    return <PanelNotice tone="expense">{recent.error}</PanelNotice>;
+  }
+  if (recent.items.length === 0) {
+    return (
+      <PanelNotice
+        action={
+          <OpenTransactionButton className="btn btn-secondary text-note">
+            <Icon name="plus" size={14} />
+            Add transaction
+          </OpenTransactionButton>
+        }
+      >
+        Nothing recorded yet. The first entry you add shows up here.
+      </PanelNotice>
+    );
+  }
+
+  return (
+    <ul>
+      {recent.items.map((entry) => (
+        <RecentTransactionRow key={entry.id} entry={entry} />
+      ))}
+    </ul>
   );
 }
 
@@ -190,7 +311,18 @@ function TrendPanelBody({ screen }: { readonly screen: DashboardScreen }) {
     return <PanelNotice tone="expense">{screen.trendError}</PanelNotice>;
   }
   if (screen.bars.length === 0) {
-    return <PanelNotice>No entries in this range yet.</PanelNotice>;
+    return (
+      <PanelNotice
+        action={
+          <OpenTransactionButton className="btn btn-secondary text-note">
+            <Icon name="plus" size={14} />
+            Add transaction
+          </OpenTransactionButton>
+        }
+      >
+        No entries in this range yet.
+      </PanelNotice>
+    );
   }
 
   return (
@@ -211,7 +343,14 @@ function CategoryPanelBody({ screen }: { readonly screen: DashboardScreen }) {
   }
   if (screen.donut.segments.length === 0) {
     return (
-      <PanelNotice>
+      <PanelNotice
+        action={
+          <Link href="/categories" className="btn btn-secondary text-note">
+            See categories
+            <Icon name="right" size={14} />
+          </Link>
+        }
+      >
         No spending recorded this month, so there is nothing to split yet.
       </PanelNotice>
     );

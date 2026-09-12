@@ -41,6 +41,7 @@ export default async function RecurringPage(props: Readonly<PageProps<"/recurrin
     <AppScreen
       title={PAGE_META.recurring.title}
       subtitle={recurringSubtitle()}
+      isPreview
     >
       <ScreenStack>
         <StatRow stats={getRecurringStats()} size="regular" />

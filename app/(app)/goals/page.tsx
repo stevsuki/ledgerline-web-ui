@@ -26,7 +26,11 @@ export default async function GoalsPage() {
   const goals = await getGoals();
 
   return (
-    <AppScreen title={PAGE_META.goals.title} subtitle={PAGE_META.goals.subtitle}>
+    <AppScreen
+      title={PAGE_META.goals.title}
+      subtitle={PAGE_META.goals.subtitle}
+      isPreview
+    >
       <ScreenStack>
         <CardGrid minWidth={316}>
           {goals.map((goal) => (

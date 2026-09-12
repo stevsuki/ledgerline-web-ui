@@ -1,3 +1,4 @@
+import { listCategories } from "@/lib/api/categories";
 import {
   fetchTransactionOverview,
   fetchTransactionTrend,
@@ -7,6 +8,7 @@ import {
   type TrendPointRecord,
 } from "@/lib/api/transactions";
 import {
+  fetchWalletOptions,
   fetchWalletOverview,
   listWallets,
   type WalletOverviewRecord,
@@ -29,6 +31,7 @@ import {
   type CategorySpend,
 } from "@/lib/data/ledger";
 import { firstDaysNames, firstDaysTotal } from "@/lib/data/recurring";
+import type { RecentTransactions } from "@/lib/data/transactions";
 import {
   formatPercent,
   formatPrecisePercent,
@@ -681,6 +684,112 @@ export async function getDashboardScreen(mode: TrendMode): Promise<DashboardScre
 }
 
 const MONTH_ISO_LENGTH = 7;
+
+/* ── the setup checklist ───────────────────────────────────────────────── */
+
+/**
+ * What a new account still has to do before this screen can say anything.
+ *
+ * Every panel below the card answers a question about money that has been
+ * recorded, so on a fresh account all of them answer "none" at once. Five
+ * panels each explaining their own emptiness is not an answer to "where do I
+ * start" — this card is, and it retires itself the moment it stops being one.
+ *
+ * A step is ticked from the account's own data rather than from a flag, so the
+ * card cannot disagree with the screen under it.
+ */
+export type SetupStep = {
+  readonly id: string;
+  readonly label: string;
+  readonly hint: string;
+  readonly done: boolean;
+  /** Where the step is done, or "" when it opens the add-transaction sheet. */
+  readonly href: string;
+  readonly action: string;
+};
+
+export type SetupChecklist = {
+  readonly steps: readonly SetupStep[];
+  readonly doneCount: number;
+  readonly show: boolean;
+};
+
+const HIDDEN_CHECKLIST: SetupChecklist = {
+  steps: [],
+  doneCount: 0,
+  show: false,
+};
+
+function categoryHint(count: number): string {
+  return count === 0
+    ? "Add the first one to file a transaction against it"
+    : `${pluralCategories(count)} were set up for you`;
+}
+
+function walletHint(count: number): string {
+  return count === 0
+    ? "Where the money sits — cash, a bank account, an e-wallet"
+    : `${plural(count, "wallet")} on this account`;
+}
+
+function entryHint(hasEntry: boolean): string {
+  return hasEntry
+    ? "Your ledger is running"
+    : "The first income or expense fills every panel below";
+}
+
+/**
+ * Registration seeds the categories, so the two real gaps are a wallet and a
+ * first entry. The card names all three anyway: a step already ticked is what
+ * makes the two that are not read as a short list rather than a warning.
+ */
+export async function getSetupChecklist(
+  recent: RecentTransactions,
+): Promise<SetupChecklist> {
+  const accessToken = await requireAccessToken();
+  const [categories, wallets] = await Promise.all([
+    listCategories(accessToken),
+    fetchWalletOptions(accessToken),
+  ]);
+
+  // A read that failed is not a step left undone. Rather than tell an account
+  // with wallets that it has none, the card stays out of the way — the panels
+  // below state the failure on their own.
+  if (!categories.ok || !wallets.ok || recent.error !== "") {
+    return HIDDEN_CHECKLIST;
+  }
+
+  const hasEntry = recent.items.length > 0;
+  const steps: readonly SetupStep[] = [
+    {
+      id: "categories",
+      label: "Categories ready",
+      hint: categoryHint(categories.data.length),
+      done: categories.data.length > 0,
+      href: "/categories",
+      action: "Add category",
+    },
+    {
+      id: "wallet",
+      label: "Add a wallet",
+      hint: walletHint(wallets.data.length),
+      done: wallets.data.length > 0,
+      href: "/wallets",
+      action: "Add wallet",
+    },
+    {
+      id: "entry",
+      label: "Record a transaction",
+      hint: entryHint(hasEntry),
+      done: hasEntry,
+      href: "",
+      action: "Add transaction",
+    },
+  ];
+
+  const doneCount = steps.filter((step) => step.done).length;
+  return { steps, doneCount, show: doneCount < steps.length };
+}
 
 function monthError(
   overview: ApiResult<TransactionOverviewRecord>,

@@ -33,6 +33,7 @@ export default async function SharedPage() {
     <AppScreen
       title={PAGE_META.shared.title}
       subtitle={PAGE_META.shared.subtitle}
+      isPreview
     >
       <ScreenStack>
         <SplitGrid>

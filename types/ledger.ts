@@ -105,6 +105,12 @@ export type LedgerItem = {
   readonly currency: CurrencyCode;
 };
 
+/**
+ * A row of the dashboard's "Recent transactions": a ledger row, plus the day it
+ * fell on. The panel lists across days, so each row carries its own.
+ */
+export type RecentEntry = LedgerItem & { readonly dayLabel: string };
+
 /** One day of the live ledger: the API's group, resolved for print. */
 export type LedgerDay = {
   readonly day: string;

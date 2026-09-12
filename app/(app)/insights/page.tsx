@@ -28,6 +28,7 @@ export default async function InsightsPage() {
     <AppScreen
       title={PAGE_META.insights.title}
       subtitle={PAGE_META.insights.subtitle}
+      isPreview
     >
       <ScreenStack>
         <CardGrid>
