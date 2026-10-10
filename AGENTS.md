@@ -464,6 +464,7 @@ JSON blob, so the server reads the permission rows straight off the `FormData`.
 State that survives a reload lives in the URL, never in React state:
 
 ```
+/dashboard      ?trend=weekly|monthly &edit=1
 /transactions   ?q= &category= &wallet= &range= &amount= &page= &size=
 /users          ?q= &role= &status= &sort= &page= &size=
 /roles          ?q= &sort= &page= &size=
@@ -485,6 +486,31 @@ it and the back button does not walk one keystroke at a time. Parse every param 
 and only the columns `dto.userSort` / `dto.roleSort` whitelist are accepted, so
 `readSort` drops anything else before it leaves. `<SortHeader>` is a link that rewrites
 the param, so ordering ships no JavaScript and survives a reload.
+
+### The dashboard is arranged by its reader
+
+Which panels show, in what order and how wide is a `DashboardLayout`, kept in the
+`ll-dashboard` cookie and parsed by `lib/dashboard-layout.ts`. It is a cookie for the
+reason the theme is: the page reads it on the server, so the first frame is already the
+saved arrangement and nothing shuffles after hydration. `toRows` turns it into rows —
+two halves side by side share one, a half with no half beside it takes the row.
+
+Arranging is `?edit=1` on the dashboard itself, and **it ships no client component**.
+Every control in `components/dashboard/layout-editor.tsx` is a submit button in a plain
+form over `changeDashboardLayoutAction`; a click is one round trip that rewrites the
+cookie and returns the screen re-laid. That was chosen over drag-and-drop on purpose:
+buttons work with a keyboard, a screen reader, a phone and JavaScript off, and a drag
+layer would be a library and a client boundary around panels that are server-rendered.
+If dragging is ever added, it goes on top of these buttons, not instead of them.
+
+To add a panel: a name in `DASHBOARD_WIDGETS`, a row in `WIDGET_META`, a renderer in
+`WIDGET_BY_ID`. `parseLayout` appends a panel the stored cookie has never heard of,
+visible, so it does not start life hidden from everyone who arranged before it existed.
+A hidden panel's request is skipped where the panel is its only reader (budgets today).
+
+The cost, stated: the layout follows the browser, not the account. There is no
+preferences endpoint on the backend; the day there is, only the two ends of
+`changeDashboardLayoutAction` and the one `parseLayout` call in the page change.
 
 ### Data layer
 

@@ -685,13 +685,14 @@ html[data-theme="light"] {
     border-left: 1px solid var(--color-divider);
   }
 
-  .seg-opt:not(:has(input:checked)):not([aria-current="true"]):hover {
+  .seg-opt:not(:has(input:checked)):not([aria-current="true"]):not([aria-pressed="true"]):hover {
     background: color-mix(in srgb, var(--color-text) 7%, transparent);
   }
 
   /* A segment can be a radio (a form) or a link (a filter in the URL). */
   .seg-opt:has(input:checked),
-  .seg-opt[aria-current="true"] {
+  .seg-opt[aria-current="true"],
+  .seg-opt[aria-pressed="true"] {
     background: var(--accent-glass-bg);
     color: var(--accent-glass-fg);
     box-shadow: inset 0 0 0 1px var(--accent-glass-edge);
