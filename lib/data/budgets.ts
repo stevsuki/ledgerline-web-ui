@@ -14,7 +14,7 @@ import { requireAccessToken } from "@/lib/auth/session";
 import { isPreset } from "@/lib/budget-fields";
 import { ICON_BY_CATEGORY_KIND, RAMP_STEPS } from "@/lib/category-fields";
 import { formatFigure, formatRupiah } from "@/lib/format";
-import type { RampStep, Tone } from "@/types/ledger";
+import type { ColorKey, Tone } from "@/types/ledger";
 
 /**
  * The budgets screen, served from `ledgerline-backend`.
@@ -46,7 +46,7 @@ function iconOf(record: { readonly icon: IconKey | "" }): IconKey {
  * one falls back to its position, and that step is the weak one: past seven,
  * two budgets share a colour and two slices cannot be told apart.
  */
-function stepOf(color: RampStep | "", index: number): RampStep {
+function stepOf(color: ColorKey | "", index: number): ColorKey {
   return color === "" ? RAMP_STEPS[index % RAMP_STEPS.length] : color;
 }
 
@@ -313,7 +313,7 @@ function toAllocation(overview: BudgetOverviewRecord): Allocation {
 
 export type AllocationShare = {
   readonly id: string;
-  readonly step: RampStep;
+  readonly step: ColorKey;
   readonly width: string;
 };
 

@@ -20,7 +20,7 @@ import {
   CATEGORY_NAME_MAX_LENGTH,
   CATEGORY_NAME_MIN_LENGTH,
   parseCategoryKind,
-  rampStepOrBlank,
+  colorOrBlank,
 } from "@/lib/category-fields";
 import { knownIconOrBlank } from "@/lib/api/icon-key";
 import type { CategoryKind } from "@/types/ledger";
@@ -77,7 +77,7 @@ function readInput(formData: FormData): ReadResult {
       // "" hands the tile and the colour back to the reader, which is the
       // column's own default — never a guess made on the way out.
       icon: knownIconOrBlank(text(formData, CATEGORY_FIELD.icon)),
-      color: rampStepOrBlank(text(formData, CATEGORY_FIELD.color)),
+      color: colorOrBlank(text(formData, CATEGORY_FIELD.color)),
       // A category created here derives from no master row. On an edit the
       // field is left out entirely, so the seeded link is never cut by accident.
     },

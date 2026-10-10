@@ -6,6 +6,15 @@ export type Tone = "text" | "muted" | "income" | "expense" | "warn" | "accent";
 /** The seven-step categorical ramp, in category order. */
 export type RampStep = "c1" | "c2" | "c3" | "c4" | "c5" | "c6" | "c7";
 
+/** A colour somebody chose for themselves, as `#rrggbb`. */
+export type HexColor = `#${string}`;
+
+/**
+ * What a record is painted with: a step of the theme's ramp, or a colour of
+ * its own. A step follows the theme; a hex is the same in light and dark.
+ */
+export type ColorKey = RampStep | HexColor;
+
 export type CategoryKey =
   | "housing"
   | "food"

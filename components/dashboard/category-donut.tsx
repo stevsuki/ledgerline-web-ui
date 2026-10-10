@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import type { DonutData } from "@/lib/data/analytics";
-import { RAMP_BG, RAMP_FILL, RAMP_STROKE, cx } from "@/lib/tone";
+import { cx, paintClass, paintStyle, sliceClass, sliceStyle } from "@/lib/tone";
 
 /** Spending by category. The geometry is computed on the server. */
 export function CategoryDonut({ data }: { readonly data: DonutData }) {
@@ -25,10 +25,10 @@ export function CategoryDonut({ data }: { readonly data: DonutData }) {
               key={segment.id}
               d={segment.path}
               className={cx(
-                RAMP_FILL[segment.step],
-                RAMP_STROKE[segment.step],
+                sliceClass(segment.step),
                 "glass-slice cursor-pointer transition-opacity duration-150",
               )}
+              style={sliceStyle(segment.step)}
               opacity={!hovered || hovered === segment.id ? 1 : 0.32}
               onMouseEnter={() => setHovered(segment.id)}
               onMouseLeave={() => setHovered(null)}
@@ -65,7 +65,11 @@ export function CategoryDonut({ data }: { readonly data: DonutData }) {
           >
             <span
               aria-hidden="true"
-              className={cx("size-[9px] flex-none rounded-[3px]", RAMP_BG[segment.step])}
+              className={cx(
+                "size-[9px] flex-none rounded-[3px]",
+                paintClass(segment.step),
+              )}
+              style={paintStyle(segment.step)}
             />
             <span className="min-w-0 flex-1 truncate">{segment.label}</span>
             <span className="text-muted tabular-nums">{segment.percent}</span>

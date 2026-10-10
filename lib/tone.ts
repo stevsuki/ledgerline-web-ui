@@ -1,4 +1,6 @@
-import type { RampStep, Tone } from "@/types/ledger";
+import type { CSSProperties } from "react";
+
+import type { ColorKey, HexColor, RampStep, Tone } from "@/types/ledger";
 
 /** Tailwind needs whole class names at build time. */
 
@@ -49,6 +51,37 @@ export const RAMP_STROKE: Readonly<Record<RampStep, string>> = {
   c6: "stroke-c6",
   c7: "stroke-c7",
 };
+
+const HEX_COLOR = /^#[0-9a-f]{6}$/;
+
+export function isHexColor(value: string): value is HexColor {
+  return HEX_COLOR.test(value);
+}
+
+/**
+ * How a `ColorKey` reaches an element. A ramp step is a class, so it follows
+ * the theme; a colour of the person's own cannot be a class Tailwind saw at
+ * build time, so it is the one inline style in the app. Always spread both —
+ * each answers nothing for the half it does not own.
+ */
+export function paintClass(color: ColorKey): string | undefined {
+  return isHexColor(color) ? undefined : RAMP_BG[color];
+}
+
+export function paintStyle(color: ColorKey): CSSProperties | undefined {
+  return isHexColor(color) ? { backgroundColor: color } : undefined;
+}
+
+/** The same pair for an SVG mark, where the edge is a stroke. */
+export function sliceClass(color: ColorKey): string | undefined {
+  return isHexColor(color)
+    ? undefined
+    : `${RAMP_FILL[color]} ${RAMP_STROKE[color]}`;
+}
+
+export function sliceStyle(color: ColorKey): CSSProperties | undefined {
+  return isHexColor(color) ? { fill: color, stroke: color } : undefined;
+}
 
 /** Joins class names, dropping anything falsy. */
 export function cx(...values: readonly (string | false | undefined)[]): string {

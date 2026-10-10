@@ -13,7 +13,7 @@ import {
   getInsights,
 } from "@/lib/data/analytics";
 import { PAGE_META } from "@/lib/nav";
-import { RAMP_BG, TEXT_TONE, cx } from "@/lib/tone";
+import { RAMP_BG, TEXT_TONE, cx, paintClass, paintStyle } from "@/lib/tone";
 
 export const metadata: Metadata = { title: PAGE_META.insights.title };
 
@@ -70,8 +70,11 @@ export default async function InsightsPage() {
                       <span
                         key={part.id}
                         title={part.title}
-                        className={cx("glass-fill animate-grow w-full", RAMP_BG[part.step])}
-                        style={{ height: part.height }}
+                        className={cx(
+                          "glass-fill animate-grow w-full",
+                          paintClass(part.step),
+                        )}
+                        style={{ ...paintStyle(part.step), height: part.height }}
                       />
                     ))}
                   </div>

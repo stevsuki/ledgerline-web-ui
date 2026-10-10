@@ -15,7 +15,7 @@ import {
   type WalletRecord,
 } from "@/lib/api/wallets";
 import { requireAccessToken } from "@/lib/auth/session";
-import { RAMP_STEPS } from "@/lib/category-fields";
+import { RAMP_STEPS, colorOrBlank } from "@/lib/category-fields";
 import { isoDayOf, monthLabel, parseIsoDate, todayInJakarta } from "@/lib/dates";
 import { savingStreakLength } from "@/lib/data/goals";
 import {
@@ -44,7 +44,7 @@ import type {
   CurrencyCode,
   CategoryRank,
   Insight,
-  RampStep,
+  ColorKey,
   SummaryStat,
   Tone,
   TrendMode,
@@ -103,7 +103,7 @@ function arcPath(startAngle: number, endAngle: number): string {
 export type DonutSegment = {
   readonly id: string;
   readonly label: string;
-  readonly step: RampStep;
+  readonly step: ColorKey;
   readonly path: string;
   readonly percent: string;
   readonly value: string;
@@ -246,7 +246,7 @@ function comparedCategories(): readonly CategorySpend[] {
 
 export type ComparePart = {
   readonly id: string;
-  readonly step: RampStep;
+  readonly step: ColorKey;
   readonly height: string;
   readonly title: string;
 };
@@ -500,10 +500,9 @@ function dashboardBalanceBlocked(
 
 /* ── the donut ─────────────────────────────────────────────────────────── */
 
-/** A category's stored ramp step, or its position when it was never given one. */
-function stepOf(color: string, index: number): RampStep {
-  const stored = RAMP_STEPS.find((step) => step === color);
-  return stored ?? RAMP_STEPS[index % RAMP_STEPS.length];
+/** A category's stored colour, or a ramp step by position when it was never given one. */
+function stepOf(color: string, index: number): ColorKey {
+  return colorOrBlank(color) || RAMP_STEPS[index % RAMP_STEPS.length];
 }
 
 function toDonut(

@@ -375,7 +375,8 @@ html[data-theme="light"] {
     color: var(--color-text);
   }
 
-  .icon-choice:has(input:checked) {
+  .icon-choice:has(input:checked),
+  .icon-choice[data-current="true"] {
     border-color: var(--color-accent);
     background: color-mix(in srgb, var(--color-accent) 15%, transparent);
     color: var(--color-accent);

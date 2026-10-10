@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import { Icon } from "@/components/ui/icon";
 import type { IconKey } from "@/lib/icon-choice";
@@ -172,7 +172,9 @@ export function LegendList({
 export type BarSegment = {
   readonly id: string;
   readonly width: string;
-  readonly fillClass: string;
+  readonly fillClass?: string;
+  /** A colour no class can name — see `paintStyle`. */
+  readonly fillStyle?: CSSProperties;
 };
 
 /**
@@ -199,7 +201,7 @@ export function StackedBar({
           <span
             key={segment.id}
             className={cx("glass-fill", segment.fillClass)}
-            style={{ width: segment.width }}
+            style={{ ...segment.fillStyle, width: segment.width }}
           />
         ))}
       </div>

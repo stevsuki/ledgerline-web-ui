@@ -1,8 +1,11 @@
 import type { ReactNode } from "react";
 
+import { Icon } from "@/components/ui/icon";
+import { DEFAULT_CUSTOM_COLOR, colorOrBlank } from "@/lib/category-fields";
+import { RAMP_BG, cx, isHexColor, paintStyle } from "@/lib/tone";
+import type { ColorKey, RampStep } from "@/types/ledger";
 
-import { RAMP_BG, cx } from "@/lib/tone";
-import type { RampStep } from "@/types/ledger";
+const CUSTOM_COLOR_LABEL = "Your own colour";
 
 /** Native form controls on the design system's classes. */
 
@@ -179,41 +182,45 @@ export function SelectField({
 }
 
 /**
- * A row of tiles, one of which is picked. A radio group rather than a select,
- * because the whole point of the field is seeing the choices — and native
- * radios mean the arrow keys work and the answer posts with no state at all.
+ * The colour a record is drawn with: a step of the seven-colour ramp, or one
+ * of the person's own.
  *
- * Pass `value` + `onChange` to drive it from state, exactly as `SelectField`
- * does; omit both for a plain form. The icon picker and the colour picker are
- * the same control with a different thing drawn inside the tile, so they are
- * one component rather than two that drift.
+ * The steps are native radios — a swatch is the whole label, since a step has
+ * no name a person would recognise and naming it by hue would lie in one of
+ * the two themes, so each radio carries its position instead. The last tile is
+ * the browser's own colour well. A colour chosen there unticks every radio, so
+ * it posts through a hidden input of the same name.
  */
-function ChoiceGroup<T extends string>({
+export function ColorChoiceField({
   id,
   label,
   choices,
-  defaultValue,
   value,
   onChange,
   name,
   note,
   optionLabel,
-  render,
 }: {
   readonly id: string;
   readonly label: string;
-  readonly choices: readonly T[];
-  readonly defaultValue?: T;
-  readonly value?: T;
-  readonly onChange?: (next: T) => void;
+  readonly choices: readonly RampStep[];
+  readonly value: ColorKey;
+  readonly onChange: (next: ColorKey) => void;
   readonly name?: string;
   /** The line under the row, saying where the choice shows up. */
   readonly note?: string;
-  /** What the tile is called, for the radio nobody can see the shape of. */
-  readonly optionLabel: (choice: T) => string;
-  readonly render: (choice: T) => ReactNode;
+  /** What a swatch is called, for the radio nobody can see the colour of. */
+  readonly optionLabel: (choice: RampStep) => string;
 }) {
-  const isControlled = value !== undefined;
+  const custom = isHexColor(value) ? value : undefined;
+  const field = name ?? id;
+
+  function readWell(raw: string): void {
+    const next = colorOrBlank(raw);
+    if (next !== "") {
+      onChange(next);
+    }
+  }
 
   return (
     <fieldset className="field" id={id}>
@@ -227,52 +234,54 @@ function ChoiceGroup<T extends string>({
           >
             <input
               type="radio"
-              name={name ?? id}
+              name={field}
               value={choice}
               aria-label={optionLabel(choice)}
-              {...(isControlled
-                ? { checked: value === choice, onChange: () => onChange?.(choice) }
-                : { defaultChecked: defaultValue === choice })}
+              checked={value === choice}
+              onChange={() => onChange(choice)}
             />
-            {render(choice)}
+            <span
+              aria-hidden="true"
+              className={cx("size-4 rounded-[5px]", RAMP_BG[choice])}
+            />
           </label>
         ))}
+
+        <label
+          className="icon-choice"
+          title={CUSTOM_COLOR_LABEL}
+          data-current={custom !== undefined}
+        >
+          <input
+            type="color"
+            aria-label={custom ? `${CUSTOM_COLOR_LABEL}, ${custom}` : CUSTOM_COLOR_LABEL}
+            value={custom ?? DEFAULT_CUSTOM_COLOR}
+            // Opening the well is already choosing it: a browser fires no
+            // change when the colour it opened on is the one that is kept.
+            onClick={(event) => readWell(event.currentTarget.value)}
+            onChange={(event) => readWell(event.target.value)}
+          />
+          {custom ? (
+            <span
+              aria-hidden="true"
+              className="size-4 rounded-[5px]"
+              style={paintStyle(custom)}
+            />
+          ) : (
+            <Icon name="plus" size={15} />
+          )}
+        </label>
       </div>
+
+      {custom ? <input type="hidden" name={field} value={custom} /> : null}
+      {custom ? (
+        <p className="text-meta text-muted mt-1.5">
+          Your own colour, {custom.toUpperCase()} — it stays the same in light
+          and dark.
+        </p>
+      ) : null}
       {note ? <p className="text-meta text-muted mt-1.5">{note}</p> : null}
     </fieldset>
-  );
-}
-
-/**
- * The step of the seven-colour ramp a record is drawn with.
- *
- * The swatch is the whole label — a step has no name a person would recognise,
- * and naming it by hue would lie in one of the two themes — so the radio
- * carries its position instead, which is the one thing true in both.
- */
-export function ColorChoiceField(
-  props: Readonly<{
-    id: string;
-    label: string;
-    choices: readonly RampStep[];
-    defaultValue?: RampStep;
-    value?: RampStep;
-    onChange?: (next: RampStep) => void;
-    name?: string;
-    note?: string;
-    optionLabel: (choice: RampStep) => string;
-  }>,
-) {
-  return (
-    <ChoiceGroup
-      {...props}
-      render={(choice) => (
-        <span
-          aria-hidden="true"
-          className={cx("size-4 rounded-[5px]", RAMP_BG[choice])}
-        />
-      )}
-    />
   );
 }
 

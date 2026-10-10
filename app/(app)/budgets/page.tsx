@@ -28,7 +28,7 @@ import {
   type BudgetRow,
 } from "@/lib/data/budgets";
 import { PAGE_META } from "@/lib/nav";
-import { BG_TONE, RAMP_BG, TEXT_TONE, cx } from "@/lib/tone";
+import { BG_TONE, TEXT_TONE, cx, paintClass, paintStyle } from "@/lib/tone";
 
 export const metadata: Metadata = { title: PAGE_META.budgets.title };
 
@@ -68,7 +68,8 @@ export default async function BudgetsPage() {
                 segments={screen.shares.map((share) => ({
                   id: share.id,
                   width: share.width,
-                  fillClass: RAMP_BG[share.step],
+                  fillClass: paintClass(share.step),
+                  fillStyle: paintStyle(share.step),
                 }))}
               />
 

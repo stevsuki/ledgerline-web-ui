@@ -1,6 +1,13 @@
 import type { IconName } from "@/components/ui/icon-sprite";
 import { withCurrent, type IconKey } from "@/lib/icon-choice";
-import type { CategoryKind, RampStep, SelectChoice } from "@/types/ledger";
+import { isHexColor } from "@/lib/tone";
+import type {
+  CategoryKind,
+  ColorKey,
+  HexColor,
+  RampStep,
+  SelectChoice,
+} from "@/types/ledger";
 
 /**
  * The category form's contract, kept outside `lib/data/` so the client half of
@@ -114,11 +121,19 @@ export function rampStepLabel(step: RampStep): string {
   return `Colour ${step.slice(1)}`;
 }
 
+/** What the colour well opens on before anybody has chosen a colour. */
+export const DEFAULT_CUSTOM_COLOR: HexColor = "#8c9eff";
+
 /**
- * What a form posted, as a step the ramp actually has — the same contract
- * `iconNameOrBlank` holds for an icon. `""` is the column's way of saying "no
- * colour of its own", and only the read path resolves it.
+ * What a form posted, as a colour this app can paint — a step of the ramp or
+ * a `#rrggbb` of the person's own. The same contract `iconNameOrBlank` holds
+ * for an icon: `""` is the column's way of saying "no colour of its own", and
+ * only the read path resolves it.
  */
-export function rampStepOrBlank(value: string): RampStep | "" {
+export function colorOrBlank(value: string): ColorKey | "" {
+  const hex = value.toLowerCase();
+  if (isHexColor(hex)) {
+    return hex;
+  }
   return RAMP_STEPS.find((step) => step === value) ?? "";
 }

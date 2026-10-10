@@ -42,7 +42,7 @@ import {
 import type { CategoryDraft, CategoryRow } from "@/lib/data/category-list";
 import type {
   CategoryKind,
-  RampStep,
+  ColorKey,
   SelectChoice,
 } from "@/types/ledger";
 
@@ -224,7 +224,7 @@ function CategoryFields({
 }) {
   const [kind, setKind] = useState<CategoryKind>(draft.kind);
   const [icon, setIcon] = useState<IconKey>(draft.icon);
-  const [color, setColor] = useState<RampStep>(draft.color);
+  const [color, setColor] = useState<ColorKey>(draft.color);
   // An existing category already wears a decision; a new one is still following
   // the Type select, and stops the moment someone picks a tile themselves.
   const [iconPicked, setIconPicked] = useState(draft.id !== "");

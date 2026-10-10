@@ -6,7 +6,7 @@ import {
   ICON_BY_CATEGORY_KIND,
   RAMP_STEPS,
 } from "@/lib/category-fields";
-import type { CategoryKind, MiniStat, RampStep } from "@/types/ledger";
+import type { CategoryKind, MiniStat, ColorKey } from "@/types/ledger";
 
 /**
  * The categories screen: the master list, and nothing else.
@@ -51,7 +51,7 @@ function iconOf(record: CategoryRecord): IconKey {
  * step, and two slices of one colour cannot be told apart. It is the reason the
  * editor asks for a colour rather than counting one out.
  */
-function stepOf(record: CategoryRecord, index: number): RampStep {
+function stepOf(record: CategoryRecord, index: number): ColorKey {
   if (record.color !== "") {
     return record.color;
   }
@@ -66,7 +66,7 @@ export type CategoryDraft = {
   readonly name: string;
   readonly kind: CategoryKind;
   readonly icon: IconKey;
-  readonly color: RampStep;
+  readonly color: ColorKey;
 };
 
 /** Why a category cannot be removed — said in the sheet, beside the button. */
@@ -79,7 +79,7 @@ export type CategoryRow = {
   readonly id: string;
   readonly name: string;
   readonly icon: IconKey;
-  readonly step: RampStep;
+  readonly step: ColorKey;
   /** "Built-in" or "Custom" — where the name came from, in one word. */
   readonly origin: string;
   /** "Expense" or "Income" — all that is still recorded about a row's origin. */
@@ -183,7 +183,7 @@ function statsOf(records: readonly CategoryRecord[]): readonly MiniStat[] {
 /* ── the screen ────────────────────────────────────────────────────────── */
 
 /** The step a new category opens on: the first one nothing else is wearing. */
-function nextFreeStep(rows: readonly CategoryRow[]): RampStep {
+function nextFreeStep(rows: readonly CategoryRow[]): ColorKey {
   const taken = new Set(rows.map((row) => row.step));
   return (
     RAMP_STEPS.find((step) => !taken.has(step)) ??

@@ -17,7 +17,7 @@ import {
   type CategoryRow,
 } from "@/lib/data/category-list";
 import { PAGE_META } from "@/lib/nav";
-import { RAMP_BG, cx } from "@/lib/tone";
+import { cx, paintClass, paintStyle } from "@/lib/tone";
 
 export const metadata: Metadata = { title: PAGE_META.categories.title };
 
@@ -113,8 +113,9 @@ function CategoryListRow({ row }: { readonly row: CategoryRow }) {
             aria-hidden="true"
             className={cx(
               "size-2.5 flex-none rounded-[3px]",
-              RAMP_BG[row.step],
+              paintClass(row.step),
             )}
+            style={paintStyle(row.step)}
           />
           <span className="truncate">{row.name}</span>
         </p>

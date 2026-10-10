@@ -377,6 +377,15 @@ Four things the screen states rather than assumes:
    000023 — and then, for a category with no master row, `index % 7`. That last step
    is the weak one: past seven, two categories share a step, and two slices of one
    colour cannot be told apart.
+   **A colour may also be the person's own.** The last tile of `<ColorChoiceField>` is
+   the browser's colour well, and what it picks is stored as `#rrggbb` in the same
+   `VARCHAR(10)` — so `ColorKey` is `RampStep | HexColor`, and `colorOrBlank` is the one
+   reader of either. A step is a class and follows the theme; a hex cannot be a class
+   Tailwind saw at build time, so it is the one inline style in the app, and only ever
+   through `paintClass` + `paintStyle` (or `sliceClass` + `sliceStyle` on the donut).
+   Spread both — never index `RAMP_BG` with a category's colour. The cost is stated in
+   the form: a hex is the same in light and dark, so a colour chosen against one ground
+   may sit badly on the other.
 3. **The fallback stays.** `Others` (master `…-0007`) is where spending nobody named
    lands and what the add-transaction sheet hangs "name this category" on, so it is
    the one row the sheet will not remove and the one whose type it will not change —

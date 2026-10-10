@@ -9,10 +9,10 @@ import {
 import { isRecord, readEnum, readString } from "@/lib/api/parse";
 import {
   CATEGORY_KIND_ORDER,
-  RAMP_STEPS,
+  colorOrBlank,
 } from "@/lib/category-fields";
 import type { ApiResult } from "@/types/api";
-import type { CategoryKind, RampStep } from "@/types/ledger";
+import type { CategoryKind, ColorKey } from "@/types/ledger";
 
 /**
  * The `/categories` endpoints.
@@ -34,7 +34,7 @@ export type CategoryRecord = {
   readonly kind: CategoryKind;
   /** "" when the category has no icon of its own; the reader resolves one. */
   readonly icon: IconKey | "";
-  readonly color: RampStep | "";
+  readonly color: ColorKey | "";
   /**
    * False marks a shared master row: offered to this account, not held by it.
    * It has no timestamps and nothing to delete, and editing it takes it up.
@@ -56,9 +56,9 @@ function readIcon(raw: Record<string, unknown>): IconKey | "" {
   return knownIconOrBlank(name ?? "");
 }
 
-function readColor(raw: Record<string, unknown>): RampStep | "" {
+function readColor(raw: Record<string, unknown>): ColorKey | "" {
   const value = readString(raw, "color");
-  return RAMP_STEPS.find((step) => step === value) ?? "";
+  return colorOrBlank(value ?? "");
 }
 
 function parseCategory(raw: unknown): CategoryRecord | null {

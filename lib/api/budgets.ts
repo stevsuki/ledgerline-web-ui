@@ -2,10 +2,10 @@ import { knownIconOrBlank } from "@/lib/api/icon-key";
 import type { IconKey } from "@/lib/icon-choice";
 import { apiRequest, withParsed, withoutData } from "@/lib/api/client";
 import { isRecord, readBoolean, readNumber, readString } from "@/lib/api/parse";
-import { RAMP_STEPS } from "@/lib/category-fields";
+import { colorOrBlank } from "@/lib/category-fields";
 import { CURRENCY_ORDER } from "@/lib/wallet-fields";
 import type { ApiResult } from "@/types/api";
-import type { CurrencyCode, RampStep } from "@/types/ledger";
+import type { CurrencyCode, ColorKey } from "@/types/ledger";
 
 /**
  * The `/budgets` endpoints.
@@ -35,7 +35,7 @@ export type BudgetRecord = {
   readonly categoryName: string;
   /** The category's own tile, or "" when it has none; the reader resolves it. */
   readonly icon: IconKey | "";
-  readonly color: RampStep | "";
+  readonly color: ColorKey | "";
   readonly currency: CurrencyCode;
   readonly monthlyLimit: number;
   readonly spent: number;
@@ -59,7 +59,7 @@ export type BudgetRecord = {
 export type BudgetShareRecord = {
   readonly categoryId: string;
   readonly categoryName: string;
-  readonly color: RampStep | "";
+  readonly color: ColorKey | "";
   readonly percent: number;
 };
 
@@ -72,7 +72,7 @@ export type BudgetAttentionRecord = {
   readonly categoryId: string;
   readonly categoryName: string;
   readonly icon: IconKey | "";
-  readonly color: RampStep | "";
+  readonly color: ColorKey | "";
   readonly monthlyLimit: number;
   readonly spent: number;
   readonly carriedOver: number;
@@ -110,9 +110,9 @@ function readIcon(raw: Record<string, unknown>): IconKey | "" {
   return knownIconOrBlank(name ?? "");
 }
 
-function readColor(raw: Record<string, unknown>): RampStep | "" {
+function readColor(raw: Record<string, unknown>): ColorKey | "" {
   const value = readString(raw, "color");
-  return RAMP_STEPS.find((step) => step === value) ?? "";
+  return colorOrBlank(value ?? "");
 }
 
 function readCurrency(raw: Record<string, unknown>): CurrencyCode {
