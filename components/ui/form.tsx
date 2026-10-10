@@ -242,7 +242,7 @@ export function ColorChoiceField({
             />
             <span
               aria-hidden="true"
-              className={cx("size-4 rounded-[5px]", RAMP_BG[choice])}
+              className={cx("glass-fill size-4 rounded-[5px]", RAMP_BG[choice])}
             />
           </label>
         ))}
@@ -264,7 +264,7 @@ export function ColorChoiceField({
           {custom ? (
             <span
               aria-hidden="true"
-              className="size-4 rounded-[5px]"
+              className="glass-fill size-4 rounded-[5px]"
               style={paintStyle(custom)}
             />
           ) : (

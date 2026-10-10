@@ -112,7 +112,7 @@ function CategoryListRow({ row }: { readonly row: CategoryRow }) {
           <span
             aria-hidden="true"
             className={cx(
-              "size-2.5 flex-none rounded-[3px]",
+              "glass-fill size-2.5 flex-none rounded-[3px]",
               paintClass(row.step),
             )}
             style={paintStyle(row.step)}

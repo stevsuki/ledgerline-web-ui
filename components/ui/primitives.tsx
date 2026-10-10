@@ -142,7 +142,7 @@ export function LegendItem({
     <li className="flex items-center gap-1.5">
       <span
         aria-hidden="true"
-        className={cx("size-2.5 flex-none rounded-[3px]", fillClass)}
+        className={cx("glass-fill size-2.5 flex-none rounded-[3px]", fillClass)}
       />
       {label}
     </li>

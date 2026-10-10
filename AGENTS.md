@@ -92,8 +92,9 @@ dark: `#e28aab #dcc594 #6cc3d8 #86cf96 #6f9fe6 #a88ae0 #e9a585`;
 light: `#d9648f #c9a75a #3fa5bf #55b06c #5a82d8 #8d68d0 #e08a63`.
 Every chart mark is a hairline of its own colour around a translucent body: `.glass-fill`
 on a bar, a track fill or a share, `.glass-slice` on the donut's paths. `<ProgressTrack>`
-and `<StackedBar>` already carry it; a hand-drawn bar must add it. Legend swatches stay
-solid, so the key reads at 9px.
+and `<StackedBar>` already carry it; a hand-drawn bar must add it. The colour swatches
+wear it too — `<LegendItem>`, the donut's key, a category's dot, the tiles of
+`<ColorChoiceField>` — so a key looks like the mark it names.
 Category → ramp step is positional: Housing=c1, Food & drink=c2, Transport=c3,
 Subscriptions=c4, Utilities=c5, Health=c6, Other=c7.
 
@@ -435,6 +436,7 @@ Keep it this short. Adding one is a decision, not a detail.
 | `RailToggle` | writes the rail cookie |
 | `NavDrawer` | the mobile rail's open flag — `aria-expanded`, Escape, close on navigation |
 | `NotificationBell` | open/close popover, outside click, Escape |
+| `ProfileMenu` | the avatar's popover — Settings and Sign out — on the same `usePopover` hook as the bell |
 | `FilterForm` | debounced typing, instant selects, focus-preserving replace |
 | `TrendChart` | hover tooltip over the bars |
 | `CategoryDonut` | hover highlights slice + legend row |

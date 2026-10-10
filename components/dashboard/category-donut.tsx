@@ -67,7 +67,7 @@ export function CategoryDonut({ data }: { readonly data: DonutData }) {
             <span
               aria-hidden="true"
               className={cx(
-                "size-[9px] flex-none rounded-[3px]",
+                "glass-fill size-[9px] flex-none rounded-[3px]",
                 paintClass(segment.step),
               )}
               style={paintStyle(segment.step)}

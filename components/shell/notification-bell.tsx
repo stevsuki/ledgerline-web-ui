@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useRef, useState } from "react";
 
+import { usePopover } from "@/components/shell/use-popover";
 import { Icon } from "@/components/ui/icon";
 import { TEXT_TONE, cx } from "@/lib/tone";
 import type { Reminder } from "@/types/ledger";
@@ -13,38 +13,7 @@ export function NotificationBell({
 }: {
   readonly reminders: readonly Reminder[];
 }) {
-  const [isOpen, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const panelId = useId();
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    function handlePointerDown(event: MouseEvent) {
-      if (
-        event.target instanceof Node &&
-        !containerRef.current?.contains(event.target)
-      ) {
-        setOpen(false);
-      }
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isOpen]);
+  const { isOpen, toggle, close, containerRef, panelId } = usePopover();
 
   return (
     <div ref={containerRef} className="relative flex-none">
@@ -54,7 +23,7 @@ export function NotificationBell({
         aria-label={`Reminders, ${reminders.length} new`}
         aria-expanded={isOpen}
         aria-controls={panelId}
-        onClick={() => setOpen((previous) => !previous)}
+        onClick={toggle}
       >
         <Icon name="bell" size={17} />
         <span
@@ -96,7 +65,7 @@ export function NotificationBell({
           <Link
             href="/reminders"
             className="btn btn-ghost btn-block px-3.5 py-[11px]"
-            onClick={() => setOpen(false)}
+            onClick={close}
           >
             View all reminders
           </Link>

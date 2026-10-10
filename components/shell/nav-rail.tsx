@@ -1,12 +1,10 @@
 import { NavLink } from "@/components/shell/nav-link";
-import { RailToggle } from "@/components/shell/rail-toggle";
-import { SignOutButton } from "@/components/shell/sign-out-button";
 import { Icon } from "@/components/ui/icon";
 import { navGroupsFromMenus } from "@/lib/access/menus";
 import { NAV_ID, RAIL_CARD, WORKSPACE } from "@/lib/nav";
 import type { MenuNode } from "@/types/access";
 
-/** The rail: a Server Component, save for the active link and the collapse button. */
+/** The rail: a Server Component, save for the active link. */
 export function NavRail({
   menus,
 }: {
@@ -57,8 +55,6 @@ export function NavRail({
         </div>
       ))}
 
-      <SignOutButton />
-
       <div className="flex-1" />
 
       <div className="rail-label border-accent/45 bg-accent/[0.09] mb-3 rounded-[var(--radius-panel)] border p-3">
@@ -68,8 +64,6 @@ export function NavRail({
         </p>
         <p className="text-meta text-muted mt-1.5">{RAIL_CARD.body}</p>
       </div>
-
-      <RailToggle />
     </nav>
   );
 }

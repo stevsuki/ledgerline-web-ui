@@ -1,9 +1,10 @@
 import { NavDrawer } from "@/components/shell/nav-drawer";
 import { NotificationBell } from "@/components/shell/notification-bell";
+import { ProfileMenu } from "@/components/shell/profile-menu";
+import { RailToggle } from "@/components/shell/rail-toggle";
 import { ThemeToggle } from "@/components/shell/theme-controls";
 import { OpenTransactionButton } from "@/components/ui/action-button";
 import { Icon } from "@/components/ui/icon";
-import { Avatar } from "@/components/ui/primitives";
 import { NOTIFICATIONS } from "@/lib/data/reminders";
 import { WORKSPACE } from "@/lib/nav";
 import type { Theme } from "@/lib/preferences";
@@ -23,6 +24,7 @@ export function AppHeader({
   return (
     <div className="mx-auto flex w-full max-w-[var(--screen-max)] flex-wrap items-center gap-2 sm:gap-3">
       <NavDrawer />
+      <RailToggle />
 
       <div className="min-w-0 flex-[1_1_180px]">
         <h1 className="truncate text-[17px] leading-tight font-semibold tracking-[-0.025em] sm:text-[21px]">
@@ -64,10 +66,7 @@ export function AppHeader({
         <span className="hidden sm:inline">Add transaction</span>
       </OpenTransactionButton>
 
-      <span className="flex items-center gap-2">
-        <span className="sr-only">Signed in as {fullName}</span>
-        <Avatar name={fullName} />
-      </span>
+      <ProfileMenu fullName={fullName} />
     </div>
   );
 }
