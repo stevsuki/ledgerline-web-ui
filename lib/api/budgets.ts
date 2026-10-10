@@ -1,4 +1,5 @@
-import { ICON_NAMES, type IconName } from "@/components/ui/icon-sprite";
+import { knownIconOrBlank } from "@/lib/api/icon-key";
+import type { IconKey } from "@/lib/icon-choice";
 import { apiRequest, withParsed, withoutData } from "@/lib/api/client";
 import { isRecord, readBoolean, readNumber, readString } from "@/lib/api/parse";
 import { RAMP_STEPS } from "@/lib/category-fields";
@@ -33,7 +34,7 @@ export type BudgetRecord = {
   readonly categoryId: string;
   readonly categoryName: string;
   /** The category's own tile, or "" when it has none; the reader resolves it. */
-  readonly icon: IconName | "";
+  readonly icon: IconKey | "";
   readonly color: RampStep | "";
   readonly currency: CurrencyCode;
   readonly monthlyLimit: number;
@@ -70,7 +71,7 @@ export type BudgetAttentionRecord = {
   readonly budgetId: string;
   readonly categoryId: string;
   readonly categoryName: string;
-  readonly icon: IconName | "";
+  readonly icon: IconKey | "";
   readonly color: RampStep | "";
   readonly monthlyLimit: number;
   readonly spent: number;
@@ -104,9 +105,9 @@ export type BudgetOverviewRecord = {
 /* ── parsing ───────────────────────────────────────────────────────────── */
 
 /** Anything this sprite cannot draw is no icon at all, exactly as "" is. */
-function readIcon(raw: Record<string, unknown>): IconName | "" {
+function readIcon(raw: Record<string, unknown>): IconKey | "" {
   const name = readString(raw, "icon");
-  return ICON_NAMES.find((icon) => icon === name) ?? "";
+  return knownIconOrBlank(name ?? "");
 }
 
 function readColor(raw: Record<string, unknown>): RampStep | "" {

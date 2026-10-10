@@ -1,4 +1,4 @@
-import type { IconName } from "@/components/ui/icon-sprite";
+import type { IconKey } from "@/lib/icon-choice";
 
 /** Semantic colour roles from the artboard, resolved to a token by `toneClass`. */
 export type Tone = "text" | "muted" | "income" | "expense" | "warn" | "accent";
@@ -19,7 +19,7 @@ export type CategoryKey =
 export type Category = {
   readonly key: CategoryKey;
   readonly label: string;
-  readonly icon: IconName;
+  readonly icon: IconKey;
 };
 
 /**
@@ -46,7 +46,7 @@ export type Transaction = {
   readonly note: string;
   readonly category: CategoryKey;
   readonly wallet: WalletName;
-  readonly walletIcon: IconName;
+  readonly walletIcon: IconKey;
   /** Negative is money out. */
   readonly amount: number;
   /**
@@ -125,9 +125,9 @@ export type LedgerItem = {
   readonly name: string;
   readonly note: string;
   readonly categoryName: string;
-  readonly categoryIcon: IconName;
+  readonly categoryIcon: IconKey;
   readonly walletName: string;
-  readonly walletIcon: IconName;
+  readonly walletIcon: IconKey;
   /** Negative is money out. */
   readonly amount: number;
   readonly currency: CurrencyCode;
@@ -178,7 +178,7 @@ export type WalletDraft = {
   readonly id: string;
   readonly name: string;
   readonly kind: WalletKind;
-  readonly icon: IconName;
+  readonly icon: IconKey;
   readonly currency: CurrencyCode;
   readonly reference: string;
   /** Grouped the Indonesian way, with a plain hyphen so it can be typed over. */
@@ -196,7 +196,7 @@ export type WalletDraft = {
 export type WalletCard = {
   readonly id: string;
   readonly name: string;
-  readonly icon: IconName;
+  readonly icon: IconKey;
   readonly currency: CurrencyCode;
   readonly meta: string;
   readonly balance: string;
@@ -234,7 +234,7 @@ export type Goal = {
   readonly id: string;
   readonly name: string;
   readonly deadline: string;
-  readonly icon: IconName;
+  readonly icon: IconKey;
   readonly percent: string;
   readonly saved: string;
   readonly target: string;
@@ -246,7 +246,7 @@ export type RecurringItem = {
   readonly id: string;
   readonly name: string;
   readonly wallet: string;
-  readonly icon: IconName;
+  readonly icon: IconKey;
   readonly frequency: string;
   readonly due: string;
   readonly amount: string;
@@ -257,7 +257,7 @@ export type RecurringItem = {
 export type Insight = {
   readonly id: string;
   readonly kicker: string;
-  readonly icon: IconName;
+  readonly icon: IconKey;
   readonly tone: Tone;
   readonly title: string;
   readonly body: string;
@@ -283,7 +283,7 @@ export type SummaryStat = {
   readonly id: string;
   readonly label: string;
   readonly value: string;
-  readonly icon: IconName;
+  readonly icon: IconKey;
   readonly iconTone: Tone;
   readonly valueTone: Tone;
   readonly delta: string;
@@ -330,7 +330,7 @@ export type Bill = {
 
 export type BudgetAlert = {
   readonly id: string;
-  readonly icon: IconName;
+  readonly icon: IconKey;
   readonly tone: Tone;
   readonly title: string;
   readonly meta: string;
@@ -338,7 +338,7 @@ export type BudgetAlert = {
 
 export type Reminder = {
   readonly id: string;
-  readonly icon: IconName;
+  readonly icon: IconKey;
   readonly tone: Tone;
   readonly title: string;
   readonly meta: string;

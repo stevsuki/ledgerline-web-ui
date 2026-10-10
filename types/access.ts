@@ -1,4 +1,4 @@
-import type { IconName } from "@/components/ui/icon-sprite";
+import type { IconKey } from "@/lib/icon-choice";
 import type { AuditDetail } from "@/types/audit-detail";
 
 /** The five permission columns of the role matrix, in artboard order. */
@@ -104,7 +104,7 @@ export type MenuNode = {
   readonly id: string;
   readonly code: string;
   readonly name: string;
-  readonly icon: IconName;
+  readonly icon: IconKey;
   readonly access: MenuAccess;
   readonly children: readonly MenuNode[];
 };
@@ -118,7 +118,7 @@ export type RoleRecord = {
   readonly name: string;
   readonly description: string;
   /** The badge beside the name. Falls back to the built-in / custom default. */
-  readonly icon: IconName;
+  readonly icon: IconKey;
   /** Built-in roles cannot be renamed or deleted; the UI hides those actions. */
   readonly isSystem: boolean;
   readonly userCount: number;

@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useActionState, useId, useState } from "react";
 
 import { FormBanner } from "@/components/auth/form-feedback";
-import { IconChoiceField } from "@/components/ui/form";
+import { IconChoiceField } from "@/components/ui/icon-picker";
 import { Icon } from "@/components/ui/icon";
-import type { IconName } from "@/components/ui/icon-sprite";
+import type { IconKey } from "@/lib/icon-choice";
 import { TableScroll } from "@/components/ui/layout";
 import { Panel } from "@/components/ui/panel";
 import { saveRoleAction } from "@/lib/access/actions";
@@ -68,7 +68,7 @@ export function RoleForm({
   readonly modules: readonly PermissionModule[];
   readonly initialName: string;
   readonly initialDescription: string;
-  readonly initialIcon: IconName;
+  readonly initialIcon: IconKey;
   readonly initialGrants: GrantMap;
   readonly memberCount: number;
   /** A built-in role: the backend refuses to rename it. */

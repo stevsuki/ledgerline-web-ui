@@ -1,4 +1,5 @@
-import { ICON_NAMES, type IconName } from "@/components/ui/icon-sprite";
+import { knownIconOrBlank } from "@/lib/api/icon-key";
+import type { IconKey } from "@/lib/icon-choice";
 import {
   apiRequest,
   withParsed,
@@ -32,7 +33,7 @@ export type CategoryRecord = {
   readonly name: string;
   readonly kind: CategoryKind;
   /** "" when the category has no icon of its own; the reader resolves one. */
-  readonly icon: IconName | "";
+  readonly icon: IconKey | "";
   readonly color: RampStep | "";
   /**
    * False marks a shared master row: offered to this account, not held by it.
@@ -50,9 +51,9 @@ export type CategoryRecord = {
 /* ── parsing ───────────────────────────────────────────────────────────── */
 
 /** Anything this sprite cannot draw is no icon at all, exactly as "" is. */
-function readIcon(raw: Record<string, unknown>): IconName | "" {
+function readIcon(raw: Record<string, unknown>): IconKey | "" {
   const name = readString(raw, "icon");
-  return ICON_NAMES.find((icon) => icon === name) ?? "";
+  return knownIconOrBlank(name ?? "");
 }
 
 function readColor(raw: Record<string, unknown>): RampStep | "" {

@@ -22,7 +22,7 @@ import {
   parseCategoryKind,
   rampStepOrBlank,
 } from "@/lib/category-fields";
-import { iconNameOrBlank } from "@/lib/icon-choice";
+import { knownIconOrBlank } from "@/lib/api/icon-key";
 import type { CategoryKind } from "@/types/ledger";
 
 /**
@@ -76,7 +76,7 @@ function readInput(formData: FormData): ReadResult {
       kind: parseCategoryKind(text(formData, CATEGORY_FIELD.kind)),
       // "" hands the tile and the colour back to the reader, which is the
       // column's own default — never a guess made on the way out.
-      icon: iconNameOrBlank(text(formData, CATEGORY_FIELD.icon)),
+      icon: knownIconOrBlank(text(formData, CATEGORY_FIELD.icon)),
       color: rampStepOrBlank(text(formData, CATEGORY_FIELD.color)),
       // A category created here derives from no master row. On an edit the
       // field is left out entirely, so the seeded link is never cut by accident.

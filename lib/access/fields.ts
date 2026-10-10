@@ -1,5 +1,5 @@
 import type { IconName } from "@/components/ui/icon-sprite";
-import { withCurrent } from "@/lib/icon-choice";
+import { withCurrent, type IconKey } from "@/lib/icon-choice";
 
 /** The names on the access forms. */
 export const ACCESS_FIELD = {
@@ -58,6 +58,6 @@ export function defaultRoleIcon(isSystem: boolean): IconName {
 }
 
 /** The shortlist, plus whatever this role is already wearing. */
-export function roleIconChoices(current: IconName): readonly IconName[] {
+export function roleIconChoices(current: IconKey): readonly IconKey[] {
   return withCurrent(ROLE_ICON_CHOICES, current);
 }

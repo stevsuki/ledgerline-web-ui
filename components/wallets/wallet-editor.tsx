@@ -15,13 +15,13 @@ import {
 import { FormBanner } from "@/components/auth/form-feedback";
 import { useAppChrome } from "@/components/shell/app-chrome";
 import {
-  IconChoiceField,
   SelectField,
   TextField,
   ToggleRow,
 } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icon";
-import type { IconName } from "@/components/ui/icon-sprite";
+import { IconChoiceField } from "@/components/ui/icon-picker";
+import type { IconKey } from "@/lib/icon-choice";
 import { FieldGrid } from "@/components/ui/layout";
 import { SlideOver } from "@/components/ui/slide-over";
 import { IDLE_AUTH_STATE, type AuthFormState } from "@/lib/auth/form-state";
@@ -268,7 +268,7 @@ function WalletFields({
   readonly currencies: readonly SelectChoice[];
 }) {
   const [kind, setKind] = useState<WalletKind>(draft.kind);
-  const [icon, setIcon] = useState<IconName>(draft.icon);
+  const [icon, setIcon] = useState<IconKey>(draft.icon);
   // An existing wallet already wears a decision; a new one is still following
   // the Type select, and stops the moment someone picks a tile themselves.
   const [iconPicked, setIconPicked] = useState(isEdit);
@@ -281,7 +281,7 @@ function WalletFields({
     }
   }
 
-  function chooseIcon(next: IconName) {
+  function chooseIcon(next: IconKey) {
     setIcon(next);
     setIconPicked(true);
   }

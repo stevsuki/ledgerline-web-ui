@@ -1,4 +1,4 @@
-import type { IconName } from "@/components/ui/icon-sprite";
+import type { IconKey } from "@/lib/icon-choice";
 import {
   fetchBudgetOverview,
   listBudgets,
@@ -34,7 +34,7 @@ import type { RampStep, Tone } from "@/types/ledger";
 /* ── how a budget prints ───────────────────────────────────────────────── */
 
 /** A budget wears its category's tile; a category with none wears the kind's. */
-function iconOf(record: { readonly icon: IconName | "" }): IconName {
+function iconOf(record: { readonly icon: IconKey | "" }): IconKey {
   return record.icon === "" ? ICON_BY_CATEGORY_KIND.expense : record.icon;
 }
 
@@ -158,7 +158,7 @@ export type BudgetDraft = {
 export type BudgetRow = {
   readonly id: string;
   readonly label: string;
-  readonly icon: IconName;
+  readonly icon: IconKey;
   /** "Alerts at 80% of limit · rolls over" */
   readonly meta: string;
   readonly tone: Tone;

@@ -13,7 +13,7 @@ import {
   type RolePermissionInput,
 } from "@/lib/api/access";
 import { ACCESS_FIELD, GRANT_SEPARATOR } from "@/lib/access/fields";
-import { iconNameOrBlank } from "@/lib/icon-choice";
+import { knownIconOrBlank } from "@/lib/api/icon-key";
 import {
   failureState,
   noticeState,
@@ -127,7 +127,7 @@ export async function saveRoleAction(
   // Anything else is stored as "no icon of its own", which is what the column
   // already means — the read path then draws the built-in / custom default,
   // and it knows which of the two this role is. Guessing that here would not.
-  const icon = iconNameOrBlank(text(formData, ACCESS_FIELD.icon));
+  const icon = knownIconOrBlank(text(formData, ACCESS_FIELD.icon));
   const values = {
     [ACCESS_FIELD.name]: name,
     [ACCESS_FIELD.description]: description,

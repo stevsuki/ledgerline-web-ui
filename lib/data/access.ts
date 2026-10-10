@@ -1,4 +1,4 @@
-import type { IconName } from "@/components/ui/icon-sprite";
+import type { IconKey } from "@/lib/icon-choice";
 import {
   MAX_PER_PAGE,
   fetchRole,
@@ -70,7 +70,7 @@ export type RoleRow = {
   readonly members: number;
   readonly updated: string;
   readonly isSystem: boolean;
-  readonly icon: IconName;
+  readonly icon: IconKey;
 };
 
 /* There is no permission count on the row. */

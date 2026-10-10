@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { Icon } from "@/components/ui/icon";
-import type { IconName } from "@/components/ui/icon-sprite";
+import type { IconKey } from "@/lib/icon-choice";
 
 /** The one part of the rail that has to know where the browser is. */
 export function NavLink({
@@ -15,7 +15,7 @@ export function NavLink({
 }: {
   readonly href: string;
   readonly label: string;
-  readonly icon: IconName;
+  readonly icon: IconKey;
   /** Marks a screen still served from the design fixture. */
   readonly isPreview?: boolean;
 }) {

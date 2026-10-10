@@ -1,4 +1,5 @@
-import { ICON_NAMES, type IconName } from "@/components/ui/icon-sprite";
+import { knownIconOrBlank } from "@/lib/api/icon-key";
+import type { IconKey } from "@/lib/icon-choice";
 import { apiRequest, withParsed, withoutData } from "@/lib/api/client";
 import {
   isRecord,
@@ -31,7 +32,7 @@ export type WalletRecord = {
   readonly id: string;
   readonly name: string;
   readonly kind: WalletKind;
-  readonly icon: IconName;
+  readonly icon: IconKey;
   readonly currency: CurrencyCode;
   readonly reference: string;
   /**
@@ -85,9 +86,9 @@ export type WalletOverviewRecord = {
 function readWalletIcon(
   raw: Record<string, unknown>,
   kind: WalletKind,
-): IconName {
+): IconKey {
   const name = readString(raw, "icon");
-  return ICON_NAMES.find((icon) => icon === name) ?? ICON_BY_KIND[kind];
+  return knownIconOrBlank(name ?? "") || ICON_BY_KIND[kind];
 }
 
 /** A card-only field: absent, null, or on another kind, all read as none. */

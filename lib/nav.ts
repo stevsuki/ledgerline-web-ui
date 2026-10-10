@@ -1,9 +1,9 @@
-import type { IconName } from "@/components/ui/icon-sprite";
+import type { IconKey } from "@/lib/icon-choice";
 
 export type NavItem = {
   readonly href: string;
   readonly label: string;
-  readonly icon: IconName;
+  readonly icon: IconKey;
   /** The screen is still the design fixture, and the rail says so. */
   readonly isPreview: boolean;
 };

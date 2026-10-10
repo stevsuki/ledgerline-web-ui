@@ -221,8 +221,12 @@ html[data-theme="light"] {
     height: 10px;
   }
 
+  /* A pill floating in its track: the transparent border is the gap around it. */
   ::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: var(--radius-pill);
     background: color-mix(in srgb, var(--color-text) 22%, transparent);
+    background-clip: padding-box;
   }
 
   ::-webkit-scrollbar-track {

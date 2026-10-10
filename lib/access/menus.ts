@@ -1,4 +1,4 @@
-import type { IconName } from "@/components/ui/icon-sprite";
+import type { IconKey } from "@/lib/icon-choice";
 import type { NavGroup } from "@/lib/nav";
 import type { MenuNode } from "@/types/access";
 
@@ -82,7 +82,7 @@ export function navGroupsFromMenus(
         ): item is {
           href: string;
           label: string;
-          icon: IconName;
+          icon: IconKey;
           isPreview: boolean;
         } => Boolean(item.href),
       );
@@ -103,7 +103,7 @@ export type PermissionModule = {
   readonly id: string;
   readonly code: string;
   readonly label: string;
-  readonly icon: IconName;
+  readonly icon: IconKey;
 };
 
 /** The pages of the menus table, by the ids the seed pins. */

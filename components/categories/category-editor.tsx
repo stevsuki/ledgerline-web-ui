@@ -16,12 +16,12 @@ import { FormBanner } from "@/components/auth/form-feedback";
 import { useAppChrome } from "@/components/shell/app-chrome";
 import {
   ColorChoiceField,
-  IconChoiceField,
   SelectField,
   TextField,
 } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icon";
-import type { IconName } from "@/components/ui/icon-sprite";
+import { IconChoiceField } from "@/components/ui/icon-picker";
+import type { IconKey } from "@/lib/icon-choice";
 import { InsetBlock } from "@/components/ui/panel";
 import { SlideOver } from "@/components/ui/slide-over";
 import { IDLE_AUTH_STATE, type AuthFormState } from "@/lib/auth/form-state";
@@ -223,7 +223,7 @@ function CategoryFields({
   readonly keptReason?: string;
 }) {
   const [kind, setKind] = useState<CategoryKind>(draft.kind);
-  const [icon, setIcon] = useState<IconName>(draft.icon);
+  const [icon, setIcon] = useState<IconKey>(draft.icon);
   const [color, setColor] = useState<RampStep>(draft.color);
   // An existing category already wears a decision; a new one is still following
   // the Type select, and stops the moment someone picks a tile themselves.
@@ -237,7 +237,7 @@ function CategoryFields({
     }
   }
 
-  function chooseIcon(next: IconName): void {
+  function chooseIcon(next: IconKey): void {
     setIcon(next);
     setIconPicked(true);
   }

@@ -1,7 +1,5 @@
 import type { ReactNode } from "react";
 
-import { Icon } from "@/components/ui/icon";
-import type { IconName } from "@/components/ui/icon-sprite";
 
 import { RAMP_BG, cx } from "@/lib/tone";
 import type { RampStep } from "@/types/ledger";
@@ -242,28 +240,6 @@ function ChoiceGroup<T extends string>({
       </div>
       {note ? <p className="text-meta text-muted mt-1.5">{note}</p> : null}
     </fieldset>
-  );
-}
-
-/** The icon a record wears — a name from this app's sprite, never a picture. */
-export function IconChoiceField(
-  props: Readonly<{
-    id: string;
-    label: string;
-    choices: readonly IconName[];
-    defaultValue?: IconName;
-    value?: IconName;
-    onChange?: (next: IconName) => void;
-    name?: string;
-    note?: string;
-  }>,
-) {
-  return (
-    <ChoiceGroup
-      {...props}
-      optionLabel={(choice) => choice}
-      render={(choice) => <Icon name={choice} size={16} />}
-    />
   );
 }
 

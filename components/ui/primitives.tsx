@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { Icon } from "@/components/ui/icon";
-import type { IconName } from "@/components/ui/icon-sprite";
+import type { IconKey } from "@/lib/icon-choice";
 import { PanelNotice } from "@/components/ui/panel";
 import { initialsOf } from "@/lib/format";
 import { BG_TONE, TEXT_TONE, cx } from "@/lib/tone";
@@ -40,7 +40,7 @@ export function IconTile({
   tone = "muted",
   dense = false,
 }: {
-  readonly name: IconName;
+  readonly name: IconKey;
   readonly tone?: Tone;
   readonly dense?: boolean;
 }) {

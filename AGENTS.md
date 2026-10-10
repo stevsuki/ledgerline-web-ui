@@ -433,6 +433,7 @@ Keep it this short. Adding one is a decision, not a detail.
 | `WalletEditorProvider` | the add/edit slide-over over `saveWalletAction`, plus the kind select that reveals a card’s fields |
 | `CategoryEditorProvider` | the add/edit sheet over `saveCategoryAction`, plus the type select the icon follows |
 | `BudgetEditorProvider` / `NewBudgetForm` | the shared budget form over `saveBudgetAction`, and the sheet every row's pencil opens |
+| `IconChoiceField` | the catalogue search — a lazy fetch of the index, the query, and the pick it adds to the radios |
 | `ThresholdField` | the Notify-me-at segments, the Custom field they reveal, and the line pricing the choice |
 | `UserEditorProvider` | same, plus `useActionState` over `saveUserAction` |
 | `RoleForm` | the live permission grid, posting to `saveRoleAction` |
@@ -499,10 +500,15 @@ started from is measured against `todayInJakarta()` — the real day, not a fixt
 frozen `TODAY`.
 
 **An icon key is a contract, not a picture.** `roles.icon` (migration 000019),
-`wallets.icon` and `menus.icon` are each a `VARCHAR(50)` holding a *name from this app's
-sprite* — never a path, never markup. The column takes any string, so both halves of the
-contract live in `lib/icon-choice.ts`: `iconNameOrBlank` refuses to send anything
-`ICON_NAMES` does not carry, and each domain's reader refuses to draw it.
+`wallets.icon` and `menus.icon` are each a `VARCHAR(50)` holding a *name this app can
+draw* — a sprite symbol or a `lucide:` catalogue icon, never a path, never markup. The
+column takes any string, so the contract is kept here, in two strengths.
+`iconNameOrBlank` in `lib/icon-choice.ts` checks a sprite name exactly and a catalogue
+name by shape only, because it is imported by client forms and the full name list is
+two thousand strings none of them needs. `knownIconOrBlank` in `lib/api/icon-key.ts` is
+the strict one — it also asks the generated name set — and it is what every action
+sends through and every reader draws through, so a name that would render an empty tile
+is neither stored nor shown.
 
 `""` is the column's own way of saying "no icon of its own", which is why an action
 stores that rather than guessing a default. Only the read path knows enough to resolve
@@ -511,9 +517,11 @@ group pair the roles list drew before the column existed, `ICON_BY_KIND` gives a
 its kind's tile. Every seeded role is still `NULL` there and renders exactly as it
 always did.
 
-`<IconChoiceField>` is the one picker both screens use. It is a radio group rather than
-a select — the whole point of the field is seeing the icon, and native radios mean the
-arrow keys work and the choice posts without a line of state. It takes `value` +
+`<IconChoiceField>` is the one picker every screen uses. Its shortlist is a radio group
+rather than a select — the whole point of the field is seeing the icon, and native
+radios mean the arrow keys work and the common answers post with JavaScript off. Under
+the shortlist a search box reaches the whole catalogue; a match that is picked joins the
+radios as the checked one, which is how it posts. It takes `value` +
 `onChange` or a bare `defaultValue`, exactly as `<SelectField>` does, because roles want
 a plain form while the wallet editor drives it: a new wallet's icon follows the Type
 select until someone picks a tile, and then it stops. Each domain names its own
@@ -809,7 +817,28 @@ They ship as one sprite: `<IconSprite />` renders the `<symbol>` set once in the
 layout, and `<Icon name="wallet" />` renders `<svg><use href="#i-wallet" /></svg>`.
 
 `IconName` is a union type — adding an icon means adding a symbol *and* the name. Never
-paste raw `<path>` data into a screen. Decorative icons get `aria-hidden`; an icon that
+paste raw `<path>` data into a screen.
+
+**The sprite is the app's chrome; the catalogue is what a person may pick.** A wallet, a
+category or a role can wear any Lucide icon, and 2,141 of them cannot ride in a sprite
+inlined on every page. So they live in two static files under `public/icons/`, written
+by `npm run icons` from `lucide-static` and committed:
+
+- `lucide-<version>.svg` — every icon as a `<symbol>` (≈98 KB gzipped). `<Icon>` points
+  `<use>` at it, so the browser fetches it the first time a catalogue icon is drawn and
+  never again.
+- `lucide-<version>.json` — `[name, tags]` rows (≈44 KB gzipped). `<IconChoiceField>`
+  fetches it the first time its search box is used, never with the page, and matches a
+  query against the name and the tags in the browser, drawing 60 results at most.
+
+The version is in the file name because `next.config.ts` serves `/icons/*` immutable,
+and `proxy.ts` leaves that path alone — a redirect to `/sign-in` is not a JSON index.
+
+A catalogue icon is stored **with its prefix**, `lucide:piggy-bank`, and `IconKey` is
+`IconName | CatalogueIconName`. The prefix is not decoration: the sprite's names were
+coined here (`gear`, `cup`, `bag`), several collide with a Lucide icon that is a
+different drawing, and a bare name must keep meaning the sprite for every row already
+stored. The longest is 45 characters, inside the columns' `VARCHAR(50)`. Decorative icons get `aria-hidden`; an icon that
 is the only content of a control needs an accessible name on the control.
 
 ---

@@ -1,4 +1,4 @@
-import type { IconName } from "@/components/ui/icon-sprite";
+import type { IconKey } from "@/lib/icon-choice";
 import { listCategories, type CategoryRecord } from "@/lib/api/categories";
 import { requireAccessToken } from "@/lib/auth/session";
 import {
@@ -39,7 +39,7 @@ import type { CategoryKind, MiniStat, RampStep } from "@/types/ledger";
  * so only a category named by hand before the icon column existed reaches the
  * second line.
  */
-function iconOf(record: CategoryRecord): IconName {
+function iconOf(record: CategoryRecord): IconKey {
   return record.icon === "" ? ICON_BY_CATEGORY_KIND[record.kind] : record.icon;
 }
 
@@ -65,7 +65,7 @@ export type CategoryDraft = {
   readonly id: string;
   readonly name: string;
   readonly kind: CategoryKind;
-  readonly icon: IconName;
+  readonly icon: IconKey;
   readonly color: RampStep;
 };
 
@@ -78,7 +78,7 @@ export type CategoryRemoval = {
 export type CategoryRow = {
   readonly id: string;
   readonly name: string;
-  readonly icon: IconName;
+  readonly icon: IconKey;
   readonly step: RampStep;
   /** "Built-in" or "Custom" — where the name came from, in one word. */
   readonly origin: string;

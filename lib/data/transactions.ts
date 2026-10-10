@@ -1,4 +1,4 @@
-import type { IconName } from "@/components/ui/icon-sprite";
+import type { IconKey } from "@/lib/icon-choice";
 import { fetchCategoryOptions, listCategories } from "@/lib/api/categories";
 import {
   listTransactions,
@@ -150,7 +150,7 @@ const ENTRIES: readonly LedgerEntry[] = [
 ];
 
 /** Which tile a wallet wears in a ledger row. One per wallet, not one per row. */
-const WALLET_ICON: Readonly<Record<WalletName, IconName>> = {
+const WALLET_ICON: Readonly<Record<WalletName, IconKey>> = {
   "BCA Payroll": "bank",
   "BCA Card": "card",
   GoPay: "phone",
@@ -349,18 +349,18 @@ function rangeBounds(range: RangeFilter): {
  * is still on one of the seven seeded names; otherwise its direction's tile.
  * The list endpoint states the name, not the icon, so the icon is resolved here.
  */
-const CATEGORY_ICON_BY_LABEL: Readonly<Record<string, IconName>> =
+const CATEGORY_ICON_BY_LABEL: Readonly<Record<string, IconKey>> =
   Object.fromEntries(
-    Object.values(CATEGORIES).map((category): [string, IconName] => [
+    Object.values(CATEGORIES).map((category): [string, IconKey] => [
       category.label.toLowerCase(),
       category.icon,
     ]),
   );
 
-const INCOME_ICON: IconName = "bank";
-const EXPENSE_ICON: IconName = "bag";
+const INCOME_ICON: IconKey = "bank";
+const EXPENSE_ICON: IconKey = "bag";
 
-function categoryIconFor(name: string, type: CategoryKind): IconName {
+function categoryIconFor(name: string, type: CategoryKind): IconKey {
   return (
     CATEGORY_ICON_BY_LABEL[name.toLowerCase()] ??
     (type === "income" ? INCOME_ICON : EXPENSE_ICON)
@@ -368,10 +368,10 @@ function categoryIconFor(name: string, type: CategoryKind): IconName {
 }
 
 /** The fixture's wallet tiles, by name; anything else gets the generic wallet. */
-const WALLET_ICON_BY_NAME: Readonly<Record<string, IconName>> = WALLET_ICON;
-const FALLBACK_WALLET_ICON: IconName = "wallet";
+const WALLET_ICON_BY_NAME: Readonly<Record<string, IconKey>> = WALLET_ICON;
+const FALLBACK_WALLET_ICON: IconKey = "wallet";
 
-function walletIconFor(name: string): IconName {
+function walletIconFor(name: string): IconKey {
   return WALLET_ICON_BY_NAME[name] ?? FALLBACK_WALLET_ICON;
 }
 

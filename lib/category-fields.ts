@@ -1,5 +1,5 @@
 import type { IconName } from "@/components/ui/icon-sprite";
-import { withCurrent } from "@/lib/icon-choice";
+import { withCurrent, type IconKey } from "@/lib/icon-choice";
 import type { CategoryKind, RampStep, SelectChoice } from "@/types/ledger";
 
 /**
@@ -84,7 +84,7 @@ export const CATEGORY_ICON_CHOICES: readonly IconName[] = [
 ];
 
 /** The shortlist, plus whatever this category is already wearing. */
-export function categoryIconChoices(current: IconName): readonly IconName[] {
+export function categoryIconChoices(current: IconKey): readonly IconKey[] {
   return withCurrent(CATEGORY_ICON_CHOICES, current);
 }
 

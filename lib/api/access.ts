@@ -1,6 +1,7 @@
 import { apiRequest, withParsed, withoutData, withQuery } from "@/lib/api/client";
 import { isRecord, readBoolean, readNumber, readString } from "@/lib/api/parse";
-import { ICON_NAMES, type IconName } from "@/components/ui/icon-sprite";
+import { knownIconOrBlank } from "@/lib/api/icon-key";
+import type { IconKey } from "@/lib/icon-choice";
 import { defaultRoleIcon } from "@/lib/access/fields";
 import type { ApiResult } from "@/types/api";
 import {
@@ -59,9 +60,9 @@ export function toAccessPayload(
 /** A group carries no access row of its own, so every flag reads false. */
 const NO_ACCESS: MenuAccess = readAccess({});
 
-function readIcon(raw: Record<string, unknown>, fallback: IconName): IconName {
+function readIcon(raw: Record<string, unknown>, fallback: IconKey): IconKey {
   const name = readString(raw, "icon");
-  return ICON_NAMES.find((icon) => icon === name) ?? fallback;
+  return knownIconOrBlank(name ?? "") || fallback;
 }
 
 function readStatus(raw: Record<string, unknown>): AccountStatus {

@@ -1,5 +1,5 @@
 import type { IconName } from "@/components/ui/icon-sprite";
-import { withCurrent } from "@/lib/icon-choice";
+import { withCurrent, type IconKey } from "@/lib/icon-choice";
 import type { CurrencyCode, WalletKind } from "@/types/ledger";
 
 /**
@@ -79,7 +79,7 @@ export const WALLET_ICON_CHOICES: readonly IconName[] = [
 ];
 
 /** The shortlist, plus whatever this wallet is already wearing. */
-export function walletIconChoices(current: IconName): readonly IconName[] {
+export function walletIconChoices(current: IconKey): readonly IconKey[] {
   return withCurrent(WALLET_ICON_CHOICES, current);
 }
 
