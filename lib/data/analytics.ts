@@ -75,7 +75,7 @@ const HEIGHT_PRECISION = 1;
 
 const CENTER = 90;
 const OUTER_RADIUS = 88;
-const INNER_RADIUS = 52;
+const INNER_RADIUS = 64;
 const SLICE_GAP = 0.022;
 const QUARTER_TURN = Math.PI / 2;
 const FULL_TURN = Math.PI * 2;

@@ -134,7 +134,9 @@ export function WidgetSlot({
     return children;
   }
   return (
-    <div className="flex min-w-0 flex-col gap-2">
+    // A move remounts the row, which would replay each panel's rise; while
+    // arranging, panels hold still.
+    <div className="flex min-w-0 flex-col gap-2 [&_.animate-pop]:animate-none">
       {editBar}
       {children}
     </div>

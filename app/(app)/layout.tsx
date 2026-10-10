@@ -46,7 +46,8 @@ export default async function AppLayout({
         className="flex h-dvh overflow-hidden"
       >
         <NavRail menus={menus} />
-        <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
+        {/* The gutter is reserved, so content growing past the fold cannot shift the page sideways. */}
+        <div className="flex min-w-0 flex-1 flex-col overflow-y-auto [scrollbar-gutter:stable]">
           {children}
         </div>
       </div>

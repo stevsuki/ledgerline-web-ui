@@ -36,14 +36,15 @@ export function CategoryDonut({ data }: { readonly data: DonutData }) {
           ))}
         </svg>
 
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="text-muted text-[9.5px] tracking-[0.12em] uppercase">
+        {/* Narrower than the hole, so a long name ends in an ellipsis inside the ring rather than under it. */}
+        <div className="pointer-events-none absolute inset-0 mx-auto flex w-[104px] flex-col items-center justify-center text-center">
+          <span className="text-muted max-w-full truncate text-[9.5px] tracking-[0.12em] uppercase">
             {active ? active.label : data.totalLabel}
           </span>
-          <span className="mt-[3px] text-lg font-semibold tracking-[-0.02em]">
+          <span className="mt-[3px] max-w-full truncate text-lg font-semibold tracking-[-0.02em] tabular-nums">
             {active ? active.value : data.totalValue}
           </span>
-          <span className="text-muted mt-0.5 text-[11px]">
+          <span className="text-muted mt-0.5 max-w-full truncate text-[11px]">
             {active ? `${active.percent} of spend` : data.totalNote}
           </span>
         </div>

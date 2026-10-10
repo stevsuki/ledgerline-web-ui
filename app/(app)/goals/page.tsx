@@ -147,10 +147,10 @@ export default async function GoalsPage() {
                 <li
                   key={month.id}
                   className={cx(
-                    "flex h-[38px] flex-1 items-end justify-center rounded-lg pb-[3px] text-[9px] font-semibold",
+                    "flex h-[38px] flex-1 items-end justify-center rounded-lg border pb-[3px] text-[9px] font-semibold",
                     month.isActive
                       ? "accent-glass"
-                      : "text-muted bg-[color-mix(in_srgb,var(--color-text)_10%,transparent)]",
+                      : "text-muted border-transparent bg-[color-mix(in_srgb,var(--color-text)_10%,transparent)]",
                   )}
                 >
                   {month.label}

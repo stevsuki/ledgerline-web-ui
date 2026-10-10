@@ -313,6 +313,18 @@ html[data-theme="light"] {
     color: var(--color-muted);
   }
 
+  /*
+   * A head that opens a panel carries its own fill, and a square fill covers
+   * the panel's rounded corners. It takes the panel's curve, one pixel tighter
+   * for the border it sits inside. The panel cannot simply clip instead: the
+   * export and date-range popovers open out of panels and would be cut off.
+   */
+  .panel > :is(.column-head, .column-head-access):first-child,
+  .panel > :first-child > :is(.column-head, .column-head-access):first-child {
+    border-start-start-radius: calc(var(--radius-panel) - 1px);
+    border-start-end-radius: calc(var(--radius-panel) - 1px);
+  }
+
   .inset {
     border: 1px solid var(--color-divider);
     border-radius: var(--radius-control);
@@ -486,6 +498,14 @@ html[data-theme="light"] {
       border-color 0.18s ease,
       box-shadow 0.2s ease,
       transform 0.14s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /*
+   * Control height 38, the same as `.input` and `.seg`. A ghost is a link, not
+   * a control, and an icon button states its own square.
+   */
+  .btn:not(.btn-ghost):not(.btn-icon) {
+    min-height: 38px;
   }
 
   .btn:hover {
@@ -663,6 +683,7 @@ html[data-theme="light"] {
     align-items: center;
     justify-content: center;
     gap: 6px;
+    min-height: 36px;
     padding: 7px 12px;
     font-size: 13px;
     white-space: nowrap;
