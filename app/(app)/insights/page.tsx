@@ -70,7 +70,7 @@ export default async function InsightsPage() {
                       <span
                         key={part.id}
                         title={part.title}
-                        className={cx("animate-grow w-full", RAMP_BG[part.step])}
+                        className={cx("glass-fill animate-grow w-full", RAMP_BG[part.step])}
                         style={{ height: part.height }}
                       />
                     ))}

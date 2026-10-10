@@ -76,7 +76,7 @@ export function ProgressTrack({
   const track = (
     <div className={cx("track", small && "track-sm", className)}>
       <div
-        className={cx("track-fill animate-grow-x", fillClass)}
+        className={cx("track-fill glass-fill animate-grow-x", fillClass)}
         style={{ width }}
       />
     </div>
@@ -198,7 +198,7 @@ export function StackedBar({
         {segments.map((segment) => (
           <span
             key={segment.id}
-            className={segment.fillClass}
+            className={cx("glass-fill", segment.fillClass)}
             style={{ width: segment.width }}
           />
         ))}

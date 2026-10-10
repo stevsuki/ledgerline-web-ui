@@ -92,7 +92,7 @@ export function PaginationBar({
                 className={cx(
                   NUMBER_CLASS,
                   entry.isCurrent
-                    ? "bg-accent border-transparent text-white"
+                    ? "accent-glass"
                     : "border-divider text-muted hover:border-accent",
                 )}
               >

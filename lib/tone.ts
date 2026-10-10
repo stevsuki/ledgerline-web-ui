@@ -40,6 +40,16 @@ export const RAMP_FILL: Readonly<Record<RampStep, string>> = {
   c7: "fill-c7",
 };
 
+export const RAMP_STROKE: Readonly<Record<RampStep, string>> = {
+  c1: "stroke-c1",
+  c2: "stroke-c2",
+  c3: "stroke-c3",
+  c4: "stroke-c4",
+  c5: "stroke-c5",
+  c6: "stroke-c6",
+  c7: "stroke-c7",
+};
+
 /** Joins class names, dropping anything falsy. */
 export function cx(...values: readonly (string | false | undefined)[]): string {
   return values.filter(Boolean).join(" ");

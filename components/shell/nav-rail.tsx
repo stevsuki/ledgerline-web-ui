@@ -23,7 +23,7 @@ export function NavRail({
       <div className="flex items-center gap-2.5 px-2 pt-1 pb-4">
         <span
           aria-hidden="true"
-          className="bg-accent text-bg grid size-7 flex-none place-items-center rounded-[var(--radius-tile)] font-[family-name:var(--font-heading)] text-sm font-semibold"
+          className="bg-accent text-on-accent grid size-7 flex-none place-items-center rounded-[var(--radius-tile)] font-[family-name:var(--font-heading)] text-sm font-semibold"
         >
           {WORKSPACE.initial}
         </span>

@@ -22,7 +22,7 @@ export function AuthCard({
       {showBrand ? (
         <span
           aria-hidden="true"
-          className="bg-accent text-bg grid size-8 place-items-center rounded-[var(--radius-tile)] font-semibold"
+          className="bg-accent text-on-accent grid size-8 place-items-center rounded-[var(--radius-tile)] font-semibold"
         >
           {WORKSPACE.initial}
         </span>

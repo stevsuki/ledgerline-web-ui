@@ -57,27 +57,43 @@ Dark is the default; light is `html[data-theme="light"]`.
 
 | Token | Dark | Light | Utility |
 | --- | --- | --- | --- |
-| `--color-bg` | `#0d0f14` | `#f7f8fa` | `bg-bg` |
-| `--color-surface` | `#15181f` | `#ffffff` | `bg-surface` |
-| `--color-text` | `#e7eaf1` | `#171a21` | `text-text` |
-| `--color-divider` | text 11% | text 10% | `border-divider` |
-| `--panel` | `#12151b` | `#f1f3f7` | `bg-panel` |
-| `--rail` | `#101319` | `#ffffff` | `bg-rail` |
-| `--muted` | `#8a93a6` | `#6b7385` | `text-muted` |
-| `--income` | `#3ecf8e` | `#12855c` | `text-income` |
-| `--expense` | `#ff6a4d` | `#d8402a` | `text-expense` |
-| `--warn` | `#e5a94a` | `#a06a12` | `text-warn` |
-| `--color-accent` | `#ec3013` — same in both themes, never overridden | | `text-accent` |
+| `--color-bg` | `#121526` | `#f5f6fb` | `bg-bg` |
+| `--color-surface` | `#1a1e33` | `#ffffff` | `bg-surface` |
+| `--color-text` | `#e4e8f7` | `#171a2b` | `text-text` |
+| `--color-divider` | text 10% | text 10% | `border-divider` |
+| `--panel` | `#161a2d` | `#eef0f8` | `bg-panel` |
+| `--rail` | `#14182a` | `#ffffff` | `bg-rail` |
+| `--muted` | `#8e97b8` | `#666e8c` | `text-muted` |
+| `--income` | `#7ddba0` | `#147d4d` | `text-income` |
+| `--expense` | `#f2849b` | `#cf3d5e` | `text-expense` |
+| `--warn` | `#e8c987` | `#9a6b12` | `text-warn` |
+| `--color-accent` | `#8c9eff` | `#4a56d6` | `text-accent` |
+| `--color-on-accent` | `#121526` | `#ffffff` | `text-on-accent` |
 
-Two known costs of keeping the artboard's red, recorded so they are not rediscovered as
-bugs: white on `#ec3013` measures **4.20:1**, under the 4.5 AA floor for the labels on
-`.btn-primary`; and the accent sits **2° of hue** from `--expense` `#ff6a4d`, so brand
-emphasis and "money out" read as the same colour (an over-limit card's accent border
-beside its expense-red bar is the clearest case).
+**The theme departs from the artboard on purpose.** The canvas is a neutral black with
+one red accent, `#ec3013`, and a ramp of greys; this is a navy ground with a periwinkle
+accent and a pastel ramp of seven distinct hues. The artboard is still the source for
+every shape, spacing value, label and number — only the colour tokens above are ours.
 
-Chart ramp `--c1` … `--c7` —
-dark: `#ff563c #e7eaf1 #9aa3b6 #6a7387 #454c5c #2b313c #ffc4b8`;
-light: `#ec3013 #171a21 #6b7385 #9aa2b1 #c3c9d4 #e3e7ee #ffb3a3`.
+**A primary or selected control is the accent's glass, never a slab of it** —
+`.btn-primary`, a checked `.seg-opt`, a range end in the calendar, a ticked `.perm-cell`,
+the current page: a tinted body (`--accent-glass-bg`), an edge of the accent and
+`--accent-glass-fg` ink. `.accent-glass` is the same recipe for a one-off. The only
+solid accent left is the L of the logo tile.
+
+The accent is now per-theme, and **nothing on it is ever a literal `#fff`**: a pastel
+accent is too light to carry white in dark, so whatever sits on a solid accent reads
+`--color-on-accent` (7.28:1 dark, 5.84:1 light). That also retires the two costs the red
+carried — white on it measured 4.20:1, and it sat 2° of hue from `--expense`, so brand
+emphasis and "money out" read as one colour.
+
+Chart ramp `--c1` … `--c7` (rose, sand, teal, green, blue, purple, peach) —
+dark: `#e28aab #dcc594 #6cc3d8 #86cf96 #6f9fe6 #a88ae0 #e9a585`;
+light: `#d9648f #c9a75a #3fa5bf #55b06c #5a82d8 #8d68d0 #e08a63`.
+Every chart mark is a hairline of its own colour around a translucent body: `.glass-fill`
+on a bar, a track fill or a share, `.glass-slice` on the donut's paths. `<ProgressTrack>`
+and `<StackedBar>` already carry it; a hand-drawn bar must add it. Legend swatches stay
+solid, so the key reads at 9px.
 Category → ramp step is positional: Housing=c1, Food & drink=c2, Transport=c3,
 Subscriptions=c4, Utilities=c5, Health=c6, Other=c7.
 

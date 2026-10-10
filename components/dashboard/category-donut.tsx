@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import type { DonutData } from "@/lib/data/analytics";
-import { RAMP_BG, RAMP_FILL, cx } from "@/lib/tone";
+import { RAMP_BG, RAMP_FILL, RAMP_STROKE, cx } from "@/lib/tone";
 
 /** Spending by category. The geometry is computed on the server. */
 export function CategoryDonut({ data }: { readonly data: DonutData }) {
@@ -26,7 +26,8 @@ export function CategoryDonut({ data }: { readonly data: DonutData }) {
               d={segment.path}
               className={cx(
                 RAMP_FILL[segment.step],
-                "cursor-pointer transition-opacity duration-150",
+                RAMP_STROKE[segment.step],
+                "glass-slice cursor-pointer transition-opacity duration-150",
               )}
               opacity={!hovered || hovered === segment.id ? 1 : 0.32}
               onMouseEnter={() => setHovered(segment.id)}

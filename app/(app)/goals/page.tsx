@@ -149,7 +149,7 @@ export default async function GoalsPage() {
                   className={cx(
                     "flex h-[38px] flex-1 items-end justify-center rounded-lg pb-[3px] text-[9px] font-semibold",
                     month.isActive
-                      ? "bg-accent text-bg"
+                      ? "accent-glass"
                       : "text-muted bg-[color-mix(in_srgb,var(--color-text)_10%,transparent)]",
                   )}
                 >

@@ -68,7 +68,7 @@ function Bar({
 }) {
   return (
     <div
-      className={`animate-grow w-[28%] min-w-[11px] rounded-t-[7px] rounded-b-[3px] ${className}`}
+      className={`glass-fill animate-grow w-[28%] min-w-[11px] rounded-t-[7px] rounded-b-[3px] ${className}`}
       style={{ height }}
     />
   );
