@@ -95,8 +95,10 @@ on a bar, a track fill or a share, `.glass-slice` on the donut's paths. `<Progre
 and `<StackedBar>` already carry it; a hand-drawn bar must add it. The colour swatches
 wear it too — `<LegendItem>`, the donut's key, a category's dot, the tiles of
 `<ColorChoiceField>` — so a key looks like the mark it names.
-Category → ramp step is positional: Housing=c1, Food & drink=c2, Transport=c3,
-Subscriptions=c4, Utilities=c5, Health=c6, Other=c7.
+Category → ramp step is **stored on the category**, never counted from its position —
+see the sixth departure. The template hands its six spending rows `c1`–`c6` and its
+four earning rows `c1`–`c4`; only the artboard fixture (`RAMP_BY_CATEGORY_LABEL`) still
+maps the seven names positionally, for the preview screens.
 
 Shadows `--shadow-sm/md/lg` are per-theme. Type is **Plus Jakarta Sans** 400/500/600/700
 for both heading and body, loaded via `next/font/google`. Headings are weight 600 with
@@ -319,44 +321,63 @@ here.
 
 ### The sixth departure: a category is a record, not a hard-coded key
 
-The artboard's `CATS` map is eight fixed keys, and the whole app leans on the count:
-`CategoryKey` is a union, the seven-step ramp is handed out by position, and
-`ICON_BY_CATEGORY` is exhaustive over it. The backend keeps categories in two tables
-now, so the list is something people change — and the moment it is, "the seventh
-category is `c7`" stops being true.
+The artboard's `CATS` map is eight fixed keys, and the whole app used to lean on the
+count: `CategoryKey` was a union, the seven-step ramp was handed out by position, and
+the icon map was exhaustive over it. The backend keeps categories in a table, so the
+list is something people change — and the moment it is, "the seventh category is `c7`"
+stops being true.
 
-**What the backend actually holds** (migrations 000020–000024), because the two words
-do not mean what they look like: `master_categories` is a global list of **names
-only** — id and name, seven rows, Housing through Others — and `categories` is
-**per user**, with `master_category_id` (nullable, `ON DELETE SET NULL`), `name`,
-`type` (`income` | `expense`), soft delete, and one name per user enforced by a
-partial unique index on `(user_id, LOWER(name))`. `SeedDefaults` copies the seven
-master rows into a new account at registration, **all as `expense`**, so a fresh user
-has no income category at all until they add one. The routes are the full set —
-`GET|POST /categories`, `GET|PATCH|DELETE /categories/{id}`, and
-`GET /categories/options?slug=filter|budget`, where `budget` narrows to expense.
+**What the backend actually holds** (migrations 000020–000039), because the two words
+do not mean what they look like:
+
+- `master_categories` is a global **template**, not a parent: `name`, `type`
+  (`income` | `expense`), `icon`, `color`. Ten rows — six spending (Housing, Food &
+  Drink, Transport, Subscription, Utilities, Health, on `c1`–`c6`) and four earning
+  (Salary, Bonus, Side income, Investment, on `c1`–`c4`). The `Others` row is gone
+  (000039): naming a category on the sheet is one field, and a bucket called Others
+  only ever says that nobody decided.
+- `categories` is **per user**: `name`, `type`, `icon`, `color`, soft delete, and one
+  name per user *per direction* — the partial unique index is on
+  `(user_id, type, LOWER(name))` (000034), so the same name can exist once each way.
+- **Nothing links the two.** `categories.master_category_id` was dropped in 000037. A
+  category taken up from the template is a plain copy and keeps no trace of where it
+  came from.
+
+**Nothing is seeded at registration.** A new account owns no categories at all. What
+it sees is the template on offer: `GET /categories` and
+`GET /categories/options?type=income|expense` both answer the account's own rows
+*plus* every master row it has not taken up — matched by name and direction, because
+there is no link to match on. A master row arrives with `is_own: false`;
+`is_built_in` says whether a name-and-direction pair is one of the template's.
+
+**Posting a master id adopts it.** `ResolveForUser` in `category_repository.go` turns
+whichever id a picker handed back into a category the account owns: its own row if
+the id is one, otherwise an idempotent copy of the master row. `POST` and `PATCH` on
+`/transactions`, the budget writes and `PATCH /categories/{id}` all go through it, so
+no caller has to tell the two kinds of id apart. Two consequences: editing a shared
+row on `/categories` is what makes it yours, and renaming an adopted one puts its
+master row back on offer — a different name is a different bucket.
+
+The routes are the full set — `GET|POST /categories`,
+`GET|PATCH|DELETE /categories/{id}`, and `GET /categories/options`.
 
 `/categories` is that list, and it is **a menu of its own, sitting beside Budgets
 rather than inside it**. Three reasons, in the order they matter:
 
 - Each is a backend resource with its own table, CRUD and error codes, and the one
-  place they touch is `GET /categories/options?slug=budget` — the budget form
-  *reading* this list, never owning it. `ON DELETE RESTRICT` on
-  `budgets.category_id` is that boundary in SQL: a category with a budget against
-  it cannot be removed from the screen that owns categories.
+  place they touch is `GET /categories/options?type=expense` — the budget form
+  *reading* this list, never owning it. `CategoryService.Delete` is the boundary: a
+  category with a budget against it, or a transaction filed under it, is refused with
+  `CATEGORY_IN_USE`. (The `ON DELETE RESTRICT` on both foreign keys never fires,
+  because removal is a soft delete.)
 - A menu is the only unit this app grants a permission on. Renaming or removing a
   category reaches every transaction filed under it, so who may do that has to stay
-  separable from who may set a limit. (Nothing enforces it yet — `/categories` is
-  behind `Authenticate` only, as `/users` and `/roles` still are.)
+  separable from who may set a limit. (Nothing enforces it yet — every route group is
+  behind `Authenticate` only.)
 - Adjacency was never the argument for merging: the menus table already has parent
-  groups, and `budgets` sits under **money** (`a0000000-…-0002`). A `categories` row
-  in that same parent puts the two under one rail heading with no code at all.
-
-Migration id `b0000000-0000-0000-0000-000000000015` is reserved for it in
-`MENU_CATALOGUE`; until that row exists, `/auth/me` returns no such menu and the rail
-cannot draw it. The two screens link to each other instead of sharing a page: the
-"New budget" panel carries a **Categories** link (and says so in its empty state), and
-the category list carries a **Budgets** one.
+  groups, and `budgets` sits under **money** (`a0000000-…-0002`). Migration 000025
+  seeds `categories` into that same parent as `b0000000-0000-0000-0000-000000000015`,
+  and `MENU_CATALOGUE` carries the same id for the role editor.
 
 Four things the screen states rather than assumes:
 
@@ -364,20 +385,20 @@ Four things the screen states rather than assumes:
    donut and the insights ranking; what is left of a limit is the budgets screen. A
    second copy of either would be a number with two owners, and the two would disagree
    the first time one changed. This screen answers only what nothing else does: which
-   categories exist, which way each runs, what it is drawn with, and where it came
-   from. The stat strip counts rows, not rupiah. **Keep it that way** — the pull to
-   add "spent this month" here is exactly the duplication the split was meant to avoid.
+   categories exist, which way each runs, what it is drawn with, and whether it is the
+   account's yet. The stat strip counts rows, not rupiah. **Keep it that way** — the
+   pull to add "spent this month" here is exactly the duplication the split was meant
+   to avoid.
 2. **The colour is stored, not counted.** `<ColorChoiceField>` asks for a ramp step and
    the editor posts it as `color`, so adding a category above another one does not
-   repaint the donut under it. Migration **000026** adds `categories.icon` and
-   `categories.color` for it — `VARCHAR(50)` / `VARCHAR(10)`, both `NOT NULL DEFAULT
-   ''`, holding the same `""`-means-default contract as `roles.icon` and
-   `wallets.icon`, and not nullable only because rows written before them would come
-   back NULL into a non-pointer string. `stepOf` resolves `""` from
-   `MASTER_DEFAULTS` — the seven master ids are pinned by migrations 000020 and
-   000023 — and then, for a category with no master row, `index % 7`. That last step
-   is the weak one: past seven, two categories share a step, and two slices of one
-   colour cannot be told apart.
+   repaint the donut under it. `categories.icon` and `categories.color` (migration
+   000026) are `VARCHAR(50)` / `VARCHAR(10)`, both `NOT NULL DEFAULT ''`, holding the
+   same `""`-means-default contract as `roles.icon` and `wallets.icon`. The template
+   states a tile and a step for each of its rows and adoption copies them, so the
+   blank case is narrow: a category named inline from the transaction sheet, which
+   posts both blank on purpose. `iconOf` then gives `ICON_BY_CATEGORY_KIND[kind]` and
+   `stepOf` gives `RAMP_STEPS[index % 7]`. That last step is the weak one: past seven,
+   two categories share a step, and two slices of one colour cannot be told apart.
    **A colour may also be the person's own.** The last tile of `<ColorChoiceField>` is
    the browser's colour well, and what it picks is stored as `#rrggbb` in the same
    `VARCHAR(10)` — so `ColorKey` is `RampStep | HexColor`, and `colorOrBlank` is the one
@@ -387,25 +408,32 @@ Four things the screen states rather than assumes:
    Spread both — never index `RAMP_BG` with a category's colour. The cost is stated in
    the form: a hex is the same in light and dark, so a colour chosen against one ground
    may sit badly on the other.
-3. **The fallback stays.** `Others` (master `…-0007`) is where spending nobody named
-   lands and what the add-transaction sheet hangs "name this category" on, so it is
-   the one row the sheet will not remove and the one whose type it will not change —
-   an income bucket would swallow unnamed spending silently. Nothing else is guarded,
-   because nothing else can be: there is no transactions table and no budgets table
-   back there to point at a category yet.
-4. **Naming Other on a transaction is the same act as adding one here.** The
-   add-transaction sheet reveals "Name this category" when the fallback is picked, and
-   what it creates joins the same list — one way a category comes into being, not
-   two. `getCategoryPicker()` reads the API for exactly that reason: a category added
-   on this screen is selectable on the very next transaction.
+3. **A shared row is shown, not held.** It has no row of its own behind it, so the
+   sheet will not remove it (`removalOf` says why, beside the button), and editing it
+   takes it up first. No row is special beyond that: the `Others` fallback, and the
+   lock on its type, went with the link that marked it. An own category still in use
+   is refused by the backend, and the sheet prints that answer — the list states no
+   usage count, so nothing on this side can say it before the attempt.
+4. **Naming a category on a transaction is the same act as adding one here.** The
+   add-transaction sheet has a **New** button beside its category select;
+   `createCategoryInlineAction` commits the category there and then, before the
+   transaction it was named for is saved. That is a step of its own on purpose: the
+   flow it replaced created the category *while* saving the transaction, and left it
+   stranded whenever that save failed — unpickable because the list had not been
+   re-read, unrepeatable because the name was now taken.
 
-The reader is `lib/data/category-list.ts` rather than `categories.ts` because that
-name is the artboard fixture the ledger still reads. That fixture is also the picker's
-fallback when the API cannot be reached: the sheet it feeds saves nothing yet and
-every other screen is summed from those same rows, so falling back keeps the mock
-whole instead of leaving an empty select. `budgets.ts` and `ledger.ts` are still on
-the fixture — making `CategoryKey` dynamic is the next step, not this one, and it is
-what will let a budget be measured against a category the API returned.
+Two readers, two endpoints, and the difference is deliberate. `getTransactionComposer()`
+feeds the sheet from `/categories/options`, so a fresh account has something to pick.
+`getTransactionFilterOptions()` feeds the filter bar from `/categories` and keeps the
+`isOwn` rows only: narrowing the ledger to a category nothing was ever filed under can
+only return nothing. You narrow by what you have, and pick from what you could have.
+
+The screen's reader is `lib/data/category-list.ts`, because `lib/data/categories.ts` is
+still the artboard fixture (`CATEGORIES`, `RAMP_BY_CATEGORY_LABEL`). The fixture ledger
+reads it, and so does one live path: `categoryIconFor` in `lib/data/transactions.ts`
+resolves a row's tile by matching its category *name* against the fixture's labels,
+because the list endpoint states `category_name` and no icon. `CategoryKey` survives
+only for that fixture.
 
 ---
 
@@ -440,7 +468,10 @@ Keep it this short. Adding one is a decision, not a detail.
 | `FilterForm` | debounced typing, instant selects, focus-preserving replace |
 | `TrendChart` | hover tooltip over the bars |
 | `CategoryDonut` | hover highlights slice + legend row |
-| `TransactionSlideOver` | modal state, focus trap, Escape |
+| `AppChromeProvider` | the shell's shared state — whether the transaction sheet is open, the entry it is editing, and the toast with its timed dismissal |
+| `SlideOver` | the overlay every sheet sits in — focus trap, Escape, scrim |
+| `TransactionSlideOver` | the add/edit sheet over `saveTransactionAction` — the direction segment that narrows the category select, and the inline **New** category |
+| `ActionButton` / `OpenTransactionButton` / `EditTransactionButton` | a click that reaches `useAppChrome()` — a toast on a preview screen, the sheet blank, the sheet on a row |
 | `WalletEditorProvider` | the add/edit slide-over over `saveWalletAction`, plus the kind select that reveals a card’s fields |
 | `CategoryEditorProvider` | the add/edit sheet over `saveCategoryAction`, plus the type select the icon follows |
 | `BudgetEditorProvider` / `NewBudgetForm` | the shared budget form over `saveBudgetAction`, and the sheet every row's pencil opens |
@@ -449,7 +480,8 @@ Keep it this short. Adding one is a decision, not a detail.
 | `UserEditorProvider` | same, plus `useActionState` over `saveUserAction` |
 | `RoleForm` | the live permission grid, posting to `saveRoleAction` |
 | `RemoveUserButton` / `RemoveRoleButton` | confirm before the delete form posts |
-| `Toast` | timed dismissal |
+| `DateRangeField` / `Calendar` | the audit bar's range control — the grid that takes over from the native date inputs |
+| `AuditExportPopover` | pick the period, fetch `/audit/export`, hand the browser the file |
 | `SignInForm` / `RegisterForm` | `useActionState` — pending state, inline errors |
 | `ResetRequestForm` / `NewPasswordForm` | same |
 | `AppError` (`app/error.tsx`) | an error boundary must be a client component |
@@ -461,13 +493,18 @@ JavaScript switched off; the client half only adds the pending label and the per
 error. The role matrix posts one hidden `grant` value per ticked cell rather than a
 JSON blob, so the server reads the permission rows straight off the `FormData`.
 
+Every live domain keeps its mutations the same way, one `"use server"` file each:
+`lib/wallets/actions.ts`, `lib/categories/actions.ts`, `lib/budgets/actions.ts`,
+`lib/transactions/actions.ts`, and `lib/dashboard/actions.ts` for the layout cookie. A
+new domain adds a sixth file rather than a function to one of these.
+
 ### URL contract
 
 State that survives a reload lives in the URL, never in React state:
 
 ```
 /dashboard      ?trend=weekly|monthly &edit=1
-/transactions   ?q= &category= &wallet= &range= &amount= &page= &size=
+/transactions   ?q= &category= &wallet= &range= &type= &page= &size=
 /users          ?q= &role= &status= &sort= &page= &size=
 /roles          ?q= &sort= &page= &size=
 /audit          ?q= &actor= &module= &status= &severity= &from= &to= &page= &size=
@@ -475,6 +512,11 @@ State that survives a reload lives in the URL, never in React state:
 /sign-in        ?next= &status=
 /reset-password ?step=request|reset
 ```
+
+On `/transactions`, `category` and `wallet` carry **ids**, not names — the options are
+read live, so the page validates each against the list it just fetched before the
+query is built. `range` is one of three presets, resolved to RFC3339 bounds in
+`+07:00`; `type` is `income` | `expense`.
 
 Filter bars are plain `<form method="get">` — they work with JavaScript disabled, and
 `FilterForm` only adds timing on top: a `<select>` applies at once, typing waits out a
@@ -518,11 +560,12 @@ preferences endpoint on the backend; the day there is, only the two ends of
 
 `lib/data/<domain>.ts` exports `async` query functions (`getTransactions(filters)`,
 `getUsers(filters)`, …) that pages `await`. That async boundary is what made the next
-step cheap: **users, roles, wallets, categories, budgets, the audit log and the
-sidebar menus are live** —
+step cheap: **users, roles, the audit log, the sidebar menus, wallets, categories,
+budgets, transactions and the dashboard are live** —
 they call `ledgerline-backend` through `lib/api/`, and no component changed when they
-stopped being fixtures. Every other domain is still a typed fixture behind the same
-signature.
+stopped being fixtures. **Goals, recurring, insights, shared, reminders and settings**
+are still typed fixtures behind the same signature, with no table and no route behind
+them yet — and each of those screens says so (`isPreview`, below).
 
 Wallets is the one screen served by two calls that must agree: `GET /wallets` for the
 cards and `GET /wallets/overview` for the headline. `getWalletsScreen()` awaits both
@@ -582,8 +625,9 @@ never enters a React tree.
 
 **`code` is the contract, `message` is for people.** The backend publishes its catalogue
 in `ERROR_CODES.md` (generated from `internal/domain/error_codes.go`, which is the one
-to read when the two disagree — as they do today: the six `WALLET_*` codes are in the
-Go file and not yet in the document); `API_ERROR_CODES`
+to read when the two disagree — as they do today: every `WALLET_*`,
+`TRANSACTION_*` and `MASTER_CATEGORY_*` code is in the Go file and not in the document,
+which still lists a `CATEGORY_INVALID_SLUG` the Go file dropped); `API_ERROR_CODES`
 in `types/api.ts` mirrors it, and `MESSAGE_BY_CODE` in `lib/auth/form-state.ts` is the
 only place a code becomes a sentence. Never branch on `message`, and never parse it. A
 code released after this client was written lands on `UNKNOWN` and keeps the message the
@@ -604,7 +648,7 @@ or an unreachable API means the backend is unwell while the cookie is still good
 there would both lie and loop, because the proxy sends a live cookie straight back to
 `/dashboard`. `app/error.tsx` catches the throw.
 
-Gaps in the API the screens work around today, each marked where it bites:
+Gaps the screens work around today, each marked where it bites:
 
 - `GET /users` has no `role` or `status` filter, so one `per_page=100` window is
   fetched and the two selects are applied on the server. Past that many accounts they
@@ -618,9 +662,10 @@ Gaps in the API the screens work around today, each marked where it bites:
   `card` clears both, which is the only way back today.
 - A transaction has to be kept in the currency of the wallet it names, and its type
   has to match its category's — `TRANSACTION_CURRENCY_MISMATCH` and
-  `TRANSACTION_CATEGORY_MISMATCH`, both enforced on create and on patch. The
-  add-transaction sheet posts `IDR` whatever wallet is picked, so the USD Paypal wallet
-  is now refused rather than filed where no balance would ever count it. The fix is for
+  `TRANSACTION_CATEGORY_MISMATCH`, both enforced on create and on patch. The sheet
+  only offers the matching half of the categories, so the second cannot be built. The
+  first still can: a new entry posts `IDR` whatever wallet is picked, so a USD wallet
+  is refused rather than filed where no balance would ever count it. The fix is for
   the sheet to offer base-currency wallets only, or to post the chosen wallet's own
   currency; `GET /wallets/options` answers `{id, name}` and cannot say which is which,
   so that narrowing needs the field added there.
@@ -628,31 +673,47 @@ Gaps in the API the screens work around today, each marked where it bites:
   about a date, so refusing a real entry against a possibly stale figure would only
   punish recording late — it reads as a negative balance and an **Overdrawn** line
   instead of an error.
-- Nothing under `/wallets` is written to the audit log: `walletService` is handed an
-  `AuditLogRepository` and never calls it, so adding, editing and removing a wallet
-  leave no trail the way a user or a role does.
+- `note` is required on a transaction. The backend refuses a blank one on create and on
+  patch, so the sheet's textarea is `required` rather than optional as the artboard
+  drew it.
+- `GET /transactions` states `category_name` and `wallet_name` but neither icon, so a
+  ledger row's tiles are resolved from the names: `categoryIconFor` against the
+  artboard's seven labels, `walletIconFor` against the fixture's five wallet names.
+  A category or wallet under any other name wears its direction's tile or the generic
+  wallet, whatever was chosen for it on its own screen. The fix is two fields on the
+  list row.
+- **The transactions subtitle is still the fixture's.** `app/(app)/transactions/page.tsx`
+  prints `transactionsSubtitle()` from `lib/data/ledger.ts`, so the live list sits
+  under "56 entries this month across 5 wallets" whatever the account holds. The
+  `total_items` the list already returns is what it should count.
+- **The notification bell is still the fixture's.** `<AppHeader>` hands
+  `NOTIFICATIONS` from `lib/data/reminders.ts` to the bell on every screen, live or
+  not. It goes when reminders has an endpoint.
+- The sheet's impact line costs a request on every screen. `app/(app)/layout.tsx`
+  awaits `getBudgets()` for `budgetWidths`, and the sheet matches a budget to the
+  picked category by *name*. An id on both sides, read when the sheet opens, is the
+  shape it should take.
+- **Only a sign-in is written to the audit log.** `auth_service.go` records
+  `auth.login`, succeeded and failed, and that is every `recordAudit` call there is.
+  The user, role and wallet services are each handed an `AuditLogRepository` and never
+  call it; the category, budget and transaction services are not handed one. So
+  nothing a person changes leaves a trail — and it bites hardest on a category
+  rename, which reaches every transaction filed under it.
 - Actions are dotted codes (`auth.login`) and the backend ships no label for them,
   unlike modules and severities. `lib/audit-labels.ts` names the ones it knows and
   prettifies the rest, so a newly recorded action reads sensibly without a release.
-- `GET /categories` returns the list whole and does not page. Fine for a household's
-  handful; past that it needs the same `page` / `per_page` the other lists take.
-- `DELETE /categories/{id}` checks budgets and nothing else. `CategoryService.Delete`
-  refuses with `CATEGORY_IN_USE` while a budget limits the category, but a category
-  with transactions filed under it soft-deletes cleanly — and every budget read joins
-  `categories` on `deleted_at IS NULL`, so what was filed under it stops being counted
-  anywhere. The rest of what the sheet states (the Others bucket itself) still lives
-  only in the client.
-- A new account is seeded with the seven master rows **all as `expense`**, so it has
-  no income category until someone adds one. Nothing in the API says which row is the
-  fallback either — the client reads that off `master_category_id` being `…-0007`.
-- Nothing under `/categories` is written to the audit log, the same gap `/wallets`
-  has — and it bites harder here, since a rename reaches every transaction filed
-  under the category.
-- **`spent` is summed from transactions now.** `spentThisCycle` in
-  `budget_repository.go` sums the expense rows of the budget's own category *and*
-  currency inside the calendar month, negated because the table stores an expense
-  negative. It replaced the literal `0::bigint AS spent`; nothing on this side
-  changed but the numbers, which is what the wiring was for.
+- `GET /categories` and `GET /budgets` return their lists whole and do not page. Fine
+  for a household's handful; past that they need the same `page` / `per_page` the
+  other lists take.
+- `DELETE /categories/{id}` is guarded on both sides now — a budget or a transaction
+  still pointing at the category answers `CATEGORY_IN_USE` — but the list states no
+  usage count, so the sheet cannot say so before the attempt.
+- A new account has no category of its own until it files something or edits a shared
+  row. That is by design, and it is why every picker reads `/categories/options`
+  rather than `/categories`.
+- **`spent` is summed from transactions.** `spentThisCycle` in `budget_repository.go`
+  sums the expense rows of the budget's own category *and* currency inside the
+  calendar month, negated because the table stores an expense negative.
 - **`rollover` is computed too, with three limits worth knowing.** `carried_over`
   is last cycle's unspent amount and nothing older, because `budgets` keeps no
   history of `monthly_limit` — last cycle is measured with *today's* limit, so
@@ -662,78 +723,119 @@ Gaps in the API the screens work around today, each marked where it bites:
   not start on a doubled limit. `remaining`, `used_percent` and `is_over` all
   answer against `monthly_limit + carried_over`, while `total_budget_allocated`
   and the overview's `shares` stay the plan alone.
-- `GET /budgets` and `/budgets/overview` take no `?period=`; the service reads
-  `time.Now()` in the server's own zone, so the cycle is the server's month rather
-  than Jakarta's. It only shows near a month boundary, and only until the endpoint
-  takes a period. The two halves do not even read the same clock: `spent` and
-  `carried_over` are windowed by Postgres's `date_trunc('month', NOW())`, while
-  `days_left` and `cycle_elapsed_percent` come from Go's `time.Now()`.
-- `GET /budgets` returns the list whole and does not page, as `/categories` does.
-- Nothing under `/budgets` is written to the audit log, the same gap `/wallets` and
-  `/categories` have.
-- `GET /categories/options` answers `{id, name}` only, so it cannot say which
+- **The month is the server's, not Jakarta's.** `GET /budgets` and `/budgets/overview`
+  take no `?period=`, and `GET /transactions/overview` takes a `?month=YYYY-MM` this
+  client never sends, so each falls back to the server's own clock and zone. The two
+  halves of a budget do not even read the same one: `spent` and `carried_over` are
+  windowed by Postgres's `date_trunc('month', NOW())`, while `days_left` and
+  `cycle_elapsed_percent` come from Go's `time.Now()`. Meanwhile the transactions
+  list is bounded here, in `+07:00`. It only shows near a month boundary.
+- `GET /categories/options` answers `{id, name, type}`, so it cannot say which
   categories already have a budget. `toChoices` subtracts the budget list on this
   side; past a household's handful that belongs in the query.
 - There is no `GET /menus`. `/auth/me` returns only the menus the signed-in role may
   *read*, which is the right list for the rail and the wrong one for the role editor,
-  so `MENU_CATALOGUE` in `lib/access/menus.ts` carries the ids migration 000008 pins.
+  so `MENU_CATALOGUE` in `lib/access/menus.ts` carries the ids the migrations pin.
   Delete it the day that endpoint exists.
 
-### The ledger is the only place a money figure is typed
+### A money figure is summed once, by the backend
 
-The artboard hand-wrote its rows *and* its totals, and the two never agreed: its
-fourteen transactions add up to Rp6.958.000 against a headline of Rp12.780.000,
-its recurring rows to Rp5.705.000 a month against a stated Rp5.891.000, and its
-balance card claimed +3.4% on a month that kept Rp8.670.000 — a figure no
-opening balance can make true. So the totals were deleted, and August 2026 was
-written out in full instead: 54 rupiah rows in `lib/data/transactions.ts`, plus
-two in USD on the Wise account that is kept in it.
+Transactions are live. `transactions` (migration 000029) holds `category_id`,
+`wallet_id`, `name`, `note`, `type`, a signed `amount`, `currency` and `occurred_at`,
+with a CHECK that pins the sign to the type: income is positive, expense negative.
+The routes are `GET|POST /transactions`, `GET|PATCH|DELETE /transactions/{id}`,
+`GET /transactions/overview` and `GET /transactions/trend?range=weekly|monthly`.
 
-`lib/data/ledger.ts` is the one reducer over those rows, and **nothing
-downstream of it states a money figure of its own**. The dashboard's four stats,
-both trend charts, the donut, what each budget has spent, the insights ranking
-and every subtitle that counts something are all the same rows asked a different
-question, so a figure on one screen cannot disagree with the same figure on
-another. Adding a transaction moves all of them at once, which is the whole
-point — and the day `getTransactions` starts calling the API, only the reader
-under `ledger.ts` changes.
+**Nothing on this side re-derives a figure the API stated.** That is the rule the
+fixture ledger was written to enforce, and it survived the move: a total has one
+owner, so a figure on one screen cannot disagree with the same figure on another.
 
-Four things are genuinely input rather than derived, and each says so where it
-sits: the `limit` and `threshold` on a budget (someone chose those), the
-`OPENING_BALANCE` August started from (a month of movements says how much the
-balance changed, never what it started at), the five month-end rollups before
-the ledger begins, and the recurring schedule's `dueDay` + `amount`.
+- **`/transactions`** is one read. `GET /transactions` answers the page grouped by
+  day, with a `summary` beside it that was summed in SQL over the whole filtered set,
+  not the page. `getTransactions` turns the summary into the four stats and the
+  groups into `LedgerDay`s. The one sum made here is a day's net, folded in `netOf`
+  from the rows that day carries on this page.
+- **`/dashboard`** is `getDashboardScreen(mode)`, four reads awaited together: the
+  transactions overview, the trend, `/wallets/overview` and `/wallets`. The overview
+  answers the reported month *and* the one before it in a single call, because every
+  delta on the screen divides one by the other and two calls could read the ledger a
+  transaction apart.
+- **A delta that cannot honestly be made is `—`, not `0%`.** An empty earlier month is
+  no comparison at all, and "0%" beside a month that earned nothing would read as
+  "unchanged". The balance card goes further: its opening figure is inferred by taking
+  the month's net back off what the wallets hold now, and `dashboardBalanceBlocked`
+  hides the delta when that inference is wrong — a wallet is overdrawn, or a counted
+  base-currency wallet had its balance restated this month.
+- **A failure takes down a panel, not the page** — unlike `/budgets`. No panel here
+  states the sum of another, so one unreadable answer is one panel saying so beside
+  three that are still true. The stats and the donut are the exception: one read,
+  one error between them.
+- **The recent panel is unbounded on purpose.** `getRecentTransactions()` asks for the
+  newest seven with no date filter, so an empty answer means exactly one thing —
+  nothing has ever been recorded — and the setup checklist can tick its last step
+  from it.
+- **The setup checklist is ticked from data, never from a flag.** `getSetupChecklist`
+  names three steps — categories, a wallet, a first entry — and retires the card the
+  moment all three hold. A read that failed is not a step left undone, so the card
+  stays out of the way rather than tell an account with wallets that it has none.
+  The categories step counts the shared rows too, so it is ticked from the start.
 
-Two of the artboard's own bugs were fixed on the way and must stay fixed: the
-bar under "August allocated" now splits the *limits* rather than the spending
-donut it was drawing, and a budget turns amber at its own stated threshold
-rather than at one flat 85% for every row. Weekdays are derived from the row's
-ISO date — every one the artboard printed was a day out.
+**One sheet records and corrects.** `<TransactionSlideOver>` is mounted once in the
+app layout and opened through `<AppChromeProvider>` — `openTransaction()` blank, or
+`openTransaction(draft)` from a row's pencil. The row already carries its `draft`, so
+opening the sheet reads nothing a second time. It posts to `saveTransactionAction` in
+`lib/transactions/actions.ts`, with every input named for the backend's own json tag,
+for the reason the wallet form does it. Three things it settles before the call: the
+amount is typed as a magnitude and signed from the direction, a date and an optional
+time become one `occurred_at` stamped `+07:00`, and an existing entry keeps the
+currency it arrived in, so editing the note of a dollar row cannot redenominate it.
+The direction segment narrows the category select to the half that can carry it. With
+no wallet to record against, the sheet says so and links to `/wallets` rather than
+open on an empty select.
 
 **A row states what it is quoted in, and a total never crosses that.** Every
-`Transaction` carries a `currency`, and it is stored on the row rather than
-inherited from the wallet, because a Wise account holds several at once. The
-`WalletName` union already had `Wise USD` in it while the ledger printed every
-figure through a rupiah-only helper, so dollars were being added to rupiah and
-the answer shown with an "Rp" in front — the same guess the wallets summary
-refuses to make. So `formatSignedRupiah` is gone: `formatSignedMoney(amount,
-currency)` is the one way a row prints, and there is no rupiah-only signed
-helper left to reach for by accident.
+transaction carries a `currency`, and the backend refuses one that differs from its
+wallet's. `formatSignedMoney(amount, currency)` is the one way a row prints; there is
+no rupiah-only signed helper to reach for by accident. Anywhere rows are summed the
+answer is a `MoneySum[]`, one total per currency, never a number. The base currency is
+the backend's, arriving as `base_currency`: the stats strip states it at stat weight
+and puts the rest in the card's `note` — "Plus $1.180,00, unconverted" — and a day
+heading prints its nets side by side rather than adding them. The dashboard counts
+the base currency alone and says what it left out: "2 entries in another currency,
+not counted here". An exchange rate is what would replace all of that, and nothing
+fetches one.
 
-Anywhere rows are summed the answer is a `MoneySum[]`, one total per currency,
-never a number. The transactions overview reports the base currency at stat
-weight and puts the rest in the card's `note` — "Plus $1.180,00, unconverted" —
-and a day heading prints its nets side by side rather than adding them. The
-rupiah bounds on the Amount filter exclude a non-base row rather than pretend to
-measure it, since "Under Rp100.000" cannot be true or false of twenty dollars.
+The artboard's Amount filter is gone with its rupiah buckets — "Under Rp100.000"
+cannot be true or false of twenty dollars. The bar filters by **Type** instead, which
+is what the backend takes.
 
-`ledger.ts` reduces `rowsThisMonth`, which is the base currency alone, so the
-dashboard, the donut, what a budget has spent and the insights ranking are the
-rupiah rows and nothing else — that filter is what an exchange rate would one
-day replace. `entryCount` and `walletCount` are the exception and read
-`allRowsThisMonth`: they count rather than add, and a subtitle saying "54
-entries" over a "Shown: 56 entries" card is two numbers disagreeing about rows
-the reader can see.
+**The fixture ledger is what the preview screens still read.** `lib/data/transactions.ts`
+still carries August 2026 written out — 54 rupiah rows and two in USD — and
+`lib/data/ledger.ts` is still the one reducer over them. It exists because the
+artboard hand-wrote its rows *and* its totals and the two never agreed: fourteen
+transactions adding up to Rp6.958.000 against a headline of Rp12.780.000. So the
+totals were deleted and the month was written out. What reads it now is short:
+
+- `/insights` — `getInsights`, `getCategoryComparison` and `getCategoryRanking`, the
+  first half of `lib/data/analytics.ts`. The second half of that file is the live
+  dashboard, and all it takes from the ledger is `shareOf`.
+- `lib/data/recurring.ts`, for `averageMonthlyIncome`.
+- `transactionsSubtitle()` — a leak onto a live screen, listed with the gaps above.
+
+Inside the fixture the old rule still holds: nothing downstream of `ledger.ts` types a
+figure of its own. Three things in it are input rather than derived — the
+`OPENING_BALANCE` August started from, the five month-end rollups before the ledger
+begins, and the recurring schedule's `dueDay` + `amount`. `TODAY` (`2026-08-27`) is
+the fixture's day and nothing live may read it; a live path asks `todayInJakarta()`.
+Weekdays are derived from a row's ISO date by `formatDayHeading`, on both paths —
+every one the artboard printed was a day out.
+
+**A screen still on the fixture says so.** `PREVIEW_CODES` in `lib/access/menus.ts`
+names them — goals, recurring, insights, shared, reminders — which marks the rail
+item, and each of those pages passes `<AppScreen isPreview>` for the banner (`/mobile`
+does too). A new account must not read someone else's goals and bills as its own. A
+code leaves that list, and the page drops the prop, the day its screen is served from
+the API.
 
 ### A budget is a limit somebody chose, and nothing else
 
@@ -764,7 +866,7 @@ is the setting, and it holds for the cycles after this one.
 for the reason `getWalletsScreen()` does: the header states the sum of the very
 cards printed under it, and read a moment apart the two could disagree in front of
 somebody who can add six figures themselves. A failure on either empties the whole
-screen; only `GET /categories/options?slug=budget` degrades on its own, because it
+screen; only `GET /categories/options?type=expense` degrades on its own, because it
 feeds nothing but the "New budget" panel, which then says why it is offering
 nothing.
 
@@ -791,9 +893,11 @@ Add and edit are one `<BudgetFields>`, the lesson wallets already records. It ma
 twice over here: before this a threshold could only be chosen at creation, and the
 six budgets that already existed had no edit affordance at all. A budget's category
 cannot be changed, because the pairing of a category with a limit is what the budget
-*is*; and only the seven spending categories can be budgeted, since a budget for
-anything a transaction cannot carry would read Rp0 for ever — the artboard's own
-select offered Education, Travel and Gifts & donations, none of which qualify.
+*is*; and only an expense category can be budgeted, since a limit on money coming in
+measures nothing — the backend answers `BUDGET_INVALID_CATEGORY`, and the form asks
+the options call for `?type=expense` so the select never offers one. That list holds
+the shared template rows too, and posting one adopts it, so a budget can be set on a
+category the account has not filed anything under yet.
 
 **The track shows where the threshold is.** A row states "Alerts at 80% of limit" in
 words and then draws a bar that said nothing about where 80% fell — the one number
@@ -885,11 +989,13 @@ is the only content of a control needs an accessible name on the control.
 ```
 (auth)/  sign-in · register · reset-password        no app shell
 (app)/   layout = nav rail + AppHeader
-         /                    Dashboard
-         /transactions  /budgets  /wallets  /categories  /goals  /recurring
-         /insights  /shared  /reminders
-         /users  /roles  /roles/new  /roles/[roleId]  /audit
+         /dashboard
+         /transactions  /budgets  /wallets  /categories
+         /goals  /recurring  /insights  /shared  /reminders      preview — fixture data
+         /users  /roles  /roles/new  /roles/[roleId]
+         /audit  /audit/export                                   export is a route handler
          /settings  /mobile
+/        redirects to HOME_PATH (/dashboard)
 ```
 
 The artboard's `auth` screen shows sign-in, register and reset side by side — that is a
@@ -897,9 +1003,13 @@ canvas showcase, not a screen. It ships as three real routes; the card markup in
 is copied exactly. `/mobile` stays a single preview page of the three phone frames, as
 designed.
 
-Page title and subtitle come from `PAGE_META` in `lib/nav.ts`, taken verbatim from the
-artboard's `titles` map. Each page renders `<AppHeader title subtitle />` as its first
-child — the header is sticky, so it is shared markup without a parallel-route slot.
+Page title and subtitle come from `PAGE_META` in `lib/nav.ts`. A subtitle there is a
+description, never a figure: the artboard's numbers used to be copied into that map,
+which printed "184 entries this month" over an account that had none. A screen that
+can count its own rows states them from the API instead, as `/dashboard` and
+`/budgets` do. Each page renders `<AppScreen title subtitle>`, which draws the sticky
+`<AppHeader>` and the content in one box — shared markup without a parallel-route
+slot — and takes `isPreview` on a screen that is still the fixture.
 
 ---
 
