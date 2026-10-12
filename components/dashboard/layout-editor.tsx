@@ -5,7 +5,9 @@ import { Icon } from "@/components/ui/icon";
 import type { IconName } from "@/components/ui/icon-sprite";
 import { changeDashboardLayoutAction } from "@/lib/dashboard/actions";
 import {
+  CHART_LABEL,
   DASHBOARD_WIDGETS,
+  chartChoices,
   LAYOUT_FIELD,
   RESET_OP,
   WIDGET_META,
@@ -69,6 +71,7 @@ export function WidgetEditBar({
   readonly isLast: boolean;
 }) {
   const meta = WIDGET_META[placement.id];
+  const charts = chartChoices(placement.id);
 
   return (
     <form
@@ -118,6 +121,31 @@ export function WidgetEditBar({
       >
         Hide
       </button>
+
+      {charts.length > 0 ? (
+        <div className="flex w-full flex-wrap items-center gap-2">
+          <span className="text-meta text-muted">Chart</span>
+          {/* Five names outrun a half panel on a phone, so the row scrolls rather than the page. */}
+          <div
+            className="seg max-w-full overflow-x-auto"
+            role="group"
+            aria-label={`${meta.title} chart`}
+          >
+            {charts.map((kind) => (
+              <button
+                key={kind}
+                type="submit"
+                name={LAYOUT_FIELD.chart}
+                value={kind}
+                aria-pressed={placement.chart === kind}
+                className="seg-opt"
+              >
+                {CHART_LABEL[kind]}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </form>
   );
 }
@@ -169,7 +197,8 @@ export function LayoutToolbar({
       <div className="min-w-0 flex-1">
         <p className="text-row font-semibold">Arranging your dashboard</p>
         <p className="text-meta text-muted mt-px">
-          Move, resize or hide a panel. Each change is saved as you make it, on
+          Move, resize or hide a panel, or redraw a chart. Each change is saved
+          as you make it, on
           this browser.
         </p>
       </div>

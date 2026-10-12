@@ -466,8 +466,8 @@ Keep it this short. Adding one is a decision, not a detail.
 | `NotificationBell` | open/close popover, outside click, Escape |
 | `ProfileMenu` | the avatar's popover — Settings and Sign out — on the same `usePopover` hook as the bell |
 | `FilterForm` | debounced typing, instant selects, focus-preserving replace |
-| `TrendChart` | hover tooltip over the bars |
-| `CategoryDonut` | hover highlights slice + legend row |
+| `TrendChart` | hover tooltip over the periods, whichever of its five forms is drawn |
+| `CategoryChart` | hover links a slice or tile to its key row and reads it out |
 | `AppChromeProvider` | the shell's shared state — whether the transaction sheet is open, the entry it is editing, and the toast with its timed dismissal |
 | `SlideOver` | the overlay every sheet sits in — focus trap, Escape, scrim |
 | `TransactionSlideOver` | the add/edit sheet over `saveTransactionAction` — the direction segment that narrows the category select, and the inline **New** category |
@@ -546,6 +546,21 @@ cookie and returns the screen re-laid. That was chosen over drag-and-drop on pur
 buttons work with a keyboard, a screen reader, a phone and JavaScript off, and a drag
 layer would be a library and a client boundary around panels that are server-rendered.
 If dragging is ever added, it goes on top of these buttons, not instead of them.
+
+**The form of a chart is part of the arrangement.** The two chart panels each carry
+a `chart` in their placement — a fourth field in the same cookie, so a cookie written
+before it existed still reads whole — and the edit bar picks it with the same kind of
+submit button. `TREND_CHARTS` is bars, line, area, mirrored and net; `CATEGORY_CHARTS`
+is donut, ranked, stacked and treemap. Each list holds only forms that are honest for
+what the panel measures, which is why three obvious ones are absent: income stacked on
+expense sums two figures nobody adds, a pie is the donut without room for its total,
+and a radar implies an order the categories do not have. The net form has a scale of
+its own (`netHeight`), since against the income/expense peak a month that broke nearly
+even would be a bar too short to see. Every form's geometry is still computed on the
+server — `toDonut` hands each segment its arc, its two widths and its treemap tile
+(`squarify` in `lib/treemap.ts`), and `toBars` the shares a line plots — so adding a
+form is a name in one of those lists, a label in `CHART_LABEL`, and a branch in
+`TrendChart` or `CategoryChart`.
 
 To add a panel: a name in `DASHBOARD_WIDGETS`, a row in `WIDGET_META`, a renderer in
 `WIDGET_BY_ID`. `parseLayout` appends a panel the stored cookie has never heard of,

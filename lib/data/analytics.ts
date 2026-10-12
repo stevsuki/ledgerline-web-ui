@@ -38,6 +38,7 @@ import {
   formatRupiah,
   formatSignedPercent,
 } from "@/lib/format";
+import { squarify, type TreemapTile } from "@/lib/treemap";
 import type { ApiResult } from "@/types/api";
 import type {
   CategoryKey,
@@ -63,6 +64,12 @@ export type TrendBar = {
   readonly label: string;
   readonly incomeHeight: string;
   readonly expenseHeight: string;
+  /** The same two figures as shares of the window's peak, for a line to plot. */
+  readonly incomeShare: number;
+  readonly expenseShare: number;
+  /** The net against the window's largest net, and which side of zero it fell. */
+  readonly netHeight: string;
+  readonly isLoss: boolean;
   readonly incomeLabel: string;
   readonly expenseLabel: string;
   readonly netLabel: string;
@@ -107,7 +114,23 @@ export type DonutSegment = {
   readonly path: string;
   readonly percent: string;
   readonly value: string;
+  /** Its share of the spend, 0–1 — what the other three forms are drawn from. */
+  readonly share: number;
+  /** That share as a width, for one track divided between the categories. */
+  readonly width: string;
+  /** The same spend against the largest category's, for a ranked bar. */
+  readonly barWidth: string;
+  /** Where its tile sits in the treemap. */
+  readonly tile: TreemapTile;
 };
+
+/** The treemap is laid out for a box this many times wider than it is tall. */
+const TREEMAP_ASPECT = 2.5;
+const WIDTH_PRECISION = 3;
+
+function widthOf(share: number): string {
+  return `${(share * FULL_PERCENT).toFixed(WIDTH_PRECISION)}%`;
+}
 
 export type DonutData = {
   readonly segments: readonly DonutSegment[];
@@ -515,9 +538,16 @@ function toDonut(
   // the share of a full turn its own share of the spend is.
   let angle = -QUARTER_TURN;
 
+  const largest = Math.max(0, ...categories.map((entry) => entry.spent));
+  const tiles = squarify(
+    categories.map((entry) => entry.spent),
+    TREEMAP_ASPECT,
+  );
+
   const segments = categories.map((entry, index) => {
+    const share = shareOf(entry.spent, total);
     const start = angle;
-    const end = start + shareOf(entry.spent, total) * FULL_TURN;
+    const end = start + share * FULL_TURN;
     angle = end;
 
     return {
@@ -525,8 +555,12 @@ function toDonut(
       label: entry.name,
       step: stepOf(entry.color, index),
       path: arcPath(start, end - SLICE_GAP),
-      percent: formatPercent(shareOf(entry.spent, total)),
+      percent: formatPercent(share),
       value: formatRupiah(entry.spent),
+      share,
+      width: widthOf(share),
+      barWidth: widthOf(shareOf(entry.spent, largest)),
+      tile: tiles[index] ?? NO_TILE,
     };
   });
 
@@ -540,6 +574,8 @@ function toDonut(
     caption: `${monthName} · ${formatRupiah(total)}`,
   };
 }
+
+const NO_TILE: TreemapTile = { left: 0, top: 0, width: 0, height: 0 };
 
 function pluralCategories(count: number): string {
   return count === 1 ? "1 category" : `${count} categories`;
@@ -565,18 +601,30 @@ function toBars(
     ...points.map((point) => Math.max(point.moneyIn, -point.moneyOut)),
   );
 
-  const height = (value: number): string =>
-    `${(shareOf(value, peak) * FULL_PERCENT).toFixed(HEIGHT_PRECISION)}%`;
+  // The net has a scale of its own: it is the difference of the two, so against
+  // their peak a month that broke nearly even would be a bar too short to see.
+  const netPeak = Math.max(
+    0,
+    ...points.map((point) => Math.abs(point.moneyIn + point.moneyOut)),
+  );
+
+  const height = (value: number, against: number): string =>
+    `${(shareOf(value, against) * FULL_PERCENT).toFixed(HEIGHT_PRECISION)}%`;
 
   return points.map((point, index) => {
     const spent = -point.moneyOut;
+    const net = point.moneyIn - spent;
     return {
       label: mode === "weekly" ? `W${index + 1}` : shortMonth(point.start),
-      incomeHeight: height(point.moneyIn),
-      expenseHeight: height(spent),
+      incomeHeight: height(point.moneyIn, peak),
+      expenseHeight: height(spent, peak),
+      incomeShare: shareOf(point.moneyIn, peak),
+      expenseShare: shareOf(spent, peak),
+      netHeight: height(Math.abs(net), netPeak),
+      isLoss: net < 0,
       incomeLabel: formatRupiah(point.moneyIn),
       expenseLabel: formatRupiah(spent),
-      netLabel: formatRupiah(point.moneyIn - spent),
+      netLabel: formatRupiah(net),
     };
   });
 }

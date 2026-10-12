@@ -24,10 +24,56 @@ export type WidgetId = (typeof DASHBOARD_WIDGETS)[number];
 
 export type WidgetWidth = "half" | "full";
 
+/**
+ * The forms a chart panel can take. Each list holds only forms that are honest
+ * for what its panel measures: two series over time on one, the shares of a
+ * whole on the other. The first of each is what an untouched dashboard draws.
+ */
+export const TREND_CHARTS = ["bars", "line", "area", "mirror", "net"] as const;
+
+export const CATEGORY_CHARTS = ["donut", "ranked", "strip", "treemap"] as const;
+
+export type TrendChartKind = (typeof TREND_CHARTS)[number];
+export type CategoryChartKind = (typeof CATEGORY_CHARTS)[number];
+export type ChartKind = TrendChartKind | CategoryChartKind;
+
+export const CHART_LABEL: Readonly<Record<ChartKind, string>> = {
+  bars: "Bars",
+  line: "Line",
+  area: "Area",
+  mirror: "Mirrored",
+  net: "Net",
+  donut: "Donut",
+  ranked: "Ranked",
+  strip: "Stacked",
+  treemap: "Treemap",
+};
+
+const CHARTS_BY_WIDGET: Readonly<Record<WidgetId, readonly ChartKind[]>> = {
+  stats: [],
+  trend: TREND_CHARTS,
+  categories: CATEGORY_CHARTS,
+  recent: [],
+  budgets: [],
+};
+
+/** The forms a panel can be drawn in; empty for a panel that is not a chart. */
+export function chartChoices(id: WidgetId): readonly ChartKind[] {
+  return CHARTS_BY_WIDGET[id];
+}
+
+/** A stored form if this panel can take it, otherwise the panel's first. */
+function readChart(id: WidgetId, value: string | undefined): ChartKind | null {
+  const choices = CHARTS_BY_WIDGET[id];
+  return choices.find((kind) => kind === value) ?? choices[0] ?? null;
+}
+
 export type WidgetPlacement = {
   readonly id: WidgetId;
   readonly width: WidgetWidth;
   readonly hidden: boolean;
+  /** The form a chart panel is drawn in; `null` on a panel with no choice. */
+  readonly chart: ChartKind | null;
 };
 
 /** Visible panels first, in order; hidden ones after them. */
@@ -57,7 +103,12 @@ export const WIDGET_META: Readonly<Record<WidgetId, WidgetMeta>> = {
 };
 
 export const DEFAULT_DASHBOARD_LAYOUT: DashboardLayout = DASHBOARD_WIDGETS.map(
-  (id) => ({ id, width: WIDGET_META[id].defaultWidth, hidden: false }),
+  (id) => ({
+    id,
+    width: WIDGET_META[id].defaultWidth,
+    hidden: false,
+    chart: readChart(id, undefined),
+  }),
 );
 
 /** Everything a reader can do to the layout; the edit bar posts one of these. */
@@ -76,7 +127,11 @@ export type LayoutOp = (typeof LAYOUT_OPS)[number];
 export const RESET_OP = "reset";
 
 /** The names the edit bar's forms post under. */
-export const LAYOUT_FIELD = { op: "op", widget: "widget" } as const;
+export const LAYOUT_FIELD = {
+  op: "op",
+  widget: "widget",
+  chart: "chart",
+} as const;
 
 export function parseWidgetId(value: string): WidgetId | undefined {
   return DASHBOARD_WIDGETS.find((id) => id === value);
@@ -97,7 +152,11 @@ const WIDTH_CODE: Readonly<Record<WidgetWidth, string>> = {
 const HIDDEN_CODE = "x";
 const SHOWN_CODE = "v";
 
-/** `stats.f.v_trend.h.v_recent.h.x` — only characters a cookie takes bare. */
+/**
+ * `stats.f.v_trend.h.v.line_recent.h.x` — only characters a cookie takes bare.
+ * The chart form is a fourth field, written only by a panel that has one, so a
+ * cookie from before the field existed still reads whole.
+ */
 export function serializeLayout(layout: DashboardLayout): string {
   return layout
     .map((placement) =>
@@ -105,13 +164,15 @@ export function serializeLayout(layout: DashboardLayout): string {
         placement.id,
         WIDTH_CODE[placement.width],
         placement.hidden ? HIDDEN_CODE : SHOWN_CODE,
+        ...(placement.chart === null ? [] : [placement.chart]),
       ].join(FIELD_SEPARATOR),
     )
     .join(ENTRY_SEPARATOR);
 }
 
 function readPlacement(entry: string): WidgetPlacement | undefined {
-  const [rawId = "", widthCode, visibility] = entry.split(FIELD_SEPARATOR);
+  const [rawId = "", widthCode, visibility, chart] =
+    entry.split(FIELD_SEPARATOR);
   const id = parseWidgetId(rawId);
   if (id === undefined) {
     return undefined;
@@ -122,6 +183,7 @@ function readPlacement(entry: string): WidgetPlacement | undefined {
     id,
     width: meta.resizable ? asked : meta.defaultWidth,
     hidden: visibility === HIDDEN_CODE,
+    chart: readChart(id, chart),
   };
 }
 
@@ -215,6 +277,33 @@ export function applyLayoutOp(
     return layout;
   }
   return settle(CHANGE_BY_OP[op](layout, id, index));
+}
+
+/** The layout with one panel redrawn. A form the panel cannot take changes nothing. */
+export function applyChart(
+  layout: DashboardLayout,
+  id: WidgetId,
+  value: string,
+): DashboardLayout {
+  const chart = chartChoices(id).find((kind) => kind === value);
+  return chart === undefined ? layout : patch(layout, id, { chart });
+}
+
+function pickChart<Kind extends ChartKind>(
+  layout: DashboardLayout,
+  id: WidgetId,
+  kinds: readonly [Kind, ...Kind[]],
+): Kind {
+  const stored = layout.find((placement) => placement.id === id)?.chart;
+  return kinds.find((kind) => kind === stored) ?? kinds[0];
+}
+
+export function trendChartOf(layout: DashboardLayout): TrendChartKind {
+  return pickChart(layout, "trend", TREND_CHARTS);
+}
+
+export function categoryChartOf(layout: DashboardLayout): CategoryChartKind {
+  return pickChart(layout, "categories", CATEGORY_CHARTS);
 }
 
 /* ── rows ──────────────────────────────────────────────────────────────── */

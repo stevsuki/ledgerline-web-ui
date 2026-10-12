@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { CategoryDonut } from "@/components/dashboard/category-donut";
+import { CategoryChart } from "@/components/dashboard/category-chart";
 import {
   EmptyDashboard,
   HiddenWidgets,
@@ -30,12 +30,16 @@ import {
 import { getBudgetsPreview, type BudgetRow } from "@/lib/data/budgets";
 import {
   DASHBOARD_LAYOUT_COOKIE,
+  categoryChartOf,
   hiddenWidgets,
   parseLayout,
   toRows,
+  trendChartOf,
   visibleWidgets,
+  type CategoryChartKind,
   type DashboardLayout,
   type LayoutRow,
+  type TrendChartKind,
   type WidgetId,
 } from "@/lib/dashboard-layout";
 import {
@@ -80,6 +84,9 @@ type WidgetData = {
   readonly budgets: readonly BudgetRow[];
   readonly mode: TrendMode;
   readonly editing: boolean;
+  /** The form each chart panel is drawn in, as its reader left it. */
+  readonly trendChart: TrendChartKind;
+  readonly categoryChart: CategoryChartKind;
 };
 
 const WIDGET_BY_ID: Readonly<
@@ -87,7 +94,9 @@ const WIDGET_BY_ID: Readonly<
 > = {
   stats: ({ screen }) => <MonthStats screen={screen} />,
   trend: (data) => <TrendWidget {...data} />,
-  categories: ({ screen }) => <CategoriesWidget screen={screen} />,
+  categories: ({ screen, categoryChart }) => (
+    <CategoriesWidget screen={screen} kind={categoryChart} />
+  ),
   recent: ({ recent }) => <RecentWidget recent={recent} />,
   budgets: ({ budgets }) => <BudgetsWidget budgets={budgets} />,
 };
@@ -128,7 +137,15 @@ export default async function DashboardPage(
   // Read last, because what is left to set up is partly what was just read.
   const setup = await getSetupChecklist(recent);
 
-  const data: WidgetData = { screen, recent, budgets, mode, editing };
+  const data: WidgetData = {
+    screen,
+    recent,
+    budgets,
+    mode,
+    editing,
+    trendChart: trendChartOf(layout),
+    categoryChart: categoryChartOf(layout),
+  };
   const editHref = dashboardHref(mode, true);
 
   return (
@@ -191,7 +208,7 @@ function WidgetRow({
   return row.widgets.length > 1 ? <SplitGrid>{slots}</SplitGrid> : slots;
 }
 
-function TrendWidget({ screen, mode, editing }: WidgetData) {
+function TrendWidget({ screen, mode, editing, trendChart }: WidgetData) {
   return (
     <Panel className="panel-pad">
       <div className="border-divider flex flex-wrap items-start justify-between gap-3 border-b pb-3.5">
@@ -205,7 +222,7 @@ function TrendWidget({ screen, mode, editing }: WidgetData) {
             <Link
               key={option}
               href={dashboardHref(option, editing)}
-              aria-current={option === mode ? "page" : undefined}
+              aria-current={option === mode ? "true" : undefined}
               className="seg-opt capitalize"
             >
               {option}
@@ -214,19 +231,25 @@ function TrendWidget({ screen, mode, editing }: WidgetData) {
         </div>
       </div>
 
-      <TrendPanelBody screen={screen} />
+      <TrendPanelBody screen={screen} kind={trendChart} />
     </Panel>
   );
 }
 
-function CategoriesWidget({ screen }: { readonly screen: DashboardScreen }) {
+function CategoriesWidget({
+  screen,
+  kind,
+}: {
+  readonly screen: DashboardScreen;
+  readonly kind: CategoryChartKind;
+}) {
   return (
     <Panel className="panel-pad">
       <div className="border-divider border-b pb-3.5">
         <h2 className="panel-title">Spending by category</h2>
         <p className="text-meta text-muted mt-0.5">{screen.donutCaption}</p>
       </div>
-      <CategoryPanelBody screen={screen} />
+      <CategoryPanelBody screen={screen} kind={kind} />
     </Panel>
   );
 }
@@ -426,8 +449,18 @@ function MonthStats({ screen }: { readonly screen: DashboardScreen }) {
   );
 }
 
+/** What the two colours stand for; the net form draws one figure, signed. */
+const SERIES_LEGEND = { up: "Income", down: "Expense" } as const;
+const NET_LEGEND = { up: "Kept", down: "Overspent" } as const;
+
 /** Bars with nothing in them are a flat axis, which says less than a sentence. */
-function TrendPanelBody({ screen }: { readonly screen: DashboardScreen }) {
+function TrendPanelBody({
+  screen,
+  kind,
+}: {
+  readonly screen: DashboardScreen;
+  readonly kind: TrendChartKind;
+}) {
   if (screen.trendError) {
     return <PanelNotice tone="expense">{screen.trendError}</PanelNotice>;
   }
@@ -446,19 +479,27 @@ function TrendPanelBody({ screen }: { readonly screen: DashboardScreen }) {
     );
   }
 
+  const legend = kind === "net" ? NET_LEGEND : SERIES_LEGEND;
+
   return (
     <>
       <LegendList className="mt-3.5">
-        <LegendItem label="Income" fillClass="bg-income" />
-        <LegendItem label="Expense" fillClass="bg-expense" />
+        <LegendItem label={legend.up} fillClass="bg-income" />
+        <LegendItem label={legend.down} fillClass="bg-expense" />
       </LegendList>
-      <TrendChart bars={screen.bars} />
+      <TrendChart bars={screen.bars} kind={kind} />
     </>
   );
 }
 
 /** A ring with no spend in it is a circle of nothing, so it says that instead. */
-function CategoryPanelBody({ screen }: { readonly screen: DashboardScreen }) {
+function CategoryPanelBody({
+  screen,
+  kind,
+}: {
+  readonly screen: DashboardScreen;
+  readonly kind: CategoryChartKind;
+}) {
   if (screen.monthError) {
     return <PanelNotice tone="expense">{screen.monthError}</PanelNotice>;
   }
@@ -476,5 +517,5 @@ function CategoryPanelBody({ screen }: { readonly screen: DashboardScreen }) {
       </PanelNotice>
     );
   }
-  return <CategoryDonut data={screen.donut} />;
+  return <CategoryChart data={screen.donut} kind={kind} />;
 }

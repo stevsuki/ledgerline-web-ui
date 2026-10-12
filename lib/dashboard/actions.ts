@@ -6,6 +6,7 @@ import {
   DASHBOARD_LAYOUT_COOKIE,
   LAYOUT_FIELD,
   RESET_OP,
+  applyChart,
   applyLayoutOp,
   parseLayout,
   parseLayoutOp,
@@ -40,14 +41,23 @@ export async function changeDashboardLayoutAction(
     return;
   }
 
-  const op = parseLayoutOp(asked);
   const widget = parseWidgetId(text(formData, LAYOUT_FIELD.widget));
-  if (op === undefined || widget === undefined) {
+  if (widget === undefined) {
+    return;
+  }
+
+  // A button posts one or the other: a move, or the form to draw the chart in.
+  const op = parseLayoutOp(asked);
+  const chart = text(formData, LAYOUT_FIELD.chart);
+  if (op === undefined && chart === "") {
     return;
   }
 
   const current = parseLayout(store.get(DASHBOARD_LAYOUT_COOKIE)?.value);
-  const next = applyLayoutOp(current, op, widget);
+  const next =
+    op === undefined
+      ? applyChart(current, widget, chart)
+      : applyLayoutOp(current, op, widget);
 
   // Same-site and readable, like the theme: it is a display preference.
   store.set(DASHBOARD_LAYOUT_COOKIE, serializeLayout(next), {
