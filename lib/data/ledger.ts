@@ -364,12 +364,6 @@ export function monthlySpendByCategory(): readonly MonthlyCategorySpend[] {
   ];
 }
 
-/** The six-month average income, which the recurring screen quotes against. */
-export function averageMonthlyIncome(): number {
-  const series = monthlySeries();
-  return series.reduce((total, month) => total + month.income, 0) / series.length;
-}
-
 /**
  * How many months in a row this category has risen, counting back from now.
  * A card claiming something "climbed for the third month" is counting this.

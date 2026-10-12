@@ -96,6 +96,16 @@ const MESSAGE_BY_CODE: Partial<Readonly<Record<ApiErrorCode, string>>> = {
   TRANSACTION_CATEGORY_MISMATCH:
     "Money in needs an income category, and money out a spending one.",
 
+  /* the recurring editor */
+  RECURRING_NOT_FOUND: "That recurring item no longer exists. Reload the page.",
+  RECURRING_INVALID_DATA: CHECK_FIELDS,
+  RECURRING_INVALID_CATEGORY: "Pick one of your own spending categories.",
+  RECURRING_INVALID_WALLET: "Pick one of your own wallets.",
+  RECURRING_INVALID_AMOUNT: "Enter the amount as a number above zero.",
+  RECURRING_INVALID_FREQUENCY: "Pick one of the frequencies offered.",
+  RECURRING_INVALID_DATE: "Pick the date this is next due.",
+  RECURRING_PAUSED: "Resume this item before recording a payment for it.",
+
   /* generic */
   VALIDATION_ERROR: CHECK_FIELDS,
   INVALID_INPUT: CHECK_FIELDS,

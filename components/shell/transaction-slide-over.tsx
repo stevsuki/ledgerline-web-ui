@@ -11,6 +11,8 @@ import { IDLE_AUTH_STATE, type AuthFormState } from "@/lib/auth/form-state";
 import { CATEGORY_NAME_MAX_LENGTH } from "@/lib/category-fields";
 import { createCategoryInlineAction } from "@/lib/categories/actions";
 import { formatDayHeading } from "@/lib/dates";
+import { maskFigure } from "@/lib/format";
+import { applyMask } from "@/lib/input-mask";
 import {
   deleteTransactionAction,
   saveTransactionAction,
@@ -358,7 +360,13 @@ function TransactionFields({
             aria-label="Amount"
             inputMode="numeric"
             value={amount}
-            onChange={(event) => setAmount(event.target.value)}
+            onChange={(event) =>
+              setAmount(
+                applyMask(event.target, (text) =>
+                  maskFigure(text, draft.currency),
+                ),
+              )
+            }
             className="min-w-0 flex-1 bg-transparent font-[family-name:var(--font-heading)] text-[30px] font-semibold tracking-[-0.03em] tabular-nums outline-none"
           />
         </div>

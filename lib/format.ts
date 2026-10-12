@@ -196,6 +196,44 @@ export function formatTimestamp(iso: string): string {
   return TIMESTAMP.format(parsed).replace(",", "").replaceAll("/", "-");
 }
 
+/* ── shaping a figure while it is typed ────────────────────────────────── */
+
+const NON_DIGITS = /\D/g;
+const LEADING_ZEROS = /^0+(?=\d)/;
+const THOUSANDS = /\B(?=(\d{3})+(?!\d))/g;
+const TYPED_MINUS = /^\s*[-−]/;
+const CENT_DIGITS = 2;
+
+/** Digits only, for a field that holds a count, a day or a code. */
+export function maskDigits(text: string): string {
+  return text.replace(NON_DIGITS, "");
+}
+
+/**
+ * A money figure as it is typed: letters dropped, thousands grouped with dots,
+ * and — on a currency quoted with cents — one comma and two decimals kept. It
+ * prints exactly what `parseFigure` reads.
+ */
+export function maskFigure(
+  text: string,
+  currency: CurrencyCode,
+  allowNegative = false,
+): string {
+  const sign = allowNegative && TYPED_MINUS.test(text) ? "-" : "";
+  const hasCents = CURRENCY_HAS_CENTS[currency];
+  const comma = hasCents ? text.indexOf(",") : -1;
+  const whole = comma === -1 ? text : text.slice(0, comma);
+
+  const units = maskDigits(whole).replace(LEADING_ZEROS, "");
+  const grouped = units.replace(THOUSANDS, ".");
+  if (comma === -1) {
+    return `${sign}${grouped}`;
+  }
+
+  const cents = maskDigits(text.slice(comma + 1)).slice(0, CENT_DIGITS);
+  return `${sign}${grouped || "0"},${cents}`;
+}
+
 /* ── reading a typed figure back ───────────────────────────────────────── */
 
 /** Anything that is not a digit once the separators have been taken out. */

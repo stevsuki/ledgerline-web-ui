@@ -173,6 +173,16 @@ export function formatDayMonth(iso: string): string {
   return date ? dayAndMonth(date) : iso;
 }
 
+/** Whole days from one ISO day to another; negative when `to` is the earlier. */
+export function daysBetween(fromIso: string, toIso: string): number {
+  const from = parseIsoDate(fromIso);
+  const to = parseIsoDate(toIso);
+  if (!from || !to) {
+    return 0;
+  }
+  return Math.round((to.getTime() - from.getTime()) / MS_PER_DAY);
+}
+
 /**
  * "today" / "yesterday" / "6 days ago" / "on 18 Jul". Nothing in the app syncs,
  * so how stale a figure is has to be stated rather than implied.

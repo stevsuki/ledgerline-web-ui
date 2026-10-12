@@ -38,7 +38,6 @@ export function pathForMenu(code: string): string | undefined {
  */
 const PREVIEW_CODES: ReadonlySet<string> = new Set([
   "goals",
-  "recurring",
   "insights",
   "shared",
   "reminders",

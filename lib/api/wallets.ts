@@ -212,6 +212,7 @@ export async function fetchWalletOverview(
 export type WalletOption = {
   readonly id: string;
   readonly name: string;
+  readonly currency: CurrencyCode;
 };
 
 function parseWalletOptions(raw: unknown): readonly WalletOption[] {
@@ -227,7 +228,11 @@ function parseWalletOptions(raw: unknown): readonly WalletOption[] {
     const id = readString(entry, "id");
     const name = readString(entry, "name");
     if (id && name) {
-      options.push({ id, name });
+      options.push({
+        id,
+        name,
+        currency: readEnum(entry, "currency", CURRENCY_ORDER, "IDR"),
+      });
     }
   }
   return options;

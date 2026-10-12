@@ -251,18 +251,6 @@ export type Goal = {
   readonly eta: string;
 };
 
-export type RecurringItem = {
-  readonly id: string;
-  readonly name: string;
-  readonly wallet: string;
-  readonly icon: IconKey;
-  readonly frequency: string;
-  readonly due: string;
-  readonly amount: string;
-  readonly isDueSoon: boolean;
-  readonly isPaused: boolean;
-};
-
 export type Insight = {
   readonly id: string;
   readonly kicker: string;

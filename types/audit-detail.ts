@@ -31,6 +31,7 @@ export type AuditRecordType =
   | "goal"
   | "role"
   | "budget"
+  | "recurring"
   | "institution";
 
 export type AuditDataJob = "export" | "sync";

@@ -33,6 +33,7 @@ import {
 import { firstDaysNames, firstDaysTotal } from "@/lib/data/recurring";
 import type { RecentTransactions } from "@/lib/data/transactions";
 import {
+  formatBalance,
   formatPercent,
   formatPrecisePercent,
   formatRupiah,
@@ -435,6 +436,7 @@ function balanceStat(
 
 function incomeStat(overview: TransactionOverviewRecord, monthName: string): SummaryStat {
   const { current, previous } = overview;
+  const ratio = changeAgainst(current.moneyIn, previous.moneyIn);
 
   return {
     id: "income",
@@ -444,8 +446,8 @@ function incomeStat(overview: TransactionOverviewRecord, monthName: string): Sum
     iconTone: "income",
     valueTone: "income",
     ...deltaOf(
-      changeAgainst(current.moneyIn, previous.moneyIn),
-      "income",
+      ratio,
+      ratio !== null && ratio < 0 ? "expense" : "income",
       pluralEntries(current.incomeEntries),
       NOTHING_LAST_MONTH,
     ),
@@ -475,20 +477,34 @@ function expenseStat(overview: TransactionOverviewRecord, monthName: string): Su
   };
 }
 
+/** Not a month-on-month change: the share of what came in that stayed in. */
+function keptDelta(net: number, moneyIn: number): Delta {
+  if (moneyIn <= 0) {
+    return { delta: NO_DELTA, deltaTone: "muted", deltaNote: "no income this month" };
+  }
+  // A month that spent more than it earned kept nothing; a negative share of
+  // income is a figure nobody can act on, so the line says what happened.
+  if (net < 0) {
+    return { delta: NO_DELTA, deltaTone: "muted", deltaNote: "spent more than came in" };
+  }
+  return {
+    delta: formatPrecisePercent(shareOf(net, moneyIn)),
+    deltaTone: "income",
+    deltaNote: "of income kept",
+  };
+}
+
 function savedStat(overview: TransactionOverviewRecord): SummaryStat {
   const { net, moneyIn } = overview.current;
 
   return {
     id: "saved",
     label: "Net saved",
-    value: formatRupiah(net),
+    value: formatBalance(net, overview.baseCurrency),
     icon: "flag",
     iconTone: "accent",
-    valueTone: "text",
-    // Not a month-on-month change: the share of what came in that stayed in.
-    delta: moneyIn <= 0 ? NO_DELTA : formatPrecisePercent(shareOf(net, moneyIn)),
-    deltaTone: moneyIn <= 0 ? "muted" : "income",
-    deltaNote: moneyIn <= 0 ? "no income this month" : "of income kept",
+    valueTone: net < 0 ? "expense" : "text",
+    ...keptDelta(net, moneyIn),
   };
 }
 

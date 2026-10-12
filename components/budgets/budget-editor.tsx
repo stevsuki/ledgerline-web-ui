@@ -25,7 +25,8 @@ import type {
   BudgetDraft,
   BudgetRow,
 } from "@/lib/data/budgets";
-import { formatRupiah } from "@/lib/format";
+import { formatRupiah, maskFigure } from "@/lib/format";
+import { applyMask } from "@/lib/input-mask";
 import { cx } from "@/lib/tone";
 
 /**
@@ -411,6 +412,10 @@ function CategoryField({
   );
 }
 
+function maskRupiah(text: string): string {
+  return maskFigure(text, "IDR");
+}
+
 /** The `Rp` prefix pattern the artboard's own limit field already used. */
 function LimitField({
   formId,
@@ -440,7 +445,7 @@ function LimitField({
           id={id}
           name={BUDGET_FIELD.limit}
           value={value}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(event) => onChange(applyMask(event.target, maskRupiah))}
           inputMode="numeric"
           autoComplete="off"
           placeholder="1.500.000"

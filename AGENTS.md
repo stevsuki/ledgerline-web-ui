@@ -215,8 +215,10 @@ fill that in, and every new screen must hold them:
   360px. `<AppHeader>` is the only place that decides this.
 - **A fixed-column table folds; it does not scroll sideways.** Transactions and recurring
   drop to `icon · name · amount` under `md` and fold the other columns into the meta line
-  under the name. Reserve `<TableScroll>` for the access tables, where every column is a
-  distinct fact and there is nowhere to fold it to.
+  under the name. Recurring folds on its panel's width (`@container` + `@2xl:`), not the
+  viewport's: the list shares a row with its form, so at a 1000px viewport the panel is
+  already too narrow for five columns. Reserve `<TableScroll>` for the access tables,
+  where every column is a distinct fact and there is nowhere to fold it to.
 - **Every `minmax()` floor is `min(100%, Npx)`.** A bare `minmax(316px, 1fr)` cannot go
   under 316px, so on a 320px phone it pushes the whole page sideways. `<CardGrid>`,
   `<SplitGrid>`, `<FieldGrid>` and `<StatGrid>` all do this for you.
@@ -475,6 +477,7 @@ Keep it this short. Adding one is a decision, not a detail.
 | `WalletEditorProvider` | the add/edit slide-over over `saveWalletAction`, plus the kind select that reveals a card’s fields |
 | `CategoryEditorProvider` | the add/edit sheet over `saveCategoryAction`, plus the type select the icon follows |
 | `BudgetEditorProvider` / `NewBudgetForm` | the shared budget form over `saveBudgetAction`, and the sheet every row's pencil opens |
+| `RecurringEditorProvider` / `NewRecurringForm` | the shared recurring form over `saveRecurringAction`, the edit sheet, and the sheet that confirms a payment |
 | `IconChoiceField` | the catalogue search — a lazy fetch of the index, the query, and the pick it adds to the radios |
 | `ThresholdField` | the Notify-me-at segments, the Custom field they reveal, and the line pricing the choice |
 | `UserEditorProvider` | same, plus `useActionState` over `saveUserAction` |
@@ -495,8 +498,9 @@ JSON blob, so the server reads the permission rows straight off the `FormData`.
 
 Every live domain keeps its mutations the same way, one `"use server"` file each:
 `lib/wallets/actions.ts`, `lib/categories/actions.ts`, `lib/budgets/actions.ts`,
-`lib/transactions/actions.ts`, and `lib/dashboard/actions.ts` for the layout cookie. A
-new domain adds a sixth file rather than a function to one of these.
+`lib/transactions/actions.ts`, `lib/recurring/actions.ts`, and
+`lib/dashboard/actions.ts` for the layout cookie. A new domain adds a file of its own
+rather than a function to one of these.
 
 ### URL contract
 
@@ -576,9 +580,9 @@ preferences endpoint on the backend; the day there is, only the two ends of
 `lib/data/<domain>.ts` exports `async` query functions (`getTransactions(filters)`,
 `getUsers(filters)`, …) that pages `await`. That async boundary is what made the next
 step cheap: **users, roles, the audit log, the sidebar menus, wallets, categories,
-budgets, transactions and the dashboard are live** —
+budgets, transactions, recurring and the dashboard are live** —
 they call `ledgerline-backend` through `lib/api/`, and no component changed when they
-stopped being fixtures. **Goals, recurring, insights, shared, reminders and settings**
+stopped being fixtures. **Goals, insights, shared, reminders and settings**
 are still typed fixtures behind the same signature, with no table and no route behind
 them yet — and each of those screens says so (`isPreview`, below).
 
@@ -682,8 +686,8 @@ Gaps the screens work around today, each marked where it bites:
   first still can: a new entry posts `IDR` whatever wallet is picked, so a USD wallet
   is refused rather than filed where no balance would ever count it. The fix is for
   the sheet to offer base-currency wallets only, or to post the chosen wallet's own
-  currency; `GET /wallets/options` answers `{id, name}` and cannot say which is which,
-  so that narrowing needs the field added there.
+  currency. `GET /wallets/options` answers `{id, name, currency}` now — the recurring
+  form already reads it — so the sheet has what it needs and only has to use it.
 - Spending past what a wallet holds is allowed on purpose. A stated balance is a claim
   about a date, so refusing a real entry against a possibly stale figure would only
   punish recording late — it reads as a negative balance and an **Overdrawn** line
@@ -834,7 +838,8 @@ totals were deleted and the month was written out. What reads it now is short:
 - `/insights` — `getInsights`, `getCategoryComparison` and `getCategoryRanking`, the
   first half of `lib/data/analytics.ts`. The second half of that file is the live
   dashboard, and all it takes from the ledger is `shareOf`.
-- `lib/data/recurring.ts`, for `averageMonthlyIncome`.
+- `lib/data/recurring.ts`, which is now only the schedule the cash-flow insight
+  quotes. The live screen reads `lib/data/recurring-list.ts`.
 - `transactionsSubtitle()` — a leak onto a live screen, listed with the gaps above.
 
 Inside the fixture the old rule still holds: nothing downstream of `ledger.ts` types a
@@ -846,11 +851,39 @@ Weekdays are derived from a row's ISO date by `formatDayHeading`, on both paths 
 every one the artboard printed was a day out.
 
 **A screen still on the fixture says so.** `PREVIEW_CODES` in `lib/access/menus.ts`
-names them — goals, recurring, insights, shared, reminders — which marks the rail
+names them — goals, insights, shared, reminders — which marks the rail
 item, and each of those pages passes `<AppScreen isPreview>` for the banner (`/mobile`
 does too). A new account must not read someone else's goals and bills as its own. A
 code leaves that list, and the page drops the prop, the day its screen is served from
 the API.
+
+### A recurring item is a schedule; its payment is confirmed by hand
+
+`recurrings` (migration 000040) holds a name, an `amount`, a `frequency`
+(`weekly` | `monthly` | `quarterly` | `annual`), a `next_due_date`, `is_paused`, and
+the wallet and expense category a payment will be filed against. The currency is not
+posted: it is the wallet's, taken when the item is saved. The routes are
+`GET|POST /recurring`, `GET|PATCH|DELETE /recurring/{id}`, `GET /recurring/overview`
+and `POST /recurring/{id}/confirm`.
+
+**Nothing is recorded on its own.** There is no scheduler. A due item stays due until
+somebody presses the tick on its row; the sheet it opens offers the amount, the day it
+was paid and a note, and `confirm` then does two things in one database transaction —
+it creates the expense through the transaction service, so every rule a hand-typed
+entry meets is met here too, and it moves `next_due_date` on by one step. The step is
+taken from the scheduled date, not from the day it was paid, and `anchor_day` keeps a
+31st from settling on the 28th after February. An item two cycles behind is confirmed
+twice. A paused item is refused with `RECURRING_PAUSED`.
+
+`getRecurringScreen()` awaits the list and the overview together, for the reason
+budgets does. The overview is base currency only and says how many active items it
+left out; **Monthly commitment** spreads each item over a month (a weekly one is
+× 52 ÷ 12). It takes `?date=` and this client sends `todayInJakarta()`, so "due in 7
+days" is measured against the reader's day rather than the server's. The list does not
+page — `paginate()` slices it on the server, as it did the fixture.
+
+Left out on purpose: the artboard's "Remind me 3 days before" toggle. Nothing sends a
+reminder yet, and a stored flag with no consequence is what `rollover` used to be.
 
 ### A budget is a limit somebody chose, and nothing else
 
@@ -1005,8 +1038,8 @@ is the only content of a control needs an accessible name on the control.
 (auth)/  sign-in · register · reset-password        no app shell
 (app)/   layout = nav rail + AppHeader
          /dashboard
-         /transactions  /budgets  /wallets  /categories
-         /goals  /recurring  /insights  /shared  /reminders      preview — fixture data
+         /transactions  /budgets  /wallets  /categories  /recurring
+         /goals  /insights  /shared  /reminders                  preview — fixture data
          /users  /roles  /roles/new  /roles/[roleId]
          /audit  /audit/export                                   export is a route handler
          /settings  /mobile

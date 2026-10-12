@@ -7,7 +7,14 @@ import {
   CUSTOM_THRESHOLD,
   THRESHOLD_PRESETS,
 } from "@/lib/budget-fields";
-import { formatPercent, formatRupiah, parseFigure, parsePercent } from "@/lib/format";
+import {
+  formatPercent,
+  formatRupiah,
+  maskDigits,
+  parseFigure,
+  parsePercent,
+} from "@/lib/format";
+import { applyMask } from "@/lib/input-mask";
 import { cx } from "@/lib/tone";
 
 /**
@@ -23,6 +30,8 @@ import { cx } from "@/lib/tone";
  */
 
 const CUSTOM_LABEL = "Custom";
+/** A threshold is 1-100. */
+const PERCENT_DIGITS = 3;
 
 export function ThresholdField({
   defaultThreshold,
@@ -99,7 +108,10 @@ export function ThresholdField({
             id={`${customId}-input`}
             name={BUDGET_FIELD.thresholdCustom}
             value={custom}
-            onChange={(event) => setCustomValue(event.target.value)}
+            onChange={(event) =>
+              setCustomValue(applyMask(event.target, maskDigits))
+            }
+            maxLength={PERCENT_DIGITS}
             inputMode="numeric"
             autoComplete="off"
             aria-label="Custom alert threshold, in percent"

@@ -75,6 +75,7 @@ const RECORD_TYPES: readonly AuditRecordType[] = [
   "goal",
   "role",
   "budget",
+  "recurring",
   "institution",
 ];
 

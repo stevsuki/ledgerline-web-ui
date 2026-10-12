@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { FormFeedback } from "@/components/auth/form-feedback";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { TextField } from "@/components/ui/form";
+import { maskDigits } from "@/lib/format";
 import { resetRequestAction } from "@/lib/auth/actions";
 import { FIELD, OTP_LENGTH } from "@/lib/auth/fields";
 import { IDLE_AUTH_STATE } from "@/lib/auth/form-state";
@@ -53,6 +54,7 @@ export function ResetRequestForm() {
         placeholder="000000"
         autoComplete="one-time-code"
         inputMode="numeric"
+        mask={maskDigits}
         required
         maxLength={OTP_LENGTH}
         minLength={OTP_LENGTH}

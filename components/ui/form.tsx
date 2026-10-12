@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { Icon } from "@/components/ui/icon";
 import { DEFAULT_CUSTOM_COLOR, colorOrBlank } from "@/lib/category-fields";
+import { applyMask } from "@/lib/input-mask";
 import { RAMP_BG, cx, isHexColor, paintStyle } from "@/lib/tone";
 import type { ColorKey, RampStep } from "@/types/ledger";
 
@@ -55,12 +56,15 @@ export function TextField({
   minLength,
   required = false,
   error,
+  mask,
 }: {
   readonly id: string;
   readonly label: string;
   readonly defaultValue?: string;
   readonly placeholder?: string;
   readonly type?: "text" | "password" | "email" | "date" | "time";
+  /** Rewrites what is typed, e.g. `maskDigits`. Client callers only. */
+  readonly mask?: (text: string) => string;
   readonly name?: string;
   readonly className?: string;
   readonly inputClassName?: string;
@@ -85,6 +89,9 @@ export function TextField({
         maxLength={maxLength}
         minLength={minLength}
         required={required}
+        onInput={
+          mask ? (event) => applyMask(event.currentTarget, mask) : undefined
+        }
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId(id) : undefined}
       />

@@ -25,6 +25,7 @@ import type { IconKey } from "@/lib/icon-choice";
 import { FieldGrid } from "@/components/ui/layout";
 import { SlideOver } from "@/components/ui/slide-over";
 import { IDLE_AUTH_STATE, type AuthFormState } from "@/lib/auth/form-state";
+import { maskDigits, maskFigure } from "@/lib/format";
 import { deleteWalletAction, saveWalletAction } from "@/lib/wallets/actions";
 import {
   CARD_KIND,
@@ -36,10 +37,12 @@ import {
   WALLET_FIELD,
   WALLET_NAME_MAX_LENGTH,
   WALLET_NAME_MIN_LENGTH,
+  parseCurrency,
   parseWalletKind,
   walletIconChoices,
 } from "@/lib/wallet-fields";
 import type {
+  CurrencyCode,
   SelectChoice,
   WalletCard,
   WalletDraft,
@@ -272,6 +275,9 @@ function WalletFields({
   // An existing wallet already wears a decision; a new one is still following
   // the Type select, and stops the moment someone picks a tile themselves.
   const [iconPicked, setIconPicked] = useState(isEdit);
+  // The figures below are grouped as they are typed, in this currency's shape.
+  const [currency, setCurrency] = useState<string>(draft.currency);
+  const code = parseCurrency(currency);
 
   function changeKind(next: string) {
     const parsed = parseWalletKind(next);
@@ -322,7 +328,8 @@ function WalletFields({
           name={WALLET_FIELD.currency}
           label="Currency"
           options={currencies}
-          defaultValue={draft.currency}
+          value={currency}
+          onChange={setCurrency}
         />
       </FieldGrid>
 
@@ -350,6 +357,7 @@ function WalletFields({
           defaultValue={draft.balance}
           placeholder="0"
           inputMode="numeric"
+          mask={(text) => maskFigure(text, code, true)}
           error={fieldErrors[WALLET_FIELD.balance]}
           required
         />
@@ -359,7 +367,7 @@ function WalletFields({
       </div>
 
       {kind === CARD_KIND ? (
-        <CardFields draft={draft} fieldErrors={fieldErrors} />
+        <CardFields draft={draft} currency={code} fieldErrors={fieldErrors} />
       ) : null}
 
       <ToggleRow
@@ -416,6 +424,9 @@ function ReferenceField({
   );
 }
 
+/** A statement day is 1-31. */
+const DUE_DAY_DIGITS = 2;
+
 /**
  * A card is drawn against a ceiling and falls due on a day; nothing else is.
  * Leaving either blank keeps whatever the card already has — the API reads an
@@ -423,9 +434,11 @@ function ReferenceField({
  */
 function CardFields({
   draft,
+  currency,
   fieldErrors,
 }: {
   readonly draft: WalletDraft;
+  readonly currency: CurrencyCode;
   readonly fieldErrors: Readonly<Record<string, string>>;
 }) {
   return (
@@ -437,6 +450,7 @@ function CardFields({
         defaultValue={draft.creditLimit}
         placeholder="25.000.000"
         inputMode="numeric"
+        mask={(text) => maskFigure(text, currency)}
         error={fieldErrors[WALLET_FIELD.creditLimit]}
       />
       <TextField
@@ -446,6 +460,8 @@ function CardFields({
         defaultValue={draft.dueDay}
         placeholder="18"
         inputMode="numeric"
+        maxLength={DUE_DAY_DIGITS}
+        mask={maskDigits}
         error={fieldErrors[WALLET_FIELD.dueDay]}
       />
     </FieldGrid>
